@@ -19,6 +19,7 @@ Runnable local MVP for a containerized NGS workflow using Temporal orchestration
 
 - `.env` is local-only and ignored by git.
 - Copy `.env.example` to `.env` and fill values before running.
+- If `.env` was ever committed in earlier history, rotate any exposed credentials immediately.
 
 ## Quick Start (Linux/macOS)
 
