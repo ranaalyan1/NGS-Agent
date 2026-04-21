@@ -1,95 +1,104 @@
-# NGS Agent Swarm MVP
+# NGS Agent Swarm
 
-Runnable local MVP for a containerized NGS workflow using Temporal orchestration and cache layers.
+Temporal-orchestrated RNA-Seq pipeline with containerized agents and MinIO artifacts.
 
-## What this includes
+## Implemented pipeline
 
-- Temporal server + Web UI via Docker Compose
-- Redis cache + MinIO object storage
-- 6 containerized agents: ingest, qc, trim, align, count, de
-- Temporal workflow with conditional trim step
-- Python CLI to submit and inspect runs
+- Ingest: validates FASTQ input and read counts
+- QC: runs FastQC and uploads report artifacts
+- AI Decider: sends FastQC metrics to Claude and decides if trim is needed
+- Trim: runs Trimmomatic (single or paired mode)
+- Align: runs HISAT2 + samtools sort/index
+- Count: runs featureCounts
+- DE: currently placeholder
 
 ## Prerequisites
 
-- Docker Desktop
+- Docker Engine/Desktop
 - Python 3.11+
-- Linux/macOS shell (or WSL2 on Windows)
+- Linux/macOS shell (Windows users should run under WSL2)
 
 ## Security
 
-- `.env` is local-only and ignored by git.
-- Copy `.env.example` to `.env` and fill values before running.
-- If `.env` was ever committed in earlier history, rotate any exposed credentials immediately.
+- `.env` is git-ignored
+- Copy `.env.example` to `.env`
+- Rotate any credentials if they were ever exposed in commit history
 
-## Quick Start (Linux/macOS)
-
-1. Start infrastructure:
+## Setup
 
 ```bash
-docker compose up -d
-```
-
-2. Install Python dependencies:
-
-```bash
+cp .env.example .env
 python -m pip install -r requirements.txt
+docker compose up -d
+bash scripts/build-agents.sh
 ```
 
-3. Build agent images:
-
-```bash
-./scripts/build-agents.sh
-```
-
-Windows note:
-
-- Use WSL2 and run the same bash commands from your Linux shell.
-
-4. Start Temporal worker (keep terminal open):
+Start worker:
 
 ```bash
 python worker.py
 ```
 
-5. Submit a run (new terminal):
+## Real data example (paired-end)
+
+1. Download a tiny paired FASTQ test set:
+
+```bash
+mkdir -p data/fastq
+curl -L -o data/fastq/test_R1.fastq.gz "https://ftp.sra.ebi.ac.uk/vol1/fastq/SRR258/008/SRR2584868/SRR2584868_1.fastq.gz"
+curl -L -o data/fastq/test_R2.fastq.gz "https://ftp.sra.ebi.ac.uk/vol1/fastq/SRR258/008/SRR2584868/SRR2584868_2.fastq.gz"
+```
+
+2. Download reference + annotation and build HISAT2 index:
+
+```bash
+mkdir -p data/ref
+curl -L -o data/ref/genome.fa.gz "https://ftp.ensembl.org/pub/release-112/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz"
+curl -L -o data/ref/genes.gtf.gz "https://ftp.ensembl.org/pub/release-112/gtf/homo_sapiens/Homo_sapiens.GRCh38.112.gtf.gz"
+gunzip -f data/ref/genome.fa.gz
+gunzip -f data/ref/genes.gtf.gz
+hisat2-build data/ref/genome.fa data/ref/grch38_idx
+```
+
+3. Submit run:
 
 ```bash
 python cli.py submit \
-	--experiment RNA-Seq \
-	--organism human \
-	--ref-genome /data/ref/genome.fa \
-	--gtf /data/ref/genes.gtf \
-	--fastq tests/data/sample.fastq \
-	--single
+  --experiment RNA-Seq \
+  --organism human \
+  --ref-genome data/ref/grch38_idx \
+  --gtf data/ref/genes.gtf \
+  --fastq-r1 data/fastq/test_R1.fastq.gz \
+  --fastq-r2 data/fastq/test_R2.fastq.gz \
+  --paired
 ```
 
-Paired-end example:
-
-```bash
-python cli.py submit \
-	--experiment RNA-Seq \
-	--organism human \
-	--ref-genome /data/ref/genome.fa \
-	--gtf /data/ref/genes.gtf \
-	--fastq-r1 /data/sample_R1.fastq.gz \
-	--fastq-r2 /data/sample_R2.fastq.gz \
-	--paired
-```
-
-6. Check status:
+4. Check run:
 
 ```bash
 python cli.py status <run-id>
 ```
 
-7. Monitor in UI:
+## Artifact locations
 
-- Temporal: http://localhost:8080
-- MinIO Console: http://localhost:9001
+- QC report: `s3://ngs-artifacts/<run_id>/qc/...`
+- Trimmed FASTQ: `s3://ngs-artifacts/<run_id>/trim/...`
+- BAM + BAI: `s3://ngs-artifacts/<run_id>/align/...`
+- Count matrix/summary: `s3://ngs-artifacts/<run_id>/count/...`
 
-## Notes
+## Tests
 
-- QC agent now has a real FastQC path. If `fastqc` is available and input files are mounted, it executes FastQC and uploads the HTML report to MinIO.
-- If FastQC is unavailable, QC falls back to mock mode with explicit reasoning in payload.
-- Other agents remain scaffolded and should be replaced with real tool invocations incrementally.
+Functional test harness:
+
+```bash
+RUN_NGS_FUNCTIONAL=1 \
+TEST_FASTQ_R1=/abs/path/R1.fastq.gz \
+TEST_FASTQ_R2=/abs/path/R2.fastq.gz \
+TEST_HISAT2_INDEX_DIR=/abs/path/index_dir \
+TEST_GTF=/abs/path/genes.gtf \
+pytest -q tests/test_pipeline.py
+```
+
+## Current limitation
+
+- DE agent is still a placeholder and not yet a real statistical DE engine.
