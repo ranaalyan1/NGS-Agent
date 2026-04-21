@@ -1,7 +1,15 @@
-FROM ngs/base-agent:latest
-WORKDIR /agent
+FROM ubuntu:22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
 RUN apt-get update \
-	&& apt-get install -y --no-install-recommends trimmomatic default-jre-headless \
+	&& apt-get install -y --no-install-recommends python3 python3-pip ca-certificates trimmomatic default-jre-headless \
 	&& rm -rf /var/lib/apt/lists/*
-COPY main.py ./main.py
+
+WORKDIR /agent
+RUN python3 -m pip install --no-cache-dir boto3 pydantic
+
+COPY agents/base/base_agent.py ./base_agent.py
+COPY shared/storage.py ./storage.py
+COPY agents/trim/main.py ./main.py
 CMD ["python3", "-u", "main.py"]

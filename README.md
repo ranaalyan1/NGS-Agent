@@ -14,6 +14,7 @@ Runnable local MVP for a containerized NGS workflow using Temporal orchestration
 
 - Docker Desktop
 - Python 3.11+
+- Linux/macOS shell (or WSL2 on Windows)
 
 ## Security
 
@@ -40,6 +41,10 @@ python -m pip install -r requirements.txt
 ```bash
 ./scripts/build-agents.sh
 ```
+
+Windows note:
+
+- Use WSL2 and run the same bash commands from your Linux shell.
 
 4. Start Temporal worker (keep terminal open):
 
