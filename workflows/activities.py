@@ -69,7 +69,7 @@ async def de_activity(inputs: Dict[str, Any], routing_ctx: Dict[str, Any]) -> Di
 async def run_agent_container(
     agent_name: str, inputs: Dict[str, Any], routing_ctx: Dict[str, Any]
 ) -> Dict[str, Any]:
-    cache_key = cache.compute_hash(agent_name, inputs)
+    cache_key = cache.compute_hash(agent_name, {"inputs": inputs, "routing_ctx": routing_ctx})
     cached = await cache.get(cache_key)
     if cached:
         return cached

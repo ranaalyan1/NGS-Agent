@@ -81,7 +81,12 @@ class NGSPipelineWorkflow:
         )
 
         outputs = {
+            "qc_report_html": qc.get("payload", {}).get("report_html"),
             "mapping_rate": align.get("payload", {}).get("mapping_rate"),
+            "bam_path": align.get("payload", {}).get("bam_path"),
+            "bam_index": align.get("payload", {}).get("bam_index"),
+            "count_matrix": count.get("payload", {}).get("count_matrix"),
+            "count_summary": count.get("payload", {}).get("count_summary"),
             "n_genes": de.get("payload", {}).get("n_up", 0)
             + de.get("payload", {}).get("n_down", 0),
         }
