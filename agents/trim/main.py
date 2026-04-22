@@ -13,24 +13,46 @@ class TrimAgent(BaseAgent):
             return storage.download_file(value, os.path.join(workdir, Path(value).name))
         return value
 
-    def _param_list(self, params: dict) -> list[str]:
+    def _param_list(self, params: dict, crop_bp: int | None = None) -> list[str]:
+        """Build the Trimmomatic step list.
+
+        If *crop_bp* is provided (from the QC agent's AI-driven
+        recommended_trim_bp), a CROP:<crop_bp> step is prepended.
+        Trimmomatic applies steps in order, so CROP runs first —
+        hard-truncating reads before quality-based trimming.
+        """
         p = {
             "LEADING": params.get("LEADING", 3),
             "TRAILING": params.get("TRAILING", 3),
             "SLIDINGWINDOW": params.get("SLIDINGWINDOW", "4:20"),
             "MINLEN": params.get("MINLEN", 36),
         }
-        return [
+        steps = []
+        if crop_bp is not None:
+            steps.append(f"CROP:{crop_bp}")
+        steps.extend([
             f"LEADING:{p['LEADING']}",
             f"TRAILING:{p['TRAILING']}",
             f"SLIDINGWINDOW:{p['SLIDINGWINDOW']}",
             f"MINLEN:{p['MINLEN']}",
-        ]
+        ])
+        return steps
 
     def execute(self, inputs, routing_ctx):
         run_id = routing_ctx.get("run_id", "unknown")
         payload = inputs.get("payload", {})
         trim_params = payload.get("trim_params", {})
+
+        # The QC agent sets trim_to_bp from Claude's recommended_trim_bp.
+        # When present and the verdict is "trim_required", we use it as
+        # Trimmomatic's CROP parameter to hard-truncate reads to that length.
+        crop_bp = None
+        raw_trim_bp = payload.get("trim_to_bp")
+        if raw_trim_bp is not None:
+            try:
+                crop_bp = int(raw_trim_bp)
+            except (ValueError, TypeError):
+                crop_bp = None
 
         fastq_single = payload.get("raw_reads") or inputs.get("fastq_path")
         fastq_r1 = payload.get("raw_reads_r1") or inputs.get("fastq_r1")
@@ -48,7 +70,7 @@ class TrimAgent(BaseAgent):
                 fastq_r2 = self._resolve_input(fastq_r2, storage, workdir)
 
             trimmomatic = ["trimmomatic"]
-            params = self._param_list(trim_params)
+            params = self._param_list(trim_params, crop_bp=crop_bp)
 
             if fastq_r1 and fastq_r2:
                 out_r1_paired = os.path.join(workdir, "trimmed_R1.paired.fastq.gz")
@@ -86,6 +108,7 @@ class TrimAgent(BaseAgent):
                     "fastq_r1_unpaired": r1u_uri,
                     "fastq_r2_unpaired": r2u_uri,
                     "trim_params_used": trim_params,
+                    "crop_bp_applied": crop_bp,
                 }
             else:
                 out_single = os.path.join(workdir, "trimmed.single.fastq.gz")
@@ -96,6 +119,7 @@ class TrimAgent(BaseAgent):
                 payload_out = {
                     "fastq_path": single_uri,
                     "trim_params_used": trim_params,
+                    "crop_bp_applied": crop_bp,
                 }
 
         return {
