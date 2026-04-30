@@ -1,0 +1,69 @@
+# NGS-Agent v2: Standard RNA-Seq Configuration (Human)
+# High-quality research analysis
+
+project:
+  name: "RNA-Seq Analysis"
+  description: "Standard mRNA expression profiling"
+
+paths:
+  input_dir: "./data/input"
+  output_dir: "./results"
+  logs_dir: "./logs"
+  temp_dir: "/tmp/ngs-agent"
+  genomes_dir: "./data/genomes"
+  annotations_dir: "./data/annotations"
+
+samples:
+  paired_end: true
+  read_structure: "R1,R2"
+  quality_encoding: "phred33"
+
+organism:
+  name: "human"
+  common_name: "Homo sapiens"
+  genome_version: "GRCh38"
+
+qc:
+  enabled: true
+  min_quality_score: 25
+  trim_trigger_threshold: 25
+
+trimming:
+  enabled: true
+  leading: 3
+  trailing: 3
+  sliding_window: "4:20"
+  min_length: 36
+
+alignment:
+  aligner: "hisat2"
+  threads: 8
+  min_mapping_rate: 0.60
+
+quantification:
+  tool: "featurecounts"
+  threads: 8
+  strand_specificity: 0
+
+differential_expression:
+  enabled: true
+  tool: "deseq2"
+  alpha: 0.05
+  lfc_threshold: 1
+
+interpretation:
+  enabled: true
+  go_enrichment: true
+  kegg_enrichment: true
+
+reporting:
+  generate_html: true
+  ai_interpretation: true
+
+parallel:
+  max_threads: 8
+  max_memory_gb: 32
+
+logging:
+  level: "INFO"
+  log_to_file: true

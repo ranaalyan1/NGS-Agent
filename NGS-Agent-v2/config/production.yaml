@@ -1,0 +1,59 @@
+# NGS-Agent v2: Production Configuration
+# For high-throughput production runs
+
+project:
+  name: "Production Pipeline"
+  description: "High-throughput RNA-Seq analysis"
+
+organism:
+  name: "human"
+
+qc:
+  enabled: true
+  min_quality_score: 25
+  trim_trigger_threshold: 25
+
+trimming:
+  enabled: true
+
+alignment:
+  aligner: "hisat2"
+  threads: 32                     # Maximum parallelization
+  min_mapping_rate: 0.60
+
+bam_processing:
+  mark_duplicates: true
+  base_quality_recalibration: true
+
+quantification:
+  threads: 32
+
+differential_expression:
+  enabled: true
+  parallel_processing: true
+
+interpretation:
+  enabled: true
+  go_enrichment: true
+  kegg_enrichment: true
+
+reporting:
+  generate_html: true
+  include_plots: true
+  include_raw_data: true
+  ai_interpretation: true
+
+parallel:
+  max_threads: 32
+  max_memory_gb: 128
+
+advanced:
+  skip_trimming: false
+  skip_dedup: false
+  keep_intermediate_files: false
+  max_retries: 3
+  timeout_seconds: 7200           # 2 hour timeout per step
+
+logging:
+  level: "INFO"
+  log_to_file: true

@@ -1,0 +1,26 @@
+# NGS-Agent v2 Python Dependencies
+# Install with: pip install -r requirements.txt
+
+# Core dependencies
+pyyaml>=6.0
+click>=8.1.0
+dataclasses-json>=0.5.7
+
+# Scientific computing
+numpy>=1.23.0
+pandas>=1.4.0
+scipy>=1.8.0
+
+# Logging and utilities
+colorlog>=6.7.0
+tqdm>=4.64.0
+
+# Optional: For AI interpretation features
+# anthropic>=0.7.0  # Claude API
+# openai>=0.27.0    # GPT API
+
+# Development (optional)
+pytest>=7.0.0
+black>=22.0.0
+pylint>=2.13.0
+mypy>=0.950

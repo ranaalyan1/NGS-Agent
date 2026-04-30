@@ -1,0 +1,155 @@
+# NGS-Agent v2 Default Configuration
+# This is the primary configuration file for RNA-Seq analysis pipeline
+
+project:
+  name: "NGS-Agent-v2"
+  version: "2.0"
+  description: "Autonomous RNA-Seq Analysis System"
+
+# Input/Output configuration
+paths:
+  input_dir: "./data/input"
+  output_dir: "./results"
+  logs_dir: "./logs"
+  temp_dir: "/tmp/ngs-agent-v2"
+  genomes_dir: "./data/genomes"
+  annotations_dir: "./data/annotations"
+
+# Sample configuration
+samples:
+  paired_end: true
+  # Single-end: false
+  read_structure: "R1,R2"  # For paired reads: R1,R2
+  min_read_length: 20
+  quality_encoding: "phred33"
+
+# Organism and Reference Configuration
+organism:
+  name: "human"  # human, mouse, zebrafish, etc.
+  common_name: "Homo sapiens"
+  genome_version: "GRCh38"  # GRCh38, GRCm39, etc.
+  # Auto-detect genome path or specify:
+  # genome_path: "./data/genomes/GRCh38/Homo_sapiens.GRCh38.dna.primary_assembly.fa"
+  # annotation_path: "./data/annotations/GRCh38/Homo_sapiens.GRCh38.112.gtf"
+
+# QC Configuration
+qc:
+  enabled: true
+  min_quality_score: 25  # Phred score threshold
+  min_gc_content: 30
+  max_gc_content: 70
+  max_n_percentage: 5
+  # If per-base quality < min_quality_score, trigger trimming
+  trim_trigger_threshold: 25
+
+# Trimming Configuration (Trimmomatic)
+trimming:
+  enabled: true
+  adapter_file: "adapters/TruSeq3-PE.fa"  # Adapter sequences
+  leading: 3         # Remove leading bases below quality 3
+  trailing: 3        # Remove trailing bases below quality 3
+  sliding_window: "4:20"  # 4-base window, minimum quality 20
+  min_length: 36     # Discard reads shorter than 36 bp
+
+# Alignment Configuration (HISAT2)
+alignment:
+  aligner: "hisat2"  # Options: hisat2, star
+  threads: 8
+  max_intron_length: 500000  # For HISAT2
+  # For STAR:
+  # star_genome_dir: "./data/genomes/star_index"
+  min_mapping_rate: 0.60  # 60% minimum mapping rate (validation)
+  sort_memory: "8G"  # Memory for samtools sort
+
+# BAM Processing
+bam_processing:
+  deduplicate: true
+  mark_duplicates: true
+  remove_duplicates: false
+  base_quality_recalibration: false
+
+# Quantification Configuration (featureCounts)
+quantification:
+  tool: "featurecounts"  # Options: featurecounts, salmon
+  feature_type: "exon"
+  id_attribute: "gene_id"
+  threads: 8
+  strand_specificity: 0  # 0: unstranded, 1: forward, 2: reverse
+  count_multi_mapping: false
+  min_mapping_quality: 10
+
+# Differential Expression Configuration (DESeq2)
+differential_expression:
+  enabled: true
+  tool: "deseq2"
+  design_formula: "~ condition"  # Adjust based on experimental design
+  alpha: 0.05  # Significance threshold
+  lfc_threshold: 1  # Log2 fold-change threshold for visualization
+  parallel_processing: true
+
+# Biological Interpretation
+interpretation:
+  enabled: true
+  go_enrichment: true
+  kegg_enrichment: true
+  reactome_enrichment: false
+  pathway_db: "kegg"  # kegg, reactome, panther, etc.
+
+# Validation Thresholds
+validation:
+  min_reads_per_sample: 10000
+  min_mapping_rate: 0.50  # 50% minimum
+  max_duplicate_rate: 0.30  # 30% maximum
+  min_gene_coverage: 0.80  # At least 80% of genes detected
+  halt_on_validation_failure: false  # Set to true for strict mode
+
+# Reporting Configuration
+reporting:
+  generate_html: true
+  generate_pdf: false
+  include_plots: true
+  include_raw_data: true
+  ai_interpretation: true  # Generate AI-written biological insights
+  ai_model: "gpt-4"  # gpt-4, gpt-3.5-turbo, claude, etc.
+
+# Plotting Configuration
+plots:
+  dpi: 300
+  format: "png,pdf"  # Multiple formats
+  colors:
+    upregulated: "#d73027"     # Red
+    downregulated: "#1a9850"   # Green
+    neutral: "#cccccc"          # Gray
+  volcano_plot_pval_threshold: 0.05
+  heatmap_top_genes: 50
+
+# Advanced Options
+advanced:
+  skip_trimming: false
+  skip_dedup: false
+  skip_qc: false
+  dry_run: false  # Print commands without executing
+  verbose: true
+  keep_intermediate_files: false
+  max_retries: 3
+  timeout_seconds: 3600  # 1 hour per step
+
+# Parallel Processing
+parallel:
+  max_threads: 16
+  max_memory_gb: 64
+  use_cluster: false  # Set to true for HPC submission
+
+# Logging
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+  log_to_file: true
+  log_timestamp: true
+  colors: true
+
+# Notifications (optional)
+notifications:
+  enabled: false
+  on_completion: false
+  on_error: true
+  email: "user@example.com"

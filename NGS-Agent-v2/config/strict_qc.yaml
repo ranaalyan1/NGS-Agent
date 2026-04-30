@@ -1,0 +1,61 @@
+# NGS-Agent v2: Strict QC Configuration
+# For sensitive applications requiring high-quality data
+
+project:
+  name: "Strict QC Analysis"
+  description: "High-quality genomics research"
+
+paths:
+  input_dir: "./data/input"
+  output_dir: "./results"
+  logs_dir: "./logs"
+
+organism:
+  name: "human"
+  genome_version: "GRCh38"
+
+qc:
+  enabled: true
+  min_quality_score: 30          # Higher threshold
+  trim_trigger_threshold: 28
+  max_n_percentage: 2             # Very strict
+
+trimming:
+  enabled: true
+  leading: 5
+  trailing: 5
+  sliding_window: "5:25"          # More aggressive
+  min_length: 40
+
+alignment:
+  aligner: "hisat2"
+  threads: 16
+  min_mapping_rate: 0.70          # 70% minimum
+
+bam_processing:
+  mark_duplicates: true
+  remove_duplicates: true
+  base_quality_recalibration: true
+
+validation:
+  min_reads_per_sample: 50000000  # 50M minimum
+  min_mapping_rate: 0.70
+  max_duplicate_rate: 0.15
+  halt_on_validation_failure: true  # STRICT MODE
+
+differential_expression:
+  enabled: true
+  alpha: 0.01                     # More stringent
+  lfc_threshold: 1.5
+
+reporting:
+  generate_html: true
+  generate_pdf: true
+
+parallel:
+  max_threads: 16
+  max_memory_gb: 64
+
+logging:
+  level: "DEBUG"                  # Detailed logging
+  log_to_file: true

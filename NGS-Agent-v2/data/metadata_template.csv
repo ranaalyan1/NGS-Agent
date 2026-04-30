@@ -1,0 +1,32 @@
+# NGS-Agent v2: Sample Metadata Template
+# For differential expression analysis
+# 
+# Usage:
+#   - Create metadata.csv in your input directory
+#   - Use this format for DESeq2 sample design
+#   - Required columns: sample, condition
+#   - Additional columns can be added for complex designs
+
+sample,condition,replicate,batch
+sample_1,control,1,batch1
+sample_2,control,2,batch1
+sample_3,control,3,batch2
+sample_4,treatment,1,batch1
+sample_5,treatment,2,batch1
+sample_6,treatment,3,batch2
+
+# Column descriptions:
+# - sample: Sample identifier (must match count matrix row names)
+# - condition: Treatment condition (e.g., control, treatment)
+# - replicate: Biological replicate number (1, 2, 3...)
+# - batch: Batch effect if applicable (optional)
+#
+# For more complex designs, add more columns:
+# Example with time series:
+#   sample,condition,timepoint
+#   s1,control,0h
+#   s2,control,0h
+#   s3,treatment,2h
+#   s4,treatment,2h
+#
+# Use in config: design_formula: "~ timepoint + condition"

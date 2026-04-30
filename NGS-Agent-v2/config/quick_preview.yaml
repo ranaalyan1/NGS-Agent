@@ -1,0 +1,37 @@
+# NGS-Agent v2: Quick Preview Configuration
+# Fast exploration of data
+
+project:
+  name: "Quick Preview"
+  description: "Fast data exploration"
+
+organism:
+  name: "human"
+
+qc:
+  enabled: true
+  min_quality_score: 20
+
+trimming:
+  enabled: false                  # SKIP trimming for speed
+
+alignment:
+  aligner: "hisat2"
+  threads: 4                      # Fewer threads
+  min_mapping_rate: 0.40
+
+quantification:
+  threads: 4
+
+differential_expression:
+  enabled: false                  # SKIP for speed
+
+reporting:
+  generate_html: true
+
+parallel:
+  max_threads: 4
+  max_memory_gb: 8
+
+logging:
+  level: "WARNING"
