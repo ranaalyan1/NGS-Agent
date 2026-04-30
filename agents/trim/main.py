@@ -14,23 +14,33 @@ class TrimAgent(BaseAgent):
         return value
 
     def _param_list(self, params: dict) -> list[str]:
+        """Build the Trimmomatic step list.
+        
+        Applies standard dynamic quality trimming parameters:
+        LEADING, TRAILING, SLIDINGWINDOW, and MINLEN.
+        """
         p = {
             "LEADING": params.get("LEADING", 3),
             "TRAILING": params.get("TRAILING", 3),
             "SLIDINGWINDOW": params.get("SLIDINGWINDOW", "4:20"),
-            "MINLEN": params.get("MINLEN", 36),
+            "MINLEN": max(36, int(params.get("MINLEN", 36))),
         }
-        return [
+        steps = []
+        steps.extend([
             f"LEADING:{p['LEADING']}",
             f"TRAILING:{p['TRAILING']}",
             f"SLIDINGWINDOW:{p['SLIDINGWINDOW']}",
             f"MINLEN:{p['MINLEN']}",
-        ]
+        ])
+        return steps
 
     def execute(self, inputs, routing_ctx):
         run_id = routing_ctx.get("run_id", "unknown")
         payload = inputs.get("payload", {})
         trim_params = payload.get("trim_params", {})
+
+        # Trimmomatic uses SLIDINGWINDOW, LEADING, TRAILING, and MINLEN 
+        # from the AI decider's output, avoiding hard-truncation (CROP).
 
         fastq_single = payload.get("raw_reads") or inputs.get("fastq_path")
         fastq_r1 = payload.get("raw_reads_r1") or inputs.get("fastq_r1")
@@ -47,6 +57,7 @@ class TrimAgent(BaseAgent):
                 fastq_r1 = self._resolve_input(fastq_r1, storage, workdir)
                 fastq_r2 = self._resolve_input(fastq_r2, storage, workdir)
 
+            threads = os.environ.get("AGENT_THREADS", "2")
             trimmomatic = ["trimmomatic"]
             params = self._param_list(trim_params)
 
@@ -59,6 +70,7 @@ class TrimAgent(BaseAgent):
                     trimmomatic
                     + [
                         "PE",
+                        "-threads", threads,
                         "-phred33",
                         fastq_r1,
                         fastq_r2,
@@ -89,7 +101,7 @@ class TrimAgent(BaseAgent):
                 }
             else:
                 out_single = os.path.join(workdir, "trimmed.single.fastq.gz")
-                cmd = trimmomatic + ["SE", "-phred33", fastq_single, out_single] + params
+                cmd = trimmomatic + ["SE", "-threads", threads, "-phred33", fastq_single, out_single] + params
                 subprocess.run(cmd, check=True, capture_output=True, text=True)
 
                 single_uri = storage.upload_file(out_single, f"{run_id}/trim/trimmed.single.fastq.gz")
