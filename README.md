@@ -34,9 +34,23 @@ mamba activate ngs
 bash scripts/install.sh
 ```
 
-**Install (Docker, optional)**
+**Install (Podman, optional)**
 
-Docker is supported as an execution backend but is not required. To use Docker, set backend flags in `ngs` commands or configure the backend in `ngs.toml`.
+Podman (rootless, Docker-compatible) is supported as an execution backend but is not required. To use Podman, install Podman for your OS and set the backend to `podman` in `ngs` commands or in `ngs.toml`.
+
+On Linux (example):
+
+```bash
+sudo apt-get install -y podman
+```
+
+On macOS, install via Homebrew:
+
+```bash
+brew install podman
+```
+
+On Windows, use Podman Desktop or the Windows Podman packages; enable WSL2 integration for best results.
 
 **CLI Quickstart**
 
@@ -60,7 +74,7 @@ Useful commands:
 
 **Backend Selection**
 
-By default `ngs` uses the native backend (Conda/Mamba). To force Docker or Apptainer, use the `--backend` flag: `--backend docker` or `--backend apptainer`.
+By default `ngs` uses the native backend (Conda/Mamba). To force Podman or Apptainer, use the `--backend` flag: `--backend podman` or `--backend apptainer`.
 
 **Migration Notes (from legacy NGS-Agent)**
 
