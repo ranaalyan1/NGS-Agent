@@ -402,7 +402,7 @@ class QCAgent(BaseAgent):
         if not _fastqc_available():
             raise RuntimeError(
                 "fastqc is not installed or not on PATH. "
-                "Install it (apt-get install fastqc) or use the Docker image."
+                "Install it via your system package manager (e.g. apt-get install fastqc)."
             )
 
         # --- 1. Run real FastQC ----------------------------------------

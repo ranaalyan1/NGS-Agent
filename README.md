@@ -1,6 +1,6 @@
 # NGS Agent Swarm
 
-Temporal-orchestrated RNA-Seq pipeline with containerized agents and MinIO artifacts.
+Temporal-orchestrated RNA-Seq pipeline with native agents and MinIO artifacts.
 
 ## Implemented pipeline
 
@@ -17,9 +17,9 @@ Temporal-orchestrated RNA-Seq pipeline with containerized agents and MinIO artif
 
 ## Prerequisites
 
-- Docker Engine/Desktop
 - Python 3.11+
 - Linux/macOS shell (Windows users should run under WSL2)
+- System bioinformatics tools (see [Setup](#setup) below)
 
 ## Security
 
@@ -27,31 +27,85 @@ Temporal-orchestrated RNA-Seq pipeline with containerized agents and MinIO artif
 - Copy `.env.example` to `.env`
 - Rotate any credentials if they were ever exposed in commit history
 
+## Agent framework
+
+The pipeline agents are plain Python scripts (no Docker image required).
+Each agent reads `AGENT_INPUTS` and `ROUTING_CONTEXT` from environment variables,
+performs its task, and prints a JSON result to stdout.
+
+The agent runner in `workflows/activities.py` launches each script as a direct
+Python subprocess, so there is nothing to build or pull before running.
+
+For an in-depth look at Claude Code-style agent architecture and to explore
+alternative Python-native agent runners, see:
+[chauncygu/collection-claude-code-source-code](https://github.com/chauncygu/collection-claude-code-source-code)
+
 ## Setup
+
+### 1. Install system dependencies
+
+Run the provided setup script (Debian/Ubuntu or macOS with Homebrew):
+
+```bash
+bash scripts/setup-native.sh
+```
+
+This installs FastQC, HISAT2, SAMtools, BWA, Trimmomatic, featureCounts, R/Bioconductor
+packages, and the Python requirements.
+
+### 2. Configure environment
 
 ```bash
 cp .env.example .env
-python -m pip install -r requirements.txt
-docker compose up -d
-bash scripts/build-agents.sh
+# edit .env and fill in your S3/MinIO and Anthropic credentials
 ```
 
-Start worker:
+### 3. Start infrastructure services
+
+MinIO (S3-compatible object store) and Temporal (workflow engine) can be started
+with any container runtime **or** installed natively.
+
+**Option A – using a container runtime (Podman, Rancher Desktop, etc.):**
+
+```bash
+# start MinIO
+podman run -d --name minio -p 9000:9000 -p 9001:9001 \
+  -e MINIO_ROOT_USER=minioadmin -e MINIO_ROOT_PASSWORD=minioadmin \
+  minio/minio server /data --console-address ":9001"
+
+# create required buckets
+podman run --rm --network=host minio/mc \
+  bash -c "mc alias set local http://localhost:9000 minioadmin minioadmin && \
+           mc mb --ignore-existing local/ngs-cache && \
+           mc mb --ignore-existing local/ngs-artifacts"
+
+# start Temporal (requires PostgreSQL; see https://docs.temporal.io for native install)
+```
+
+**Option B – native MinIO:**
+
+Download the MinIO binary from <https://min.io/download> and start it:
+
+```bash
+minio server ./data --console-address ":9001"
+```
+
+### 4. Start the worker
 
 ```bash
 python worker.py
 ```
 
-Quick-start wizard:
+### 5. Quick-start wizard
 
 ```bash
 make wizard
 ```
 
-DNA branch note:
+## DNA branch note
 
 - Provide `--experiment WGS` or `--experiment WES` together with `--reference-fasta`.
-- Optionally mount a prebuilt `snpEff.jar` and set `SNPEFF_JAR=/path/to/snpEff.jar` for richer annotation.
+- Optionally set `SNPEFF_JAR=/path/to/snpEff.jar` for richer annotation.
 
 ## Real data example (paired-end)
 
@@ -103,7 +157,7 @@ python cli.py status <run-id>
 
 ## Tests
 
-Functional test harness:
+Functional test harness (no Docker required):
 
 ```bash
 RUN_NGS_FUNCTIONAL=1 \
@@ -117,3 +171,4 @@ pytest -q tests/test_pipeline.py
 ## Current limitation
 
 - DNA variant-calling branch is not yet wired into the workflow and remains the next expansion path.
+

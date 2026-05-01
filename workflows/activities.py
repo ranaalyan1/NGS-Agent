@@ -1,6 +1,7 @@
 import json
 import os
 import subprocess
+import sys
 from pathlib import Path
 from typing import Any, Dict
 
@@ -12,143 +13,108 @@ from shared.cache import CacheManager
 load_dotenv()
 cache = CacheManager()
 
-
-def _replace_local_file_paths(
-    obj: Any, mounts: list[tuple[str, str]], mount_index: list[int]
-) -> Any:
-    if isinstance(obj, dict):
-        return {k: _replace_local_file_paths(v, mounts, mount_index) for k, v in obj.items()}
-    if isinstance(obj, list):
-        return [_replace_local_file_paths(v, mounts, mount_index) for v in obj]
-    if isinstance(obj, str):
-        p = Path(obj)
-        if p.exists() and p.is_file():
-            idx = mount_index[0]
-            mount_index[0] += 1
-            container_path = f"/mnt/inputs/{idx}_{p.name}"
-            mounts.append((str(p.resolve()), container_path))
-            return container_path
-    return obj
+_REPO_ROOT = Path(__file__).resolve().parent.parent
+# Directories that must be on PYTHONPATH so agent scripts can resolve their imports
+_AGENT_PYTHONPATH = os.pathsep.join([
+    str(_REPO_ROOT / "agents" / "base"),
+    str(_REPO_ROOT / "shared"),
+])
 
 
 @activity.defn
 async def ingest_activity(inputs: Dict[str, Any], routing_ctx: Dict[str, Any]) -> Dict[str, Any]:
-    return await run_agent_container("ingest", inputs, routing_ctx)
+    return await run_agent_native("ingest", inputs, routing_ctx)
 
 
 @activity.defn
 async def qc_activity(inputs: Dict[str, Any], routing_ctx: Dict[str, Any]) -> Dict[str, Any]:
-    return await run_agent_container("qc", inputs, routing_ctx)
+    return await run_agent_native("qc", inputs, routing_ctx)
 
 
 @activity.defn
 async def ai_decider_activity(inputs: Dict[str, Any], routing_ctx: Dict[str, Any]) -> Dict[str, Any]:
-    return await run_agent_container("ai_decider", inputs, routing_ctx)
+    return await run_agent_native("ai_decider", inputs, routing_ctx)
 
 
 @activity.defn
 async def trim_activity(inputs: Dict[str, Any], routing_ctx: Dict[str, Any]) -> Dict[str, Any]:
-    return await run_agent_container("trim", inputs, routing_ctx)
+    return await run_agent_native("trim", inputs, routing_ctx)
 
 
 @activity.defn
 async def align_activity(inputs: Dict[str, Any], routing_ctx: Dict[str, Any]) -> Dict[str, Any]:
-    return await run_agent_container("align", inputs, routing_ctx)
+    return await run_agent_native("align", inputs, routing_ctx)
 
 
 @activity.defn
 async def bwa_activity(inputs: Dict[str, Any], routing_ctx: Dict[str, Any]) -> Dict[str, Any]:
-    return await run_agent_container("bwa_agent", inputs, routing_ctx)
+    return await run_agent_native("bwa_agent", inputs, routing_ctx)
 
 
 @activity.defn
 async def gatk_activity(inputs: Dict[str, Any], routing_ctx: Dict[str, Any]) -> Dict[str, Any]:
-    return await run_agent_container("gatk_agent", inputs, routing_ctx)
+    return await run_agent_native("gatk_agent", inputs, routing_ctx)
 
 
 @activity.defn
 async def annotation_activity(inputs: Dict[str, Any], routing_ctx: Dict[str, Any]) -> Dict[str, Any]:
-    return await run_agent_container("annotation_agent", inputs, routing_ctx)
+    return await run_agent_native("annotation_agent", inputs, routing_ctx)
 
 
 @activity.defn
 async def count_activity(inputs: Dict[str, Any], routing_ctx: Dict[str, Any]) -> Dict[str, Any]:
-    return await run_agent_container("count", inputs, routing_ctx)
+    return await run_agent_native("count", inputs, routing_ctx)
 
 
 @activity.defn
 async def de_activity(inputs: Dict[str, Any], routing_ctx: Dict[str, Any]) -> Dict[str, Any]:
-    return await run_agent_container("de_agent", inputs, routing_ctx)
+    return await run_agent_native("de_agent", inputs, routing_ctx)
 
 
 @activity.defn
 async def insight_activity(inputs: Dict[str, Any], routing_ctx: Dict[str, Any]) -> Dict[str, Any]:
-    return await run_agent_container("insight_agent", inputs, routing_ctx)
+    return await run_agent_native("insight_agent", inputs, routing_ctx)
 
 
 @activity.defn
 async def report_builder_activity(inputs: Dict[str, Any], routing_ctx: Dict[str, Any]) -> Dict[str, Any]:
-    return await run_agent_container("report_builder", inputs, routing_ctx)
+    return await run_agent_native("report_builder", inputs, routing_ctx)
 
 
-async def run_agent_container(
+async def run_agent_native(
     agent_name: str, inputs: Dict[str, Any], routing_ctx: Dict[str, Any]
 ) -> Dict[str, Any]:
+    """Run an agent script natively as a Python subprocess (no Docker required)."""
     cache_key = cache.compute_hash(agent_name, {"inputs": inputs, "routing_ctx": routing_ctx})
     cached = await cache.get(cache_key)
     if cached:
         return cached
 
-    mounts: list[tuple[str, str]] = []
-    mount_index = [0]
-    container_inputs = _replace_local_file_paths(inputs, mounts, mount_index)
-
-    # --- Resource Governor ---
-    # Default boundaries (Low/Standard profile)
+    # Build the subprocess environment
+    env = os.environ.copy()
+    existing_pythonpath = env.get("PYTHONPATH", "")
+    env["PYTHONPATH"] = (
+        _AGENT_PYTHONPATH + (os.pathsep + existing_pythonpath if existing_pythonpath else "")
+    )
+    env["AGENT_INPUTS"] = json.dumps(inputs)
+    env["ROUTING_CONTEXT"] = json.dumps(routing_ctx)
+    env["RUN_ID"] = routing_ctx.get("run_id", "unknown")
+    # Honour resource-governor hints via AGENT_THREADS.  Unlike Docker's --cpus
+    # flag, native processes are not hard-constrained; each agent script is
+    # expected to read AGENT_THREADS and apply its own thread limits (e.g.
+    # pass -p $AGENT_THREADS to hisat2/samtools/featureCounts).
     cpus = os.environ.get("AGENT_CPUS", "2")
-    memory = os.environ.get("AGENT_MEMORY", "4g")
-
-    # High resource profile for intensive mapping/calling agents
     if agent_name in {"align", "bwa_agent", "gatk_agent"}:
         cpus = os.environ.get("HIGH_AGENT_CPUS", cpus)
-        memory = os.environ.get("HIGH_AGENT_MEMORY", "6g")
+    env["AGENT_THREADS"] = cpus
 
-    cmd = [
-        "docker",
-        "run",
-        "--rm",
-        f"--cpus={cpus}",
-        f"--memory={memory}",
-    ]
-
-    for host_path, container_path in mounts:
-        cmd.extend(["-v", f"{host_path}:{container_path}:ro"])
-
-    cmd.extend([
-        "-e",
-        f"AGENT_THREADS={cpus}",
-        "-e",
-        f"AGENT_INPUTS={json.dumps(container_inputs)}",
-        "-e",
-        f"ROUTING_CONTEXT={json.dumps(routing_ctx)}",
-        "-e",
-        f"RUN_ID={routing_ctx.get('run_id', 'unknown')}",
-        "-e",
-        f"S3_ENDPOINT={os.environ.get('S3_ENDPOINT', 'http://localhost:9000')}",
-        "-e",
-        f"S3_ACCESS_KEY={os.environ.get('S3_ACCESS_KEY', 'minioadmin')}",
-        "-e",
-        f"S3_SECRET_KEY={os.environ.get('S3_SECRET_KEY', 'minioadmin')}",
-        "-e",
-        f"ARTIFACT_BUCKET={os.environ.get('ARTIFACT_BUCKET', 'ngs-artifacts')}",
-        "-e",
-        f"ANTHROPIC_API_KEY={os.environ.get('ANTHROPIC_API_KEY', '')}",
-        "-e",
-        f"ANTHROPIC_MODEL={os.environ.get('ANTHROPIC_MODEL', 'claude-3-5-sonnet-20241022')}",
-        f"ngs/{agent_name}-agent:latest",
-    ])
-
-    result = subprocess.run(cmd, capture_output=True, text=True)
+    agent_script = _REPO_ROOT / "agents" / agent_name / "main.py"
+    result = subprocess.run(
+        [sys.executable, str(agent_script)],
+        capture_output=True,
+        text=True,
+        env=env,
+    )
     if result.returncode != 0:
         raise RuntimeError(f"Agent {agent_name} failed: {result.stderr.strip()}")
 
