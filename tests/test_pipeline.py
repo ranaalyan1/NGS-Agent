@@ -1,7 +1,7 @@
 import json
 import os
-import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 import boto3
@@ -9,6 +9,12 @@ import pytest
 
 
 pytestmark = pytest.mark.integration
+
+_REPO_ROOT = Path(__file__).resolve().parent.parent
+_AGENT_PYTHONPATH = os.pathsep.join([
+    str(_REPO_ROOT / "agents" / "base"),
+    str(_REPO_ROOT / "shared"),
+])
 
 
 def _require_env(name: str) -> str:
@@ -18,36 +24,25 @@ def _require_env(name: str) -> str:
     return value
 
 
-def _docker_available() -> bool:
-    return shutil.which("docker") is not None
-
-
-def _run_container(agent: str, inputs: dict, routing: dict, mounts: list[tuple[str, str]] | None = None):
-    cmd = ["docker", "run", "--rm"]
-    if mounts:
-        for src, dst in mounts:
-            cmd.extend(["-v", f"{src}:{dst}:ro"])
-
-    cmd.extend(
-        [
-            "-e",
-            f"AGENT_INPUTS={json.dumps(inputs)}",
-            "-e",
-            f"ROUTING_CONTEXT={json.dumps(routing)}",
-            "-e",
-            f"RUN_ID={routing['run_id']}",
-            "-e",
-            f"S3_ENDPOINT={os.environ.get('S3_ENDPOINT', 'http://localhost:9000')}",
-            "-e",
-            f"S3_ACCESS_KEY={os.environ.get('S3_ACCESS_KEY', 'minioadmin')}",
-            "-e",
-            f"S3_SECRET_KEY={os.environ.get('S3_SECRET_KEY', 'minioadmin')}",
-            "-e",
-            f"ARTIFACT_BUCKET={os.environ.get('ARTIFACT_BUCKET', 'ngs-artifacts')}",
-            f"ngs/{agent}-agent:latest",
-        ]
+def _run_agent(agent: str, inputs: dict, routing: dict):
+    """Run an agent script natively as a Python subprocess."""
+    env = os.environ.copy()
+    existing_pythonpath = env.get("PYTHONPATH", "")
+    env["PYTHONPATH"] = (
+        _AGENT_PYTHONPATH + (os.pathsep + existing_pythonpath if existing_pythonpath else "")
     )
-    res = subprocess.run(cmd, capture_output=True, text=True, check=True)
+    env["AGENT_INPUTS"] = json.dumps(inputs)
+    env["ROUTING_CONTEXT"] = json.dumps(routing)
+    env["RUN_ID"] = routing["run_id"]
+
+    agent_script = _REPO_ROOT / "agents" / agent / "main.py"
+    res = subprocess.run(
+        [sys.executable, str(agent_script)],
+        capture_output=True,
+        text=True,
+        check=True,
+        env=env,
+    )
     return json.loads(res.stdout.strip())
 
 
@@ -69,8 +64,6 @@ def _head_size(s3_uri: str) -> int:
 def test_real_agents_pipeline_outputs():
     if os.environ.get("RUN_NGS_FUNCTIONAL") != "1":
         pytest.skip("Set RUN_NGS_FUNCTIONAL=1 to run integration test")
-    if not _docker_available():
-        pytest.skip("Docker is not available in PATH")
 
     host_r1 = _require_env("TEST_FASTQ_R1")
     host_r2 = _require_env("TEST_FASTQ_R2")
@@ -86,49 +79,22 @@ def test_real_agents_pipeline_outputs():
     routing = {
         "run_id": run_id,
         "paired_end": True,
-        "reference_genome": "/mnt/ref/genome_index",
-        "gtf": "/mnt/ref/genes.gtf",
+        "reference_genome": host_ref,
+        "gtf": host_gtf,
     }
 
-    ingest = _run_container(
+    ingest = _run_agent(
         "ingest",
-        {"fastq_r1": "/mnt/inputs/r1.fastq.gz", "fastq_r2": "/mnt/inputs/r2.fastq.gz"},
+        {"fastq_r1": host_r1, "fastq_r2": host_r2},
         routing,
-        mounts=[
-            (host_r1, "/mnt/inputs/r1.fastq.gz"),
-            (host_r2, "/mnt/inputs/r2.fastq.gz"),
-        ],
     )
 
-    qc = _run_container(
-        "qc",
-        ingest,
-        routing,
-        mounts=[
-            (host_r1, "/mnt/inputs/r1.fastq.gz"),
-        ],
-    )
+    qc = _run_agent("qc", ingest, routing)
     assert qc["payload"].get("report_html") is not None
 
-    align = _run_container(
-        "align",
-        ingest,
-        routing,
-        mounts=[
-            (host_r1, "/mnt/inputs/r1.fastq.gz"),
-            (host_r2, "/mnt/inputs/r2.fastq.gz"),
-            (host_ref, "/mnt/ref"),
-        ],
-    )
+    align = _run_agent("align", ingest, routing)
 
-    count = _run_container(
-        "count",
-        align,
-        routing,
-        mounts=[
-            (host_gtf, "/mnt/ref/genes.gtf"),
-        ],
-    )
+    count = _run_agent("count", align, routing)
 
     assert _head_size(qc["payload"]["report_html"]) > 0
     assert _head_size(align["payload"]["bam_path"]) > 0
