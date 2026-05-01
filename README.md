@@ -1,3 +1,104 @@
+# NGS-Agent → ngs (Enterprise agentic CLI)
+
+This repository contains the refactor of NGS-Agent into an enterprise-grade, native-first, agentic CLI named `ngs`.
+
+Commit: f86ab09
+
+**Overview**
+
+- **Native-first** installation using Conda/Mamba (environment.yml). Docker/Apptainer are optional backends.
+- A Typer + Rich CLI providing both natural-language and structured commands.
+- Agentic core: Planner → Executor → Verifier → Reporter with checkpointing and artifact provenance.
+- Bioinformatics tool wrappers (FastQC, Trimmomatic, HISAT2, samtools, featureCounts, MultiQC, DESeq2, GO enrichment).
+
+**Quick Links**
+
+- Source: `src/ngs_agent`
+- Environment spec: `environment.yml`
+- Installer script: `scripts/install.sh`
+
+**Install (Native, recommended)**
+
+Prerequisites: Conda or Mamba installed.
+
+1. Create the environment with Mamba (recommended):
+
+```bash
+mamba env create -f environment.yml -n ngs
+mamba activate ngs
+```
+
+2. (Optional) Run the one-liner installer to set up entry points and helpers:
+
+```bash
+bash scripts/install.sh
+```
+
+**Install (Docker, optional)**
+
+Docker is supported as an execution backend but is not required. To use Docker, set backend flags in `ngs` commands or configure the backend in `ngs.toml`.
+
+**CLI Quickstart**
+
+Natural-language run (single-shot):
+
+```bash
+ngs "Run an RNA-Seq pipeline on samplesheet.csv and produce a differential expression report"
+```
+
+Structured run (recommended for reproducibility):
+
+```bash
+ngs run rnaseq --samples samplesheet.csv --outdir results/rnaseq --reference data/genome.fa
+```
+
+Useful commands:
+
+- `ngs plan rnaseq --samples samplesheet.csv` — preview the plan and estimated runtime/cost.
+- `ngs run rnaseq --confirm` — run with automatic confirmation.
+- `ngs doctor` — validate local environment and dependencies.
+
+**Backend Selection**
+
+By default `ngs` uses the native backend (Conda/Mamba). To force Docker or Apptainer, use the `--backend` flag: `--backend docker` or `--backend apptainer`.
+
+**Migration Notes (from legacy NGS-Agent)**
+
+- Old `cli.py` entrypoints have been consolidated into the new `ngs` CLI.
+- Common mappings:
+  - `python cli.py run` → `ngs run ...`
+  - `python cli.py analyze` → `ngs analyze ...`
+  - Temporal workflows are preserved for compatibility in `workflows/` but local/native execution is now the default.
+
+**Quick Verification**
+
+1. Ensure the environment is active (see Install section).
+2. Run a dry-run plan:
+
+```bash
+ngs plan rnaseq --samples samplesheet.csv
+```
+
+3. Execute a small test run or use `ngs doctor` to validate tools.
+
+**Contributing & Development**
+
+- Code lives in `src/ngs_agent`.
+- Add new tool wrappers to `src/ngs_agent/tools` and register them with the ToolRegistry.
+- Run Python compile checks locally:
+
+```bash
+python -m compileall src/ngs_agent
+```
+
+**Acknowledgements & Notes**
+
+- This refactor introduces an Anthropic/Claude-enabled reporter integration (guarded by `NGS_ANTHROPIC_API_KEY`) for narrative summaries — opt-in only.
+- For full migration guidance, see the QUICKSTART and docs/migration.md (coming soon).
+
+**License**
+
+See the repository license file.
 # NGS Agent Swarm
 
 Temporal-orchestrated RNA-Seq pipeline with containerized agents and MinIO artifacts.
