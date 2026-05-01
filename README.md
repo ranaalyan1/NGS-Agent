@@ -1,4 +1,4 @@
-# NGS-Agent → ngs (Enterprise agentic CLI)
+# NGS-Agent → ngs 
 
 This repository contains the refactor of NGS-Agent into an enterprise-grade, native-first, agentic CLI named `ngs`.
 
