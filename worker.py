@@ -26,9 +26,12 @@ async def main() -> None:
             activities.bwa_activity,
             activities.gatk_activity,
             activities.annotation_activity,
+            activities.annotate_activity,
+            activities.coverage_activity,
             activities.count_activity,
             activities.de_activity,
             activities.insight_activity,
+            activities.report_activity,
             activities.report_builder_activity,
         ],
     )

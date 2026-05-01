@@ -1,0 +1,8 @@
+[ngs]
+backend_preference = "auto"
+anthropic_api_key = ""
+anthropic_model = "claude-opus-4-7"
+artifacts_dir = "./artifacts"
+logs_dir = "./logs"
+require_confirmation_for = ["expensive", "destructive"]
+allow_destructive_without_confirmation = false

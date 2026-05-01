@@ -72,6 +72,11 @@ async def annotation_activity(inputs: Dict[str, Any], routing_ctx: Dict[str, Any
 
 
 @activity.defn
+async def annotate_activity(inputs: Dict[str, Any], routing_ctx: Dict[str, Any]) -> Dict[str, Any]:
+    return await run_agent_container("annotation_agent", inputs, routing_ctx)
+
+
+@activity.defn
 async def count_activity(inputs: Dict[str, Any], routing_ctx: Dict[str, Any]) -> Dict[str, Any]:
     return await run_agent_container("count", inputs, routing_ctx)
 
@@ -89,6 +94,16 @@ async def insight_activity(inputs: Dict[str, Any], routing_ctx: Dict[str, Any]) 
 @activity.defn
 async def report_builder_activity(inputs: Dict[str, Any], routing_ctx: Dict[str, Any]) -> Dict[str, Any]:
     return await run_agent_container("report_builder", inputs, routing_ctx)
+
+
+@activity.defn
+async def coverage_activity(inputs: Dict[str, Any], routing_ctx: Dict[str, Any]) -> Dict[str, Any]:
+    return await run_agent_container("coverage_agent", inputs, routing_ctx)
+
+
+@activity.defn
+async def report_activity(inputs: Dict[str, Any], routing_ctx: Dict[str, Any]) -> Dict[str, Any]:
+    return await run_agent_container("report_agent", inputs, routing_ctx)
 
 
 async def run_agent_container(
@@ -145,6 +160,10 @@ async def run_agent_container(
         f"ANTHROPIC_API_KEY={os.environ.get('ANTHROPIC_API_KEY', '')}",
         "-e",
         f"ANTHROPIC_MODEL={os.environ.get('ANTHROPIC_MODEL', 'claude-3-5-sonnet-20241022')}",
+        "-e",
+        f"OPENROUTER_API_KEY={os.environ.get('OPENROUTER_API_KEY', '')}",
+        "-e",
+        f"OPENROUTER_MODEL={os.environ.get('OPENROUTER_MODEL', 'deepseek/deepseek-chat-v3-0324')}",
         f"ngs/{agent_name}-agent:latest",
     ])
 
@@ -157,5 +176,11 @@ async def run_agent_container(
         raise RuntimeError(f"Agent {agent_name} returned empty output")
 
     output = json.loads(stdout)
+    if isinstance(output, dict):
+        output.setdefault("status", "ok")
+        output.setdefault("payload", {})
+        output.setdefault("reasoning", f"{agent_name} completed")
+        output.setdefault("halt", False)
+        output.setdefault("halt_reason", "")
     await cache.set(cache_key, output)
     return output
