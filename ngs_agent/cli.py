@@ -1,0 +1,160 @@
+"""Click CLI entry point."""
+
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+import click
+from rich.console import Console
+from rich.panel import Panel
+
+from ngs_agent.analyzer import parse_vcf, render_report, scan_qc
+from ngs_agent.backends.base import NoBackend
+from ngs_agent.backends.factory import get_backend
+from ngs_agent.config import CONFIG_PATH, load_config, run_wizard, save_config
+from ngs_agent.debate import debate_variant
+from ngs_agent.watcher import load_signatures, scan_file, tail_file
+
+console = Console(force_terminal=True, legacy_windows=False)
+
+
+@click.group()
+@click.version_option(package_name="ngs_agent")
+def main() -> None:
+    """NGS-Agent: monitor pipeline logs and interpret VCF/QC for wet-lab teams."""
+
+
+@main.command()
+@click.argument("logfile", type=click.Path(exists=True, path_type=Path))
+@click.option("--tail", is_flag=True, help="Follow the log file for new lines.")
+@click.option("--signatures", type=click.Path(exists=True, path_type=Path), default=None)
+def watch(logfile: Path, tail: bool, signatures: Path | None) -> None:
+    """Scan or tail a pipeline log for known failure signatures."""
+    sigs = load_signatures(signatures)
+    console.print(Panel(f"[bold]Watching[/bold] {logfile}", style="cyan"))
+    console.print(f"Loaded {len(sigs)} failure signatures (no LLM required).\n")
+
+    if tail:
+        try:
+            for match in tail_file(logfile, sigs):
+                _print_match(match)
+        except KeyboardInterrupt:
+            console.print("\n[yellow]Stopped.[/yellow]")
+    else:
+        matches = scan_file(logfile, sigs)
+        if not matches:
+            console.print("[green]No failure signatures detected.[/green]")
+            return
+        for match in matches:
+            _print_match(match)
+        console.print(f"\n[bold]{len(matches)}[/bold] issue(s) found.")
+
+
+def _print_match(match) -> None:
+    sig = match.signature
+    sev_color = {"critical": "red", "warning": "yellow", "info": "blue"}.get(sig.severity, "white")
+    console.print(
+        Panel(
+            f"[bold]{sig.name}[/bold] (line {match.line_no})\n"
+            f"[dim]{match.line.strip()}[/dim]\n\n"
+            f"{sig.explanation}\n\n"
+            f"[bold]Suggested fix:[/bold] {sig.suggested_fix}",
+            title=f"[{sev_color}]{sig.severity.upper()}[/{sev_color}]",
+            border_style=sev_color,
+        )
+    )
+
+
+@main.command()
+@click.argument("vcffile", type=click.Path(exists=True, path_type=Path))
+@click.option("--qc", type=click.Path(exists=True, path_type=Path), default=None, help="QC summary file.")
+def analyze(vcffile: Path, qc: Path | None) -> None:
+    """Parse a VCF and render a variant/QC report (no LLM required)."""
+    variants = parse_vcf(vcffile)
+    qc_metrics = scan_qc(qc) if qc else []
+    render_report(variants, qc_metrics, console=console)
+
+
+@main.command()
+@click.argument("vcffile", type=click.Path(exists=True, path_type=Path))
+@click.option("--gene", default=None, help="Debate a specific gene (default: all VUS).")
+def debate(vcffile: Path, gene: str | None) -> None:
+    """Run a 3-persona LLM debate on VUS variants."""
+    cfg = load_config()
+    backend = get_backend(cfg)
+
+    if isinstance(backend, NoBackend):
+        console.print(
+            Panel(
+                "[bold red]No LLM backend configured.[/bold red]\n\n"
+                "The `debate` command requires an LLM. `watch` and `analyze` work without one.\n\n"
+                f"Run: [bold]ngsagent config wizard[/bold]\n"
+                f"Or edit: {CONFIG_PATH}",
+                title="LLM Required",
+                border_style="red",
+            )
+        )
+        sys.exit(1)
+
+    variants = [v for v in parse_vcf(vcffile) if v.is_vus]
+    if gene:
+        variants = [v for v in variants if v.gene.upper() == gene.upper()]
+
+    if not variants:
+        console.print("[yellow]No VUS variants to debate.[/yellow]")
+        return
+
+    for variant in variants:
+        console.print(Panel(f"[bold]{variant.gene}[/bold] {variant.chrom}:{variant.pos}", style="magenta"))
+        try:
+            result = debate_variant(variant, backend)
+        except RuntimeError as exc:
+            console.print(f"[red]{exc}[/red]")
+            sys.exit(1)
+
+        for op in result.opinions:
+            console.print(f"\n[bold]{op.persona}[/bold] — {op.stance}")
+            console.print(op.reasoning)
+        console.print(f"\n[bold]Consensus:[/bold] {result.consensus}")
+        console.print(f"[bold]Recommendation:[/bold] {result.recommendation}\n")
+
+
+@main.group()
+def config() -> None:
+    """Manage ~/.ngsagent/config.yaml."""
+
+
+@config.command("show")
+def config_show() -> None:
+    """Print current configuration."""
+    cfg = load_config()
+    for key, value in cfg.items():
+        console.print(f"{key}: {value}")
+
+
+@config.command("wizard")
+def config_wizard() -> None:
+    """Interactive first-run setup wizard."""
+    run_wizard()
+
+
+@config.command("set")
+@click.argument("key")
+@click.argument("value")
+def config_set(key: str, value: str) -> None:
+    """Set a config value."""
+    cfg = load_config()
+    if key in ("anthropic_model", "ollama_model", "ollama_host", "llm"):
+        cfg[key] = value
+    else:
+        try:
+            cfg[key] = float(value) if "." in value else int(value)
+        except ValueError:
+            cfg[key] = value
+    save_config(cfg)
+    console.print(f"[green]Set[/green] {key} = {value}")
+
+
+if __name__ == "__main__":
+    main()

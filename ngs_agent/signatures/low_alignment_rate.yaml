@@ -1,0 +1,20 @@
+id: low_alignment_rate
+name: Low Alignment Rate
+severity: critical
+patterns:
+  - "alignment rate"
+  - "mapping rate"
+  - "overall alignment rate"
+threshold: 80
+threshold_field: null
+threshold_op: lt
+explanation: >
+  The fraction of reads that successfully mapped to the reference genome is below 80%.
+  Low alignment usually means sample mix-up, wrong reference build (e.g. GRCh37 vs GRCh38),
+  severe contamination with non-target DNA, or poor library quality. Results from this
+  sample should not be trusted for variant calling until the cause is resolved.
+suggested_fix: >
+  Confirm the sample ID matches the library prep sheet. Verify the reference genome build
+  matches your panel or WGS reference (GRCh38/hg38 for most clinical pipelines). Check
+  FastQC for adapter contamination or abnormal GC content. Re-run alignment with the
+  correct reference; if alignment stays low, re-prepare the library or re-sequence.

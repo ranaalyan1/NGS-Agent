@@ -1,0 +1,20 @@
+id: high_duplication
+name: High PCR Duplication Rate
+severity: warning
+patterns:
+  - "duplication rate"
+  - "duplicate reads"
+  - "pct duplicated"
+threshold: 30
+threshold_field: null
+threshold_op: gt
+explanation: >
+  More than 30% of reads are PCR duplicates, meaning the sequencer captured multiple
+  copies of the same original DNA fragment. High duplication reduces effective coverage
+  and can mask low-frequency variants. It commonly results from insufficient input DNA,
+  over-amplification during library prep, or very low-complexity libraries.
+suggested_fix: >
+  Review library prep input mass (aim for manufacturer-recommended minimum). Reduce PCR
+  cycles if your protocol allows. Check whether the sample is cell-free DNA or FFPE, which
+  naturally have higher duplication. If duplication is extreme (>50%), consider re-prep
+  with more input or a fresh extraction before re-sequencing.

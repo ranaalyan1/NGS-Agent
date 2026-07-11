@@ -1,0 +1,21 @@
+id: low_coverage
+name: Low Mean Coverage
+severity: critical
+patterns:
+  - "mean coverage"
+  - "average coverage"
+  - "mean depth"
+  - "avg depth"
+threshold: 20
+threshold_field: null
+threshold_op: lt
+explanation: >
+  Mean sequencing depth is below 20x, which is insufficient for reliable heterozygous
+  variant detection in most clinical NGS panels (typical minimum 30x for WES, 100-500x
+  for panels). At low coverage, true variants may be missed and borderline calls become
+  unreliable.
+suggested_fix: >
+  Check whether the sample was under-loaded on the flow cell or pooled at too low a
+  concentration. Review target enrichment efficiency (hybrid capture baits, wash stringency).
+  If this is a panel run, confirm the bed file matches your kit. Re-sequence with higher
+  loading or a fresh library if coverage cannot be recovered by re-analysis.

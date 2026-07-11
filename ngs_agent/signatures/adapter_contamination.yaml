@@ -1,0 +1,20 @@
+id: adapter_contamination
+name: Adapter Contamination
+severity: critical
+patterns:
+  - "adapter contamination"
+  - "adapter content"
+  - "overrepresented sequences.*adapter"
+  - "illumina universal adapter"
+threshold: null
+threshold_field: null
+threshold_op: null
+explanation: >
+  Sequencing adapters were not fully trimmed and appear as overrepresented sequences in
+  your reads. Adapter-contaminated reads waste sequencing capacity and can cause spurious
+  alignments and false-positive variant calls, especially in low-complexity regions near
+  read ends.
+suggested_fix: >
+  Re-run adapter trimming with Trimmomatic, fastp, or Cutadapt using the correct adapter
+  sequences for your kit (e.g. TruSeq, Nextera). Trim at least 2-3 bp beyond detected
+  adapter overlap. Re-align and re-run QC; adapter content should drop below 1% of reads.
