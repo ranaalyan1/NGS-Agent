@@ -34,6 +34,7 @@ class Match:
     line: str
     line_no: int
     value: float | None = None
+    sample_id: str | None = None
 
 
 def signatures_dir() -> Path:

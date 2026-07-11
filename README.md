@@ -1,195 +1,179 @@
-# NGS-Agent 
+# NGS-Agent
 
-This repository contains the refactor of NGS-Agent into an enterprise-grade, native-first, agentic CLI named `ngs`.
+Agentic bioinformatics CLI for wet-lab NGS teams. Monitor pipeline logs in real time, parse and interpret VCF and QC outputs, and run three-perspective LLM debates on Variants of Uncertain Significance — all from a single `pip install`.
 
-Commit: f86ab09
+[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue)](https://www.python.org)
+[![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-green)](LICENSE)
+[![PyPI](https://img.shields.io/badge/pypi-ngs--agent-orange)](https://pypi.org/project/ngs-agent/)
 
-**Overview**
+---
 
-- **Native-first** installation using Conda/Mamba (environment.yml). Docker/Apptainer are optional backends.
-- A Typer + Rich CLI providing both natural-language and structured commands.
-- Agentic core: Planner → Executor → Verifier → Reporter with checkpointing and artifact provenance.
-- Bioinformatics tool wrappers (FastQC, Trimmomatic, HISAT2, samtools, featureCounts, MultiQC, DESeq2, GO enrichment).
-
-**Quick Links**
-
-- Source: `src/ngs_agent`
-- Environment spec: `environment.yml`
-- Installer script: `scripts/install.sh`
-
-**Install (Native, recommended)**
-
-Prerequisites: Conda or Mamba installed.
-
-1. Create the environment with Mamba (recommended):
+## Installation
 
 ```bash
-mamba env create -f environment.yml -n ngs
-mamba activate ngs
+pip install ngs-agent
 ```
 
-2. (Optional) Run the one-liner installer to set up entry points and helpers:
+Core install pulls only `click`, `rich`, and `PyYAML`. No Docker, no Conda environment, no Temporal server.
+
+To use the `debate` command with an LLM:
 
 ```bash
-bash scripts/install.sh
+pip install "ngs-agent[llm]"
 ```
 
-**Install (Podman, optional)**
-
-Podman (rootless, Docker-compatible) is supported as an execution backend but is not required. To use Podman, install Podman for your OS and set the backend to `podman` in `ngs` commands or in `ngs.toml`.
-
-On Linux (example):
+To run the full Temporal-orchestrated swarm pipeline (RNA-Seq, WGS, WES end-to-end):
 
 ```bash
-sudo apt-get install -y podman
+pip install "ngs-agent[swarm]"
 ```
 
-On macOS, install via Homebrew:
+---
+
+## Usage
 
 ```bash
-brew install podman
+ngsagent watch pipeline.log
+ngsagent watch --tail pipeline.log
+ngsagent analyze variants.vcf
+ngsagent analyze variants.vcf --qc multiqc_summary.txt
+ngsagent debate variants.vcf
+ngsagent debate variants.vcf --gene BRCA2
+ngsagent config wizard
 ```
 
-On Windows, use Podman Desktop or the Windows Podman packages; enable WSL2 integration for best results.
-
-**CLI Quickstart**
-
-Natural-language run (single-shot):
+Try it immediately with the bundled demo files:
 
 ```bash
-ngs "Run an RNA-Seq pipeline on samplesheet.csv and produce a differential expression report"
+ngsagent watch demo_data/sample.log
+ngsagent analyze demo_data/sample.vcf
 ```
 
-Structured run (recommended for reproducibility):
+---
+
+## Commands
+
+### watch
+
+Scans a pipeline log against five built-in failure signatures. Pass `--tail` to follow a log as it grows.
 
 ```bash
-ngs run rnaseq --samples samplesheet.csv --outdir results/rnaseq --reference data/genome.fa
+ngsagent watch <logfile> [--tail] [--signatures <dir>]
 ```
 
-Useful commands:
+Each match prints the matched line, a plain-English explanation of the failure mode, and a concrete suggested fix. Signature severity levels are `critical` and `warning`. No LLM is involved.
 
-- `ngs plan rnaseq --samples samplesheet.csv` — preview the plan and estimated runtime/cost.
-- `ngs run rnaseq --confirm` — run with automatic confirmation.
-- `ngs doctor` — validate local environment and dependencies.
+Built-in signatures:
 
-**Backend Selection**
+| Name | Severity | Fires when |
+|---|---|---|
+| Adapter Contamination | critical | Adapter sequence detected as overrepresented in reads |
+| Low Alignment Rate | critical | Overall mapping rate below 80% |
+| Low Mean Coverage | critical | Mean sequencing depth below 20x |
+| High PCR Duplication | warning | Duplication rate above 30% |
+| Poor Insert Size | warning | Median insert size below 150 bp |
 
-By default `ngs` uses the native backend (Conda/Mamba). To force Podman or Apptainer, use the `--backend` flag: `--backend podman` or `--backend apptainer`.
+You can supply your own YAML signatures directory with `--signatures`. The schema is the same as the built-in files under `ngs_agent/signatures/`.
 
-**Migration Notes (from legacy NGS-Agent)**
+---
 
-- Old `cli.py` entrypoints have been consolidated into the new `ngs` CLI.
-- Common mappings:
-  - `python cli.py run` → `ngs run ...`
-  - `python cli.py analyze` → `ngs analyze ...`
-  - Temporal workflows are preserved for compatibility in `workflows/` but local/native execution is now the default.
+### analyze
 
-**Quick Verification**
-
-1. Ensure the environment is active (see Install section).
-2. Run a dry-run plan:
+Parses a VCF file and renders a colour-coded variant report in the terminal. Accepts an optional QC summary text file (MultiQC output or any plaintext file containing metrics).
 
 ```bash
-ngs plan rnaseq --samples samplesheet.csv
+ngsagent analyze <vcffile> [--qc <qcfile>]
 ```
 
-3. Execute a small test run or use `ngs doctor` to validate tools.
+VCF parsing reads `GENE`, `CSQ`, `CLNSIG`, and `AF` from the INFO field, and `DP` and `AD` from the sample column to compute read depth and variant allele fraction. Variants are classified automatically:
 
-**Contributing & Development**
+`Pathogenic` — ClinVar `CLNSIG` contains "pathogenic" without "conflicting"  
+`VUS` — ClinVar `CLNSIG` contains "uncertain", "vus", or "unknown significance"  
+`Other` — everything else (benign, synonymous, unannotated)
 
-- Code lives in `src/ngs_agent`.
-- Add new tool wrappers to `src/ngs_agent/tools` and register them with the ToolRegistry.
-- Run Python compile checks locally:
+QC parsing extracts mapping rate, mean coverage, duplication rate, and Q30 fraction using regex against the file text and grades each metric pass / warn / fail.
+
+---
+
+### debate
+
+Submits every VUS in a VCF to three independent LLM personas simultaneously. Each persona evaluates the variant from a different disciplinary angle, then the tool builds a consensus and recommendation.
 
 ```bash
-python -m compileall src/ngs_agent
+ngsagent debate <vcffile> [--gene <GENE_SYMBOL>]
 ```
 
-**Acknowledgements & Notes**
+The three personas:
 
-- This refactor introduces an Anthropic/Claude-enabled reporter integration (guarded by `NGS_ANTHROPIC_API_KEY`) for narrative summaries — opt-in only.
-- For full migration guidance, see the QUICKSTART and docs/migration.md (coming soon).
+`Population Geneticist` — evaluates allele frequency, gnomAD population context, and stratification  
+`Clinical Geneticist` — evaluates ClinVar classification, ACMG criteria, and phenotype fit  
+`Functional Geneticist` — evaluates predicted consequence, splice site impact, and protein-level effect
 
-**License**
+Consensus logic: if all three agree the variant is pathogenic, it's escalated for clinical follow-up. If all three call it benign, it's flagged for deprioritisation. Mixed opinions surface the disagreement verbatim so the reviewing scientist sees exactly where uncertainty lies.
 
-See the repository license file.
-# NGS Agent Swarm
+Requires an LLM backend. Configure one with `ngsagent config wizard`.
 
-Temporal-orchestrated RNA-Seq pipeline with containerized agents and MinIO artifacts.
+---
 
-## Implemented pipeline
+### config
 
-- Ingest: validates FASTQ input and read counts
-- QC: runs FastQC and uploads report artifacts
-- AI Decider: sends FastQC metrics to Claude and decides if trim is needed
-- Trim: runs Trimmomatic (single or paired mode)
-- Align: runs HISAT2 + samtools sort/index
-- Count: runs featureCounts
-- DE: runs DESeq2, PCA, MA, volcano, and heatmap generation
-- Insight: runs GO enrichment and grounded AI interpretation
-- Report Builder: generates a self-contained HTML report
-- DNA branch: runs BWA-MEM2, GATK calling, annotation, and coverage summaries
+Manages `~/.ngsagent/config.yaml`.
 
-## Prerequisites
+```bash
+ngsagent config wizard
+ngsagent config show
+ngsagent config set llm anthropic
+ngsagent config set anthropic_model claude-opus-4-7
+ngsagent config set llm ollama
+ngsagent config set ollama_model llama3.2
+ngsagent config set ollama_host http://localhost:11434
+```
 
-- Docker Engine/Desktop
-- Python 3.11+
-- Linux/macOS shell (Windows users should run under WSL2)
+---
 
-## Security
+## LLM Setup
 
-- `.env` is git-ignored
-- Copy `.env.example` to `.env`
-- Rotate any credentials if they were ever exposed in commit history
+### Anthropic
 
-## Setup
+```bash
+pip install "ngs-agent[llm]"
+export ANTHROPIC_API_KEY=sk-ant-...
+ngsagent config set llm anthropic
+```
+
+Default model is `claude-sonnet-4-20250514`. Override with `ngsagent config set anthropic_model <model>`.
+
+### Ollama (local, no API key)
+
+```bash
+pip install "ngs-agent[llm]"
+ollama pull llama3.2
+ngsagent config set llm ollama
+```
+
+Ollama talks to `http://localhost:11434` by default. Override the host and model via `config set`.
+
+`watch` and `analyze` always work with no LLM configured. Only `debate` requires one.
+
+---
+
+## Swarm Pipeline (full RNA-Seq / WGS / WES)
+
+NGS-Agent also ships a Temporal-orchestrated Docker swarm that runs complete genomics pipelines end to end. Each bioinformatics tool runs in its own container as an autonomous agent. Claude is embedded at decision points — QC verdict, trim parameter selection, alignment failure diagnosis, and biological interpretation — with deterministic heuristic fallbacks when no API key is set.
+
+**Requirements:** Docker Engine, Python 3.11+, Linux or macOS (WSL2 on Windows)
+
+**Setup:**
 
 ```bash
 cp .env.example .env
-python -m pip install -r requirements.txt
+pip install "ngs-agent[swarm]"
 docker compose up -d
 bash scripts/build-agents.sh
-```
-
-Start worker:
-
-```bash
 python worker.py
 ```
 
-Quick-start wizard:
-
-```bash
-make wizard
-```
-
-DNA branch note:
-
-- Provide `--experiment WGS` or `--experiment WES` together with `--reference-fasta`.
-- Optionally mount a prebuilt `snpEff.jar` and set `SNPEFF_JAR=/path/to/snpEff.jar` for richer annotation.
-
-## Real data example (paired-end)
-
-1. Download a tiny paired FASTQ test set:
-
-```bash
-mkdir -p data/fastq
-curl -L -o data/fastq/test_R1.fastq.gz "https://ftp.sra.ebi.ac.uk/vol1/fastq/SRR258/008/SRR2584868/SRR2584868_1.fastq.gz"
-curl -L -o data/fastq/test_R2.fastq.gz "https://ftp.sra.ebi.ac.uk/vol1/fastq/SRR258/008/SRR2584868/SRR2584868_2.fastq.gz"
-```
-
-2. Download reference + annotation and build HISAT2 index:
-
-```bash
-mkdir -p data/ref
-curl -L -o data/ref/genome.fa.gz "https://ftp.ensembl.org/pub/release-112/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz"
-curl -L -o data/ref/genes.gtf.gz "https://ftp.ensembl.org/pub/release-112/gtf/homo_sapiens/Homo_sapiens.GRCh38.112.gtf.gz"
-gunzip -f data/ref/genome.fa.gz
-gunzip -f data/ref/genes.gtf.gz
-hisat2-build data/ref/genome.fa data/ref/grch38_idx
-```
-
-3. Submit run:
+**Submit a paired-end RNA-Seq run:**
 
 ```bash
 python cli.py submit \
@@ -197,38 +181,59 @@ python cli.py submit \
   --organism human \
   --ref-genome data/ref/grch38_idx \
   --gtf data/ref/genes.gtf \
-  --fastq-r1 data/fastq/test_R1.fastq.gz \
-  --fastq-r2 data/fastq/test_R2.fastq.gz \
+  --fastq-r1 data/fastq/R1.fastq.gz \
+  --fastq-r2 data/fastq/R2.fastq.gz \
   --paired
 ```
 
-4. Check run:
+**Check run status:**
 
 ```bash
 python cli.py status <run-id>
 ```
 
-## Artifact locations
+**RNA-Seq pipeline stages:**
 
-- QC report: `s3://ngs-artifacts/<run_id>/qc/...`
-- Trimmed FASTQ: `s3://ngs-artifacts/<run_id>/trim/...`
-- BAM + BAI: `s3://ngs-artifacts/<run_id>/align/...`
-- Count matrix/summary: `s3://ngs-artifacts/<run_id>/count/...`
-- DNA BAM/VCF/annotation outputs: `s3://ngs-artifacts/<run_id>/dna/...`
+Ingest (read count + paired/single detection) → QC (real FastQC + Claude verdict) → AI Decider (Trimmomatic parameters from Claude) → Trim (conditional) → Align (HISAT2 + samtools, with AI-guided re-trim retry on low mapping rate) → Count (featureCounts) → Differential Expression (DESeq2, PCA, MA plot, volcano, heatmap) → GO Enrichment (clusterProfiler + Claude biological narrative) → Report Builder (self-contained HTML) → Report Agent (OpenRouter narrative summary)
 
-## Tests
+**WGS / WES pipeline stages:**
 
-Functional test harness:
+Ingest → QC → AI Decider → Trim → BWA-MEM2 (with per-region coverage from panel BED) → GATK (MarkDuplicatesSpark → BQSR → HaplotypeCaller) → Annotation (snpEff, variant CSV) → Coverage Gate (halts run if mean depth below threshold) → Report Builder → Report Agent
 
-```bash
-RUN_NGS_FUNCTIONAL=1 \
-TEST_FASTQ_R1=/abs/path/R1.fastq.gz \
-TEST_FASTQ_R2=/abs/path/R2.fastq.gz \
-TEST_HISAT2_INDEX_DIR=/abs/path/index_dir \
-TEST_GTF=/abs/path/genes.gtf \
-pytest -q tests/test_pipeline.py
+All file artifacts are uploaded to MinIO at `s3://ngs-artifacts/<run_id>/<agent>/`. Results are content-addressed using blake2b hashes of the inputs, so identical re-runs return from cache instantly without re-executing any container.
+
+---
+
+## Project Layout
+
+```
+ngs_agent/              pip-installable CLI (watch, analyze, debate, config)
+  backends/             LLM provider abstraction: Anthropic, Ollama, NoBackend
+  signatures/           YAML failure signatures loaded by the watch command
+agents/                 Docker containers, one per pipeline step
+  base/base_agent.py    Agent contract: reads AGENT_INPUTS + ROUTING_CONTEXT env vars, prints JSON to stdout
+workflows/              Temporal workflow definitions and activity dispatcher
+shared/                 AgentResult model, MinIO storage helper, Redis+MinIO cache
+cli.py                  Swarm pipeline CLI (submit, status, wizard)
+worker.py               Temporal worker process
+demo_data/              sample.log and sample.vcf for testing without real data
 ```
 
-## Current limitation
+---
 
-- DNA variant-calling branch is not yet wired into the workflow and remains the next expansion path.
+## Development
+
+```bash
+git clone https://github.com/ranaalyan1/NGS-Agent.git
+cd NGS-Agent
+pip install -e ".[dev,llm]"
+pytest
+ruff check ngs_agent/
+mypy ngs_agent/
+```
+
+---
+
+## License
+
+Apache 2.0. See [LICENSE](LICENSE).

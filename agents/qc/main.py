@@ -336,7 +336,7 @@ class QCAgent(BaseAgent):
         return None
 
     @classmethod
-    def _validate_ai_verdict(cls, parsed: dict) -> dict | None:
+    def _validate_ai_verdict(cls, parsed: dict, actual_read_length: int | None = None) -> dict | None:
         """Validate the JSON structure and map the verdict."""
         required_keys = {"verdict", "reasoning", "quality_summary", "confidence"}
         if not required_keys.issubset(parsed.keys()):

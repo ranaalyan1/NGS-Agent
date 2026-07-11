@@ -18,5 +18,4 @@ suggested_fix: >
   If using FFPE, confirm DNA quality with a fragment analyzer (DIN score >= 3 preferred).
   Reduce sonication time or use a gentler shearing protocol. Size-select libraries to
   remove adapter dimers (<100 bp peaks) with AMPure beads or gel extraction. For fresh
-  DNA, avoid over-handling and freeze-thaw cycles before shearing. For FFPE, a DIN
-  score of 3 or higher is preferred.
+  DNA, avoid over-handling and freeze-thaw cycles before shearing.
