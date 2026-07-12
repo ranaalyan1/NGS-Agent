@@ -24,6 +24,7 @@ from rich.text import Text
 
 from ngs_agent import __version__
 from ngs_agent.config import CONFIG_PATH, load_config, save_config
+from ngs_agent.nibi import render_nibi, show_nibi_intro
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -250,11 +251,25 @@ def pick_theme(console: Console) -> str:
 # ---------------------------------------------------------------------------
 
 def render_welcome(console: Console, theme: dict[str, str]) -> None:
+    """Render the welcome screen with STATIC Nibi (no eye tracking).
+
+    Used for /clear and other re-render paths. For the live eye-tracking
+    intro, see run_tui() which calls show_nibi_intro() directly.
+    """
+    from rich.align import Align
+    _render_welcome_top(console, theme)
+    console.print(Align.center(render_nibi(theme, 0, 0)))
+    console.print()
+    _render_welcome_panels(console, theme)
+    console.print()
+
+
+def _render_welcome_top(console: Console, theme: dict[str, str]) -> None:
+    """Title + tagline + version. Shared by render_welcome and the live intro."""
     console.clear()
     render_title_clean(console, theme)
     console.print()
 
-    # Tagline + version
     tagline = Text(APP_TAGLINE, style=f"italic {theme['muted']}")
     version_bits = Text(f"v{__version__}  ·  ", style=theme["muted"])
     for cmd in SUBCOMMANDS:
@@ -263,7 +278,9 @@ def render_welcome(console: Console, theme: dict[str, str]) -> None:
     console.print(version_bits, justify="center")
     console.print()
 
-    # Two-column quickstart + slash-commands panels
+
+def _render_welcome_panels(console: Console, theme: dict[str, str]) -> None:
+    """Quickstart + slash-commands panels. Shared by render_welcome and the live intro."""
     quickstart = Panel(
         Text.from_markup(
             f"[{theme['muted']}]ngsagent watch pipeline.log[/{theme['muted']}]\n"
@@ -644,7 +661,13 @@ def run_tui() -> None:
 
     theme = THEMES[theme_name]
 
-    render_welcome(console, theme)
+    # Welcome screen: title first, then live Nibi eye-tracking intro,
+    # then quickstart panels. Falls back to static Nibi on non-TTY / Windows.
+    _render_welcome_top(console, theme)
+    show_nibi_intro(console, theme, duration=8.0)
+    console.print()
+    _render_welcome_panels(console, theme)
+
     render_status_bar(console, theme, cfg)
     console.print()
 
