@@ -19,10 +19,14 @@ from ngs_agent.watcher import load_signatures, scan_file, tail_file
 console = Console(force_terminal=True, legacy_windows=False)
 
 
-@click.group()
+@click.group(invoke_without_command=True)
 @click.version_option(package_name="ngs_agent")
-def main() -> None:
+@click.pass_context
+def main(ctx: click.Context) -> None:
     """NGS-Agent: monitor pipeline logs and interpret VCF/QC for wet-lab teams."""
+    if ctx.invoked_subcommand is None:
+        from ngs_agent.tui import run_tui
+        run_tui()
 
 
 @main.command()

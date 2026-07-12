@@ -40,6 +40,12 @@ llm = [
   "httpx>=0.28.1",
 ]
 
+# TUI enhancements (pyfiglet = chunky 3D ASCII title, prompt_toolkit = history + Tab completion)
+tui = [
+  "pyfiglet>=1.0",
+  "prompt_toolkit>=3.0",
+]
+
 # Full swarm/pipeline layer (Temporal + MinIO + Redis)
 swarm = [
   "temporalio>=1.8.0",
