@@ -1,182 +1,279 @@
 """Nibi — the NGS-Agent mascot.
 
-A tiny genome creature whose eyes track the mouse cursor across the terminal.
+A tiny genome creature with DNA antennae, big round eyes, a glowing cell
+nucleus, adapter feet, and a sequence tail. Lives in the terminal and
+reacts to what NGS-Agent is doing.
 
-ASCII art is rendered as a 2D character grid; pupils are repositioned by
-editing specific cells before converting to a rich.Text object. Mouse
-motion is captured via ANSI SGR mouse mode (``\\033[?1006h`` +
-``\\033[?1003h``) read in a background thread.
+Expressions: happy, thinking, analyzing, running, success, error,
+             curious, coffee, sleeping.
 
-Used by ``ngs_agent.tui`` during the welcome screen intro.
+Mouse-tracking eye movement works on POSIX terminals via ANSI SGR mouse
+mode. On Windows / non-TTY the mascot renders statically.
+
+Used by ``ngs_agent.tui``.
 """
 
 from __future__ import annotations
 
 import os
-import sys
-import time
-import select
 import queue
+import select
+import sys
 import threading
-from typing import Callable, List, Optional
+import time
+from typing import Callable, List, Literal, Optional
 
 from rich.align import Align
 from rich.console import Console, Group
 from rich.live import Live
 from rich.text import Text
 
-
 # ---------------------------------------------------------------------------
-# Nibi ASCII art
-# ---------------------------------------------------------------------------
-# 15 rows × 22 cols. Eyes (sclera ◯ + pupil ●) are on rows 6-7.
-# Pupils default to centered; render_nibi() moves them by (dx, dy).
-#
-#   row 0:        ╭─╮ ╭─╮            DNA antennae tops
-#   row 1:        │A│ │T│            DNA bases (A/T/G/C)
-#   row 2:        ╰╮╯ ╰╮╯            antennae bottoms
-#   row 3:         ╰╮ ╭╯             antennae merge
-#   row 4:      ╭───────────╮        head top
-#   row 5:     ╱             ╲       head curve
-#   row 6:    │   ◯     ◯    │       sclera (eye sockets)
-#   row 7:    │   ●     ●    │       pupils (default centered)
-#   row 8:    │               │      face
-#   row 9:    │    ⊙⊙⊙⊙⊙    │       glowing cell nucleus
-#   row 10:   │               │      belly
-#   row 11:    ╲             ╱       body curve
-#   row 12:     ╰───────────╯        body bottom
-#   row 13:      ╱ │     │ ╲         legs + tail
-#   row 14:     ╱  │     │  ╲        feet
+# Expression type
 # ---------------------------------------------------------------------------
 
-NIBI_GRID: List[str] = [
-    "        ╭─╮ ╭─╮        ",
-    "        │A│ │T│        ",
-    "        ╰╮╯ ╰╮╯        ",
-    "         ╰╮ ╭╯         ",
-    "      ╭───────────╮    ",
-    "     ╱             ╲   ",
-    "    │   ◯     ◯    │   ",   # row 6: sclera (eye sockets) — fixed
-    "    │   ·     ·    │   ",   # row 7: pupil track (centered default)
-    "    │               │   ",  # row 8: face
-    "    │    ⊙⊙⊙⊙⊙    │   ",   # row 9: glowing cell nucleus
-    "    │               │   ",  # row 10: belly
-    "     ╲             ╱   ",
-    "      ╰───────────╯    ",
-    "       ╱ │     │ ╲     ",
-    "      ╱  │     │  ╲    ",
+Expression = Literal[
+    "happy", "thinking", "analyzing", "running",
+    "success", "error", "curious", "coffee", "sleeping",
 ]
 
-NIBI_HEIGHT = len(NIBI_GRID)
-NIBI_WIDTH = max(len(r) for r in NIBI_GRID)
+# ---------------------------------------------------------------------------
+# Nibi ASCII art — 18 rows × 26 cols
+#
+# Anatomy (matches the design image):
+#   rows 0-2  : DNA double-helix antennae  (╭═╮ G═C ╰═╯ style)
+#   row  3    : antenna stalks merging into head
+#   rows 4-5  : head top curve
+#   rows 6-7  : eyes  (big round: ( ◉ ) style, pupils track mouse)
+#   row  8    : mouth — swapped per expression
+#   rows 9-10 : belly + glowing nucleus  ·  ⊛  ·
+#   rows 11-12: body lower curve + sequence tail (ATGC)
+#   rows 13-14: adapter feet
+# ---------------------------------------------------------------------------
 
-# Pupil default positions (row, col) — 0-indexed within NIBI_GRID.
-# Row 7 is the pupil track (between sclera at row 6 and face at row 8).
-# When dy=-1 (looking up), the pupil moves to row 6, displacing the sclera
-# to the centered position one row below — handled in render_nibi.
-LEFT_PUPIL = (7, 8)
-RIGHT_PUPIL = (7, 14)
-LEFT_SCLERA = (6, 8)
-RIGHT_SCLERA = (6, 14)
+# Base body — expression-neutral rows (eyes and mouth are substituted)
+# Column layout: leading 2 spaces so centering works nicely
+_BODY = [
+    #0         1         2
+    #0123456789012345678901234567
+    "    ╭═╮   ╭═╮              ",  # 0  antenna tops
+    "    ║G║   ║C║              ",  # 1  DNA bases
+    "    ╰═╯   ╰═╯              ",  # 2  antenna bottoms
+    "      ╲   ╱               ",  # 3  stalks
+    "    ╭─────────────╮        ",  # 4  head top
+    "  ╭─╯             ╰─╮      ",  # 5  head curve
+    "  │  ( ◉ )   ( ◉ )  │      ",  # 6  eyes  ← pupils here at cols 7,8 and 17,18
+    "  │                  │      ",  # 7  face space
+    "  │       ‿‿‿        │      ",  # 8  mouth  ← swapped per expression
+    "  │    ·  ⊛  ·      │      ",  # 9  nucleus
+    "  │                  │      ",  # 10 belly
+    "  ╰─╮             ╭─╯      ",  # 11 lower curve
+    "    ╰─────────────╯         ",  # 12 body bottom
+    "    A  │  T  G  │  C       ",  # 13 sequence tail + legs
+    "       ╰──╯  ╰──╯          ",  # 14 adapter feet
+]
 
-# Pupil movement bounds
+# Eye row index and pupil column positions (left-eye, right-eye)
+_EYE_ROW = 6
+_LEFT_PUPIL_COL = 7   # the ◉ char in "( ◉ )"
+_RIGHT_PUPIL_COL = 17
+
+# Mouth row index
+_MOUTH_ROW = 8
+
+# Mouth strings per expression (must fit in the body width between │ chars)
+# Each string is exactly the content of row 8 (replaces "       ‿‿‿        ")
+_MOUTHS: dict[Expression, str] = {
+    "happy":     "  │       ‿‿‿        │      ",   # smile
+    "thinking":  "  │       ···        │      ",   # dots
+    "analyzing": "  │      ─────       │      ",   # flat focused
+    "running":   "  │      ≋≋≋≋≋       │      ",   # vibrating
+    "success":   "  │      \\(^▽^)/     │      ",   # celebration
+    "error":     "  │       ︵         │      ",   # sad
+    "curious":   "  │       ·‿·        │      ",   # curious small smile
+    "coffee":    "  │      ～～～       │      ",   # steam/drinking
+    "sleeping":  "  │      ─ ─ ─       │      ",   # flat sleeping
+}
+
+# Eye strings per expression (replaces row 6 entirely)
+_EYES: dict[Expression, str] = {
+    "happy":     "  │  ( ◉ )   ( ◉ )  │      ",
+    "thinking":  "  │  ( ◔ )   ( ◉ )  │      ",   # one eye up
+    "analyzing": "  │  ( ◈ )   ( ◈ )  │      ",   # focused square pupils
+    "running":   "  │  ( ◉ )   ( ◉ )  │      ",
+    "success":   "  │  ( ★ )   ( ★ )  │      ",   # star eyes
+    "error":     "  │  ( × )   ( × )  │      ",   # X eyes
+    "curious":   "  │  ( ◔ )   ( ◔ )  │      ",   # looking up
+    "coffee":    "  │  ( - )   ( - )  │      ",   # half-closed
+    "sleeping":  "  │  ( _ )   ( _ )  │      ",   # closed
+}
+
+# Nucleus glow per expression
+_NUCLEUS: dict[Expression, str] = {
+    "happy":     "  │    ·  ⊛  ·      │      ",
+    "thinking":  "  │    ·  ⊙  ·      │      ",
+    "analyzing": "  │    ·  ⊕  ·      │      ",
+    "running":   "  │    ·  ⊗  ·      │      ",
+    "success":   "  │    ✦  ⊛  ✦      │      ",
+    "error":     "  │    ·  ⊘  ·      │      ",
+    "curious":   "  │    ·  ⊙  ·      │      ",
+    "coffee":    "  │    ·  ⊛  ·      │      ",
+    "sleeping":  "  │    ·  ⊙  ·      │      ",
+}
+
+# Pupil movement bounds (for mouse tracking)
 PUPIL_DX_RANGE = (-2, 2)
 PUPIL_DY_RANGE = (-1, 1)
 
+# Map pupil char per expression (replaces ◉)
+_PUPIL_CHAR: dict[Expression, str] = {
+    "happy":     "◉",
+    "thinking":  "◔",
+    "analyzing": "◈",
+    "running":   "◉",
+    "success":   "★",
+    "error":     "×",
+    "curious":   "◔",
+    "coffee":    "-",
+    "sleeping":  "_",
+}
 
-def render_nibi(theme: dict, pupil_dx: int = 0, pupil_dy: int = 0) -> Text:
-    """Render Nibi as a rich Text with pupils offset by (dx, dy).
 
-    Pupils are clamped to PUPIL_DX_RANGE / PUPIL_DY_RANGE so they stay
-    within the eye region of the ASCII art. When the pupil moves UP
-    (dy < 0), it lands on the sclera row — in that case the sclera is
-    rendered one row below to preserve the "eye socket" look.
+# ---------------------------------------------------------------------------
+# render_nibi
+# ---------------------------------------------------------------------------
+
+def render_nibi(
+    theme: dict,
+    expression: Expression = "happy",
+    pupil_dx: int = 0,
+    pupil_dy: int = 0,
+) -> Text:
+    """Render Nibi as a styled rich.Text.
+
+    Parameters
+    ----------
+    theme:
+        The active TUI theme dict (keys: accent, accent_dim, muted, …).
+    expression:
+        One of the 9 named expressions that changes eyes, mouth, nucleus.
+    pupil_dx, pupil_dy:
+        Pixel offset for mouse-tracking pupil movement.
+        Only applied on expressions with movable pupils (happy, running,
+        curious). Clamped to PUPIL_DX_RANGE / PUPIL_DY_RANGE.
     """
-    accent = theme.get("accent", "#00FF9C")
+    accent     = theme.get("accent",     "#00FF9C")
     accent_dim = theme.get("accent_dim", "#00805A")
-    muted = theme.get("muted", "dim white")
+    muted      = theme.get("muted",      "dim white")
 
-    # Clone the grid so we can mutate pupil positions
-    grid = [list(row) for row in NIBI_GRID]
+    # Coral/salmon body color — Nibi's signature look from the design sheet
+    body_color = "#FF6B6B"
 
-    # Clear default pupil positions
-    for r, c in (LEFT_PUPIL, RIGHT_PUPIL):
-        grid[r][c] = " "
+    # Build the grid from the base body, substituting expression rows
+    grid: list[str] = list(_BODY)
+    grid[_MOUTH_ROW] = _MOUTHS.get(expression, _MOUTHS["happy"])
+    grid[_EYE_ROW]   = _EYES.get(expression, _EYES["happy"])
+    grid[9]          = _NUCLEUS.get(expression, _NUCLEUS["happy"])
 
-    # Clamp offsets
-    dx = max(PUPIL_DX_RANGE[0], min(PUPIL_DX_RANGE[1], pupil_dx))
-    dy = max(PUPIL_DY_RANGE[0], min(PUPIL_DY_RANGE[1], pupil_dy))
+    # Apply mouse-tracking pupil offset for expressions that support it
+    movable = expression in ("happy", "running", "curious", "thinking", "analyzing")
+    if movable:
+        dx = max(PUPIL_DX_RANGE[0], min(PUPIL_DX_RANGE[1], pupil_dx))
+        dy = max(PUPIL_DY_RANGE[0], min(PUPIL_DY_RANGE[1], pupil_dy))
+        eye_row = list(grid[_EYE_ROW + dy] if dy != 0 else grid[_EYE_ROW])
+        # The pupil chars sit at fixed relative positions within the eye string.
+        # We shift them horizontally by dx within the ( ) bracket.
+        # Left eye bracket spans roughly cols 5-9, right eye cols 15-19.
+        pupil_char = _PUPIL_CHAR.get(expression, "◉")
+        eye_str = grid[_EYE_ROW]
+        chars   = list(eye_str)
+        # Shift left pupil col
+        lc = _LEFT_PUPIL_COL + dx
+        lc = max(5, min(9, lc))
+        # Shift right pupil col
+        rc = _RIGHT_PUPIL_COL + dx
+        rc = max(15, min(19, rc))
+        # Clear old pupil positions and place new ones
+        for c in range(5, 10):
+            if c < len(chars) and chars[c] in ("◉", "◔", "◈", "★", "×", "-", "_"):
+                chars[c] = " "
+        for c in range(15, 20):
+            if c < len(chars) and chars[c] in ("◉", "◔", "◈", "★", "×", "-", "_"):
+                chars[c] = " "
+        if lc < len(chars):
+            chars[lc] = pupil_char
+        if rc < len(chars):
+            chars[rc] = pupil_char
+        grid[_EYE_ROW] = "".join(chars)
 
-    # Place pupils and adjust sclera position
-    for pupil_pos, sclera_pos in (
-        (LEFT_PUPIL, LEFT_SCLERA),
-        (RIGHT_PUPIL, RIGHT_SCLERA),
-    ):
-        pr, pc = pupil_pos
-        sr, sc = sclera_pos
-
-        nr, nc = pr + dy, pc + dx
-
-        # If pupil moves up onto the sclera row, push sclera down one row
-        if dy < 0 and 0 <= sr + 1 < len(grid) and 0 <= sc < len(grid[sr + 1]):
-            grid[sr][sc] = " "       # remove sclera from default position
-            grid[sr + 1][sc] = "◯"  # place sclera one row below
-
-        # Place pupil (only if within bounds)
-        if 0 <= nr < len(grid) and 0 <= nc < len(grid[nr]):
-            grid[nr][nc] = "●"
-
-    # Build styled Text, character by character
+    # Build styled Text
     out = Text(no_wrap=True)
     for row in grid:
-        line = "".join(row).rstrip()
-        for ch in line:
-            if ch == "●":
-                out.append(ch, style="bold #000000 on #FFFFFF")
-            elif ch == "◯":
+        for ch in row:
+            if ch in ("╭", "╮", "╰", "╯", "─", "│", "╲", "╱", "═", "║"):
+                out.append(ch, style=f"bold {body_color}")
+            elif ch in ("◉", "◔", "◈"):
+                out.append(ch, style="bold white")
+            elif ch == "★":
+                out.append(ch, style="bold yellow")
+            elif ch == "×":
+                out.append(ch, style="bold red")
+            elif ch in ("-", "_"):
+                out.append(ch, style=body_color)
+            elif ch in ("⊛", "⊙", "⊕", "⊗", "⊘"):
                 out.append(ch, style=f"bold {accent}")
-            elif ch == "⊙":
-                out.append(ch, style=f"bold {accent}")
-            elif ch in ("╭", "╮", "╰", "╯", "─", "│", "╱", "╲"):
-                out.append(ch, style=accent)
-            elif ch in ("A", "T", "G", "C"):
+            elif ch == "✦":
+                out.append(ch, style="bold yellow")
+            elif ch in ("G", "C", "A", "T"):
                 out.append(ch, style=f"bold {accent_dim}")
+            elif ch in ("‿",):
+                out.append(ch, style=f"bold {body_color}")
+            elif ch in ("·", "～", "≋", "─", "="):
+                out.append(ch, style=muted)
             elif ch == " ":
                 out.append(ch)
             else:
-                out.append(ch, style=accent)
+                out.append(ch, style=body_color)
         out.append("\n")
     return out
+
+
+# ---------------------------------------------------------------------------
+# Expression hint text shown below Nibi
+# ---------------------------------------------------------------------------
+
+EXPRESSION_HINTS: dict[Expression, str] = {
+    "happy":     "Nibi is ready  ·  move your mouse  ·  press any key to continue",
+    "thinking":  "Nibi is thinking...",
+    "analyzing": "Nibi is analyzing your data...",
+    "running":   "Nibi is running the pipeline...",
+    "success":   "Done! Nibi is happy with the results.",
+    "error":     "Nibi encountered an error.",
+    "curious":   "Nibi is curious about that file...",
+    "coffee":    "Nibi is taking a coffee break. ☕",
+    "sleeping":  "Nibi is sleeping. zZz",
+}
 
 
 # ---------------------------------------------------------------------------
 # Mouse tracker — SGR mouse mode, background thread, careful cleanup
 # ---------------------------------------------------------------------------
 
-# Mouse tracking requires termios, which is POSIX-only.
 try:
     import termios  # type: ignore[import]
     import tty      # type: ignore[import]
     HAVE_TERMIOS = True
-except ImportError:  # pragma: no cover - Windows
+except ImportError:
     HAVE_TERMIOS = False
 
 
 class MouseTracker:
-    """Track mouse motion in the terminal using ANSI SGR mouse mode.
+    """Track terminal mouse motion via ANSI SGR + any-event mouse mode.
 
-    Enables ``\\033[?1006h`` (SGR encoding) + ``\\033[?1003h`` (any-event
-    tracking — fires on every mouse motion, not just clicks).
-
-    A background thread reads stdin in raw mode, parses
-    ``\\033[<button;x;y;M`` sequences, and invokes registered callbacks
-    with ``(x, y)`` coordinates (1-indexed, origin top-left of terminal).
-
-    Non-mouse keypresses (e.g. user pressing Enter to skip the intro) are
-    queued in ``self.keypresses`` for the main thread to drain.
-
-    All terminal state changes are wrapped in try/finally so a crash or
-    Ctrl+C will still restore the terminal.
+    Runs a daemon thread that reads raw stdin, parses
+    ``ESC[<btn;x;y;M`` sequences, and fires callbacks with ``(x, y)``.
+    Non-mouse keypresses are queued in ``self.keypresses``.
+    All terminal state is restored on ``stop()``.
     """
 
     def __init__(self) -> None:
@@ -185,13 +282,12 @@ class MouseTracker:
         self.callbacks: List[Callable[[int, int], None]] = []
         self.keypresses: "queue.Queue[bytes]" = queue.Queue()
         self._fd: Optional[int] = None
-        self._old_termios = None
+        self._old_termios: object = None
 
     def add_callback(self, cb: Callable[[int, int], None]) -> None:
         self.callbacks.append(cb)
 
     def start(self) -> bool:
-        """Enable mouse tracking. Returns False if unsupported."""
         if not HAVE_TERMIOS:
             return False
         if self.running:
@@ -199,41 +295,30 @@ class MouseTracker:
         try:
             self._fd = sys.stdin.fileno()
             self._old_termios = termios.tcgetattr(self._fd)
-        except (termios.error, AttributeError, ValueError):
+        except Exception:
             return False
-
-        # Enable SGR mouse mode + any-event tracking
         sys.stdout.write("\033[?1006h\033[?1003h")
         sys.stdout.flush()
-
-        # Raw mode so we can read individual bytes
         try:
             tty.setraw(self._fd, termios.TCSANOW)
         except termios.error:
             sys.stdout.write("\033[?1003l\033[?1006l")
             sys.stdout.flush()
             self._fd = None
-            self._old_termios = None
             return False
-
         self.running = True
         self.thread = threading.Thread(target=self._read_loop, daemon=True)
         self.thread.start()
         return True
 
     def stop(self) -> None:
-        """Disable mouse tracking and restore terminal. Safe to call multiple times."""
         if not self.running:
             return
         self.running = False
         if self.thread:
             self.thread.join(timeout=0.5)
-
-        # Disable mouse tracking modes
         sys.stdout.write("\033[?1003l\033[?1006l")
         sys.stdout.flush()
-
-        # Restore terminal settings
         if self._fd is not None and self._old_termios is not None:
             try:
                 termios.tcsetattr(self._fd, termios.TCSADRAIN, self._old_termios)
@@ -252,7 +337,6 @@ class MouseTracker:
             return None
 
     def _read_loop(self) -> None:
-        """Background thread: parse SGR mouse events, queue other keypresses."""
         assert self._fd is not None
         while self.running:
             try:
@@ -261,13 +345,9 @@ class MouseTracker:
                 ch = os.read(self._fd, 1)
                 if not ch:
                     continue
-
                 if ch != b"\033":
-                    # Regular keypress — queue for main thread
                     self.keypresses.put(ch)
                     continue
-
-                # Possible escape sequence (mouse event, arrow key, etc.)
                 if not select.select([self._fd], [], [], 0.05)[0]:
                     self.keypresses.put(ch)
                     continue
@@ -286,26 +366,20 @@ class MouseTracker:
                     self.keypresses.put(ch2)
                     self.keypresses.put(ch3)
                     continue
-
-                # Read parameters until M (press/motion) or m (release)
                 buf = b""
                 while self.running:
                     if not select.select([self._fd], [], [], 0.1)[0]:
                         break
                     c = os.read(self._fd, 1)
-                    if not c:
-                        break
-                    if c in (b"M", b"m"):
+                    if not c or c in (b"M", b"m"):
                         break
                     buf += c
                     if len(buf) > 30:
                         break
-
                 try:
                     parts = buf.decode("ascii").split(";")
                     if len(parts) == 3:
-                        x = int(parts[1])
-                        y = int(parts[2])
+                        x, y = int(parts[1]), int(parts[2])
                         for cb in self.callbacks:
                             cb(x, y)
                 except (ValueError, UnicodeDecodeError):
@@ -315,24 +389,20 @@ class MouseTracker:
 
 
 # ---------------------------------------------------------------------------
-# Nibi intro — shows the mascot with eye-tracking for a few seconds
+# show_nibi_intro — welcome screen with live eye tracking
 # ---------------------------------------------------------------------------
 
 def show_nibi_intro(
     console: Console,
     theme: dict,
     duration: float = 8.0,
+    expression: Expression = "happy",
     on_skip: Optional[Callable[[], None]] = None,
 ) -> None:
-    """Show Nibi with cursor-tracking eyes.
+    """Render Nibi with live mouse-tracking pupils in a rich.Live block.
 
-    Renders Nibi in a ``rich.Live`` region. A background ``MouseTracker``
-    captures mouse motion; the main thread updates Nibi's pupils to point
-    toward the cursor. Exits when the user presses any key, or after
-    ``duration`` seconds.
-
-    On terminals without mouse support (Windows, non-TTY, etc.), Nibi is
-    shown statically for 2 seconds and the function returns.
+    Exits after ``duration`` seconds or when the user presses any key.
+    Falls back to a 2-second static display on Windows / non-TTY.
     """
     tracker = MouseTracker()
     state: dict = {"x": None, "y": None, "dx": 0, "dy": 0}
@@ -343,69 +413,48 @@ def show_nibi_intro(
 
     tracker.add_callback(on_mouse)
 
-    # Approximate Nibi's center on screen (Nibi is rendered centered)
     try:
         term_width = console.size.width
     except AttributeError:
         term_width = console.size.columns  # type: ignore[attr-defined]
     nibi_center_x = term_width // 2
-    # Nibi's eyes are ~7 rows from the top of Nibi. After the title + tagline
-    # (~10 rows), Nibi's eyes land at screen row ~17.
     nibi_eye_screen_row = 17
-
     muted = theme.get("muted", "dim white")
 
     def build() -> Group:
-        nibi = render_nibi(theme, state["dx"], state["dy"])
+        nibi = render_nibi(theme, expression, state["dx"], state["dy"])
         hint = Text(
-            "  move your mouse — Nibi is watching  ·  press any key to continue",
+            EXPRESSION_HINTS.get(expression, ""),
             style=f"italic {muted}",
         )
         return Group(Align.center(nibi), Align.center(hint))
 
     started = False
     try:
-        with Live(
-            build(),
-            console=console,
-            refresh_per_second=15,
-            transient=False,
-        ) as live:
+        with Live(build(), console=console, refresh_per_second=15,
+                  transient=False) as live:
             if not tracker.start():
-                # No mouse support — show static Nibi briefly
                 time.sleep(2.0)
                 return
             started = True
-
             start_time = time.time()
             while time.time() - start_time < duration:
-                # User pressed any key → skip
                 if tracker.has_keypress():
                     tracker.get_keypress()
                     if on_skip:
                         on_skip()
                     break
-
-                # Update pupil offset based on last mouse position
                 x, y = state["x"], state["y"]
                 if x is not None:
                     rel_x = x - nibi_center_x
                     sens_x = max(5, nibi_center_x // 4)
-                    dx = max(
-                        PUPIL_DX_RANGE[0],
-                        min(PUPIL_DX_RANGE[1], rel_x // sens_x),
-                    )
+                    dx = max(PUPIL_DX_RANGE[0], min(PUPIL_DX_RANGE[1], rel_x // sens_x))
                     rel_y = y - nibi_eye_screen_row
-                    sens_y = 5
-                    dy = max(
-                        PUPIL_DY_RANGE[0],
-                        min(PUPIL_DY_RANGE[1], rel_y // sens_y),
-                    )
+                    dy = max(PUPIL_DY_RANGE[0], min(PUPIL_DY_RANGE[1], rel_y // 5))
                     if dx != state["dx"] or dy != state["dy"]:
                         state["dx"] = dx
                         state["dy"] = dy
                         live.update(build())
-
                 time.sleep(0.05)
     finally:
         if started:
@@ -413,7 +462,26 @@ def show_nibi_intro(
 
 
 # ---------------------------------------------------------------------------
-# Smoke test — run this file directly to preview Nibi
+# show_nibi_inline — one-shot render for status bars and non-live contexts
+# ---------------------------------------------------------------------------
+
+def show_nibi_inline(
+    console: Console,
+    theme: dict,
+    expression: Expression = "happy",
+) -> None:
+    """Print Nibi statically (no Live block, no mouse tracking)."""
+    from rich.align import Align
+    console.print(Align.center(render_nibi(theme, expression)))
+    hint = EXPRESSION_HINTS.get(expression, "")
+    if hint:
+        console.print(
+            Align.center(Text(hint, style=f"italic {theme.get('muted', 'dim white')}"))
+        )
+
+
+# ---------------------------------------------------------------------------
+# Smoke test
 # ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
@@ -421,17 +489,31 @@ if __name__ == "__main__":
     from ngs_agent.tui import THEMES
 
     cfg = load_config()
-    theme_name = cfg.get("theme", "dark")
-    theme = THEMES.get(theme_name, THEMES["dark"])
+    theme = THEMES.get(cfg.get("theme", "dark"), THEMES["dark"])
+    con = Console(force_terminal=True, legacy_windows=False)
+    con.clear()
+    con.print()
+    con.print(Text("NGS-Agent — Nibi preview", style=f"bold {theme['accent']}"),
+              justify="center")
+    con.print()
 
-    console = Console(force_terminal=True, legacy_windows=False)
-    console.clear()
+    # Cycle through all expressions
+    import time as _t
+    exprs: list[Expression] = [
+        "happy", "thinking", "analyzing", "running",
+        "success", "error", "curious", "coffee", "sleeping",
+    ]
+    for expr in exprs:
+        con.clear()
+        show_nibi_inline(con, theme, expr)
+        con.print(Align.center(Text(f"Expression: {expr}", style=theme["accent"])))
+        _t.sleep(1.5)
 
-    console.print()
-    console.print(Text("NGS-Agent", style=f"bold {theme['accent']}"), justify="center")
-    console.print()
-
-    show_nibi_intro(console, theme, duration=15.0)
-
-    console.print()
-    console.print(Text("→ starting REPL...", style=theme.get("muted", "dim")))
+    con.clear()
+    con.print()
+    con.print(Text("Live eye-tracking (8s) — move your mouse",
+                   style=theme["muted"]), justify="center")
+    con.print()
+    show_nibi_intro(con, theme, duration=8.0)
+    con.print()
+    con.print(Text("Done.", style=theme["accent"]))

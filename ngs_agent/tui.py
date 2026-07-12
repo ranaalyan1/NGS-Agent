@@ -24,7 +24,7 @@ from rich.text import Text
 
 from ngs_agent import __version__
 from ngs_agent.config import CONFIG_PATH, load_config, save_config
-from ngs_agent.nibi import render_nibi, show_nibi_intro
+from ngs_agent.nibi import Expression, render_nibi, show_nibi_intro, show_nibi_inline
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -258,7 +258,7 @@ def render_welcome(console: Console, theme: dict[str, str]) -> None:
     """
     from rich.align import Align
     _render_welcome_top(console, theme)
-    console.print(Align.center(render_nibi(theme, 0, 0)))
+    console.print(Align.center(render_nibi(theme, "happy", 0, 0)))
     console.print()
     _render_welcome_panels(console, theme)
     console.print()
@@ -536,7 +536,16 @@ def _resolve_ngsagent() -> list[str]:
 
 
 def dispatch_command(line: str, console: Console, theme: dict[str, str]) -> None:
-    """Run a subcommand via subprocess and stream its output live."""
+    """Run a subcommand via subprocess and stream its output live.
+
+    Nibi reacts to the command lifecycle:
+      - Before running: "analyzing" for analyze/watch, "running" for others
+      - On success:     "success"
+      - On error:       "error"
+      - On interrupt:   "thinking"
+    """
+    from rich.align import Align
+
     try:
         tokens = shlex.split(line)
     except ValueError as exc:
@@ -546,14 +555,26 @@ def dispatch_command(line: str, console: Console, theme: dict[str, str]) -> None
     if not tokens:
         return
 
+    # Pick Nibi's pre-run expression based on subcommand
+    subcmd = tokens[0].lower()
+    pre_expr: Expression = (
+        "analyzing" if subcmd in ("analyze", "watch") else
+        "curious"   if subcmd == "debate" else
+        "thinking"  if subcmd == "config" else
+        "running"
+    )
+
     cmd_prefix = _resolve_ngsagent()
     full_cmd = cmd_prefix + tokens
 
     console.print(
         f"  [{theme['muted']}]$ {' '.join(full_cmd)}[/{theme['muted']}]"
     )
+    # Show Nibi with pre-run expression
+    console.print(Align.center(render_nibi(theme, pre_expr)))
     console.print()
 
+    exit_code = 0
     try:
         proc = subprocess.Popen(
             full_cmd,
@@ -567,19 +588,25 @@ def dispatch_command(line: str, console: Console, theme: dict[str, str]) -> None
         for raw_line in proc.stdout:
             console.print(raw_line, end="", highlight=False, markup=False)
         proc.wait()
+        exit_code = proc.returncode
 
-        if proc.returncode == 0:
+        post_expr: Expression = "success" if exit_code == 0 else "error"
+        console.print()
+        console.print(Align.center(render_nibi(theme, post_expr)))
+        if exit_code == 0:
             console.print(f"\n  [{theme['accent']}]✓ done[/{theme['accent']}]")
         else:
-            console.print(
-                f"\n  [red]✗ exit code {proc.returncode}[/red]"
-            )
+            console.print(f"\n  [red]✗ exit code {exit_code}[/red]")
+
     except FileNotFoundError:
         console.print(
             f"  [red]Command not found: {full_cmd[0]}[/red]\n"
             "  Make sure ngs-agent is installed: pip install ngs-agent"
         )
+        console.print(Align.center(render_nibi(theme, "error")))
     except KeyboardInterrupt:
+        console.print()
+        console.print(Align.center(render_nibi(theme, "thinking")))
         console.print(f"\n  [{theme['muted']}]Interrupted.[/{theme['muted']}]")
 
     console.print()
