@@ -1,0 +1,14 @@
+##fileformat=VCFv4.2
+##INFO=<ID=GENE,Number=1,Type=String,Description="Gene symbol">
+##INFO=<ID=CONSEQUENCE,Number=1,Type=String,Description="Variant consequence">
+##INFO=<ID=CLNSIG,Number=1,Type=String,Description="ClinVar clinical significance">
+##INFO=<ID=AF,Number=1,Type=Float,Description="Allele frequency">
+##INFO=<ID=DP,Number=1,Type=Integer,Description="Depth">
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Depth">
+##FORMAT=<ID=AD,Number=R,Type=Integer,Description="Allelic depth">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	SAMPLE
+17	43091752	rs28897743	T	G	.	PASS	GENE=BRCA2;CONSEQUENCE=missense_variant;CLNSIG=Uncertain_significance;AF=0.00002	GT:DP:AD	0/1:48:22,26
+17	41245466	rs80359550	A	T	.	PASS	GENE=BRCA2;CONSEQUENCE=nonsense;CLNSIG=Pathogenic;AF=0	GT:DP:AD	0/1:60:30,30
+13	32914023	rs121908917	C	T	.	PASS	GENE=BRCA1;CONSEQUENCE=missense_variant;CLNSIG=Pathogenic;AF=0.00001	GT:DP:AD	0/1:50:25,25
+17	41215920	rs80357064	C	T	.	PASS	GENE=BRCA2;CONSEQUENCE=missense_variant;CLNSIG=Benign;AF=0.05	GT:DP:AD	1/1:55:0,55

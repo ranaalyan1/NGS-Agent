@@ -1,0 +1,87 @@
+[build-system]
+requires = ["hatchling>=1.25.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "ngs-agent"
+version = "1.0.0"
+description = "Agentic NGS CLI: tool-use loop for variant interpretation, QC triage, and pipeline troubleshooting — powered by Nibi, the genome mascot."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Apache-2.0" }
+authors = [{ name = "Muhammad Alyan Ashraf", email = "ranaaliyan887@gmail.com" }]
+keywords = ["ngs", "vcf", "bioinformatics", "agentic", "acmg", "variant-interpretation", "cli", "mascot", "nibi"]
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Intended Audience :: Science/Research",
+  "Topic :: Scientific/Engineering :: Bio-Informatics",
+  "License :: OSI Approved :: Apache Software License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Environment :: Console",
+  "Operating System :: OS Independent",
+]
+dependencies = [
+  "click>=8.1.7",
+  "rich>=13.9.4",
+  "PyYAML>=6.0.2",
+  "httpx>=0.27.0",
+  "typing-extensions>=4.12.2",
+]
+
+[project.optional-dependencies]
+llm = [
+  "anthropic>=0.40.0",
+  "openai>=1.50.0",
+]
+sqlite = [
+  # stdlib sqlite3 is enough; extra kept for future migrations
+]
+mcp = [
+  "mcp>=1.0.0",
+]
+tui = [
+  "textual>=0.80.0",
+]
+dev = [
+  "pytest>=8.3.5",
+  "pytest-cov>=6.0.0",
+  "pytest-asyncio>=0.24.0",
+  "ruff>=0.9.9",
+  "mypy>=1.15.0",
+  "respx>=0.21.1",
+  "textual>=0.80.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/ranaalyan1/NGS-Agent"
+Repository = "https://github.com/ranaalyan1/NGS-Agent"
+
+[project.scripts]
+ngsagent = "ngs_agent.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["ngs_agent"]
+
+[tool.hatch.build.targets.sdist]
+include = ["ngs_agent/", "README.md", "LICENSE", "pyproject.toml", "demo_data/", "tests/"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "N"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --asyncio-mode=auto"
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false  # loosen for first cut
+check_untyped_defs = true

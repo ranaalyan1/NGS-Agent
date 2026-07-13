@@ -1,0 +1,11 @@
+MultiQC summary report
+Sample: NA12878
+Date: 2024-09-15
+
+mapping_rate: 65.3%
+mean_coverage: 12.5x
+duplication_rate: 42.8%
+q30_rate: 88.5%
+total_reads: 245,000,000
+gc_content: 48.2%
+insert_size: 110

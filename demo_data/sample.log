@@ -1,0 +1,13 @@
+[2024-09-15 14:23:11] Starting BWA alignment
+[2024-09-15 14:23:12] Loading reference genome: GRCh38
+[2024-09-15 14:23:14] Building index
+[2024-09-15 14:25:18] Alignment started for sample NA12878
+[2024-09-15 14:31:42] Alignment complete. mapping_rate: 65.3%
+[2024-09-15 14:31:43] WARNING: Low mapping rate detected
+[2024-09-15 14:31:44] Mean coverage: 12.5x
+[2024-09-15 14:31:45] Duplication rate: 42.8%
+[2024-09-15 14:32:01] Adapter sequence detected as overrepresented in reads
+[2024-09-15 14:32:10] Insert size: 110bp
+[2024-09-15 14:33:14] GATK HaplotypeCaller started
+[2024-09-15 14:33:18] org.broadinstitute.gatk.utils.RuntimeException: reference mismatch
+[2024-09-15 14:33:19] Pipeline FAILED at variant calling stage
