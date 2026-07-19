@@ -7,7 +7,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-from ngs_agent.tools.permissions import SafetyLevel
+from ngs_agent.tools.permissions import IssueSeverity, SafetyLevel, StepStatus
 
 
 class AgentStage(str, Enum):
@@ -58,7 +58,7 @@ class Plan(BaseModel):
 
 class StepOutcome(BaseModel):
     step_name: str
-    status: str
+    status: StepStatus = StepStatus.OK
     stdout: str = ""
     stderr: str = ""
     returncode: int = 0
@@ -67,7 +67,7 @@ class StepOutcome(BaseModel):
 
 
 class VerificationIssue(BaseModel):
-    severity: str
+    severity: IssueSeverity
     message: str
     remediation: str = ""
 

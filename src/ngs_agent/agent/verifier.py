@@ -1,8 +1,12 @@
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 
 from ngs_agent.agent.models import Plan, StepOutcome, VerificationIssue, VerificationReport
+from ngs_agent.tools.permissions import IssueSeverity, StepStatus
+
+logger = logging.getLogger(__name__)
 
 
 class VerifierAgent:
@@ -15,7 +19,7 @@ class VerifierAgent:
             if outcome.returncode != 0:
                 issues.append(
                     VerificationIssue(
-                        severity="error",
+                        severity=IssueSeverity.ERROR,
                         message=f"Step {outcome.step_name} failed with return code {outcome.returncode}.",
                         remediation="Inspect stderr, rerun the failed step, or resume from the checkpoint.",
                     )
@@ -29,19 +33,23 @@ class VerifierAgent:
         for item in missing_artifacts:
             issues.append(
                 VerificationIssue(
-                    severity="warning",
+                    severity=IssueSeverity.WARNING,
                     message=f"Expected artifact not observed: {item}",
                     remediation="Check the selected backend, tool availability, and working directory mounts.",
                 )
             )
 
-        passed = not any(issue.severity == "error" for issue in issues)
+        passed = not any(issue.severity == IssueSeverity.ERROR for issue in issues)
         metrics = {
             "planned_steps": len(plan.steps),
             "executed_steps": len(outcomes),
             "expected_artifacts": len(expected_outputs),
             "observed_artifacts": len(produced_outputs),
         }
+        
+        if issues:
+            logger.warning(f"Verification found {len(issues)} issues: {[i.message for i in issues]}")
+        
         return VerificationReport(
             passed=passed,
             issues=issues,

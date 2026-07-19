@@ -318,7 +318,7 @@ class TrimmomaticTool(BioinformaticsTool):
 
         fastqc_summary = payload.fastqc_summary.strip()
         api_key = os.environ.get("ANTHROPIC_API_KEY")
-        model = os.environ.get("ANTHROPIC_MODEL", "claude-opus-4-7")
+        model = os.environ.get("ANTHROPIC_MODEL", "claude-sonnet-4-20250514")
         if api_key and fastqc_summary:
             try:
                 client = Anthropic(api_key=api_key)
@@ -340,7 +340,7 @@ class TrimmomaticTool(BioinformaticsTool):
                 text = "".join(block.text for block in response.content if getattr(block, "type", "") == "text")
                 parsed = json.loads(text)
                 params = {**default_params, **parsed.get("params", {})}
-                return params, str(parsed.get("source", "claude-opus-4-7")), float(parsed.get("confidence", 0.7))
+                return params, str(parsed.get("source", "claude-sonnet-4-20250514")), float(parsed.get("confidence", 0.7))
             except Exception:
                 pass
 
