@@ -5,18 +5,28 @@ import tomllib
 from pathlib import Path
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from platformdirs import user_config_dir
 
 
 class NGSSettings(BaseModel):
     backend_preference: Literal["auto", "native", "docker", "apptainer"] = "auto"
     anthropic_api_key: str = ""
-    anthropic_model: str = "claude-opus-4-7"
+    anthropic_model: str = "claude-sonnet-4-20250514"
     artifacts_dir: str = "./artifacts"
     logs_dir: str = "./logs"
     require_confirmation_for: set[str] = Field(default_factory=lambda: {"expensive", "destructive"})
     allow_destructive_without_confirmation: bool = False
+    
+    @field_validator("require_confirmation_for")
+    @classmethod
+    def validate_safety_levels(cls, v: set[str]) -> set[str]:
+        from ngs_agent.tools.permissions import SafetyLevel
+        valid_levels = {level.value for level in SafetyLevel}
+        for level in v:
+            if level not in valid_levels:
+                raise ValueError(f"Invalid safety level '{level}'. Must be one of: {valid_levels}")
+        return v
 
 
 def _config_candidates(explicit_path: Path | None = None) -> list[Path]:

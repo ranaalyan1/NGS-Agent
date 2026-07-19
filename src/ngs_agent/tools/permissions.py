@@ -22,3 +22,17 @@ class PermissionPolicy:
         if level == SafetyLevel.DESTRUCTIVE and self.allow_destructive_without_confirmation:
             return False
         return level in self.require_confirmation_for
+
+
+# Status enums for consistent error handling
+class StepStatus(str, Enum):
+    OK = "ok"
+    FAILED = "failed"
+    DRY_RUN = "dry-run"
+    CANCELLED = "cancelled"
+
+
+class IssueSeverity(str, Enum):
+    ERROR = "error"
+    WARNING = "warning"
+    INFO = "info"

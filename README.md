@@ -123,7 +123,7 @@ Manages `~/.ngsagent/config.yaml`.
 ngsagent config wizard
 ngsagent config show
 ngsagent config set llm anthropic
-ngsagent config set anthropic_model claude-opus-4-7
+ngsagent config set anthropic_model claude-sonnet-4-20250514
 ngsagent config set llm ollama
 ngsagent config set ollama_model llama3.2
 ngsagent config set ollama_host http://localhost:11434

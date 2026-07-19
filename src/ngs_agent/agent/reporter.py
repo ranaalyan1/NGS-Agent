@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -9,6 +10,8 @@ from rich.console import Console
 from ngs_agent.agent.models import Plan, ReportBundle, VerificationReport
 from ngs_agent.artifacts.store import LocalArtifactStore
 from ngs_agent.config.settings import NGSSettings
+
+logger = logging.getLogger(__name__)
 
 
 class ReporterAgent:
@@ -48,6 +51,7 @@ class ReporterAgent:
             )
             return "".join(block.text for block in response.content if getattr(block, "type", "") == "text")
         except Exception as exc:
+            logger.warning(f"AI insights generation failed: {exc}")
             return f"AI summary unavailable: {exc}"
 
     def generate(self, plan: Plan, verification: VerificationReport, outcomes: list[dict[str, object]]) -> ReportBundle:
