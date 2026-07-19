@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import json
+import logging
 from pathlib import Path
 from typing import Any
 
 from ngs_agent.agent.models import ResumeState
+
+logger = logging.getLogger(__name__)
 
 
 class CheckpointStore:
@@ -25,5 +28,7 @@ class CheckpointStore:
 
     def save(self, run_id: str, payload: dict[str, Any]) -> Path:
         state = self.state_for(run_id)
-        state.checkpoint_file.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+        # Disable sort_keys for performance with large payloads
+        state.checkpoint_file.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+        logger.debug(f"Checkpoint saved to {state.checkpoint_file}")
         return state.checkpoint_file

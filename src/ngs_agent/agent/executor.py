@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable
@@ -12,8 +13,10 @@ from ngs_agent.artifacts.store import LocalArtifactStore
 from ngs_agent.execution.models import CommandSpec
 from ngs_agent.execution.selector import BackendSelector
 from ngs_agent.tools.base import ToolContext
-from ngs_agent.tools.permissions import PermissionPolicy
+from ngs_agent.tools.permissions import PermissionPolicy, StepStatus
 from ngs_agent.tools.registry import ToolRegistry
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -24,6 +27,8 @@ class ExecutionState:
 
 
 class ExecutorAgent:
+    """Executes pipeline steps with proper permission handling and checkpointing."""
+    
     def __init__(
         self,
         backend_selector: BackendSelector,
@@ -45,9 +50,10 @@ class ExecutorAgent:
             CommandSpec(argv=["echo", step.command_preview], description=step.description, stream_output=True),
             self.console,
         )
+        status = StepStatus.OK if result.returncode == 0 else StepStatus.FAILED
         return StepOutcome(
             step_name=step.name,
-            status="ok" if result.returncode == 0 else "failed",
+            status=status,
             stdout=result.stdout,
             stderr=result.stderr,
             returncode=result.returncode,
@@ -83,7 +89,7 @@ class ExecutorAgent:
                 if dry_run:
                     outcome = StepOutcome(
                         step_name=step.name,
-                        status="dry-run",
+                        status=StepStatus.DRY_RUN,
                         details={
                             "backend": selected_backend.backend.name,
                             "command_preview": step.command_preview,
@@ -105,7 +111,7 @@ class ExecutorAgent:
                     )
                     outcome = StepOutcome(
                         step_name=step.name,
-                        status="ok",
+                        status=StepStatus.OK,
                         artifacts=tool_result.model_dump() if hasattr(tool_result, "model_dump") else {},
                         details={"tool_name": step.tool_name},
                     )

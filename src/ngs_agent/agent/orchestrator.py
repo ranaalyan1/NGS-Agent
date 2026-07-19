@@ -77,6 +77,15 @@ class AgentOrchestrator:
         confirm_callback: Callable[[str], bool] | None = None,
     ) -> dict[str, object]:
         working_directory = working_directory or Path.cwd()
+        
+        # Validate working directory exists and is accessible
+        if not working_directory.exists():
+            raise FileNotFoundError(f"Working directory does not exist: {working_directory}")
+        if not working_directory.is_dir():
+            raise NotADirectoryError(f"Working directory path is not a directory: {working_directory}")
+        if not os.access(working_directory, os.R_OK | os.W_OK):
+            raise PermissionError(f"Insufficient permissions for working directory: {working_directory}")
+        
         confirm = confirm_callback or self._default_confirm
         run_id = f"run-{uuid.uuid4().hex[:10]}"
         context = self.planner.discover_context(working_directory)

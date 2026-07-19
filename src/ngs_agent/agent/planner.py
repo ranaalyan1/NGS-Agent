@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+import logging
 from pathlib import Path
 from typing import Any
 
@@ -9,6 +11,8 @@ from rich.console import Console
 from ngs_agent.agent.models import ExperimentContext, Plan, PlanStep
 from ngs_agent.config.settings import NGSSettings
 from ngs_agent.tools.permissions import SafetyLevel
+
+logger = logging.getLogger(__name__)
 
 
 class PlannerAgent:
@@ -195,9 +199,6 @@ class PlannerAgent:
                 ],
             )
             text = "".join(block.text for block in response.content if getattr(block, "type", "") == "text")
-            # Keep the first phase resilient: if the model returns anything but valid JSON, we fall back.
-            import json
-
             parsed: dict[str, Any] = json.loads(text)
             steps = [PlanStep.model_validate(step) for step in parsed.get("steps", [])]
             return Plan(
@@ -213,7 +214,11 @@ class PlannerAgent:
                 next_actions=list(parsed.get("next_actions", [])),
                 dry_run=dry_run,
             )
-        except Exception:
+        except json.JSONDecodeError as exc:
+            logger.warning(f"AI planner returned invalid JSON: {exc}")
+            return None
+        except Exception as exc:
+            logger.warning(f"AI planning failed with exception: {exc}", exc_info=True)
             return None
 
     def create_plan(self, objective: str, workflow: str, context: ExperimentContext, dry_run: bool = False) -> Plan:
