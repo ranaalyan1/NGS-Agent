@@ -1,0 +1,16 @@
+##fileformat=VCFv4.2
+##fileDate=20260315
+##source=NGS-Agent-test-fixture
+##reference=GRCh38
+##INFO=<ID=CSQ,Number=.,Type=String,Description="Consequence annotations from Ensembl VEP. Format: Allele|Consequence|IMPACT|SYMBOL|Gene">
+##INFO=<ID=GENE,Number=1,Type=String,Description="Gene symbol">
+##INFO=<ID=CLNSIG,Number=.,Type=String,Description="ClinVar significance">
+##INFO=<ID=AF,Number=1,Type=Float,Description="Allele frequency">
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read depth">
+##FORMAT=<ID=AD,Number=R,Type=Integer,Description="Allelic depths">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	SAMPLE-001
+# Biallelic site - single ALT allele with proper VEP CSQ format
+17	43094692	.	G	A	999	PASS	GENE=BRCA1;CSQ=A|missense_variant|MODERATE|BRCA1|ENSG00000012048;CLNSIG=Pathogenic;AF=0.00002	GT:DP:AD	0/1:245:122,123
+# Multiallelic site - TWO ALT alleles (A and T)
+13	32338077	.	G	A,T	380	PASS	GENE=BRCA2;CSQ=A|missense_variant|MODERATE|BRCA2|ENSG00000139618,T|stop_gained|HIGH|BRCA2|ENSG00000139618;CLNSIG=Conflicting_interpretations;AF=0.0012	GT:DP:AD	0/2:156:78,40,38

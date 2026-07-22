@@ -1,0 +1,24 @@
+##fileformat=VCFv4.2
+##fileDate=20260315
+##source=NGS-Agent-test-fixture
+##reference=GRCh38
+##INFO=<ID=CSQ,Number=.,Type=String,Description="Consequence annotations from Ensembl VEP. Format: Allele|Consequence|IMPACT|SYMBOL|Gene|Feature_type|Feature|BIOTYPE|EXON|INTRON|HGVSc|HGVSp|cDNA_position|CDS_position|Protein_position|Amino_acids|Codons|ALLELE_NUM|DISTANCE|STRAND|VARIANT_CLASS|MINIMISED|FLAGS|SYMBOL_SOURCE|HGNC_ID|TSL|APRIS|PHENO|PUBMED|MOTIF_NAME|MOTIF_POS|HIGH_INF_POS|MOTIF_SCORE_CHANGE">
+##INFO=<ID=GENE,Number=1,Type=String,Description="Gene symbol">
+##INFO=<ID=CLNSIG,Number=.,Type=String,Description="ClinVar significance">
+##INFO=<ID=AF,Number=1,Type=Float,Description="Allele frequency">
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read depth">
+##FORMAT=<ID=AD,Number=R,Type=Integer,Description="Allelic depths">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	SAMPLE-001	SAMPLE-002
+# This is a biallelic site with proper VEP CSQ header format
+17	43094692	.	G	A	999	PASS	GENE=BRCA1;CSQ=A|missense_variant|MODERATE|BRCA1|ENSG00000012048|Transcript|ENST00000357654|protein_coding|11/24||||||p.Gly123Ala|c.369G>A|369|369|123|G/A|1||+|SNV|||HGNC|1100|1|||PMID:123456|||;CLNSIG=Pathogenic;AF=0.00002	GT:DP:AD	0/1:245:122,123	0/0:180:175,5
+# This is a multiallelic site - TWO ALT alleles (A and T)
+13	32338077	.	G	A,T	380	PASS	GENE=BRCA2;CSQ=A|missense_variant|MODERATE|BRCA2|ENSG00000139618|Transcript|ENST00000380152|protein_coding|10/27||||||p.Gly456Ala|c.1368G>A|1368|1368|456|G/A|1||+|SNV|||HGNC|1101|1|||PMID:234567|||,T|stop_gained|HIGH|BRCA2|ENSG00000139618|Transcript|ENST00000380152|protein_coding|10/27||||||p.Gly456*|c.1368G>T|1368|1368|456|G/*|2||+|SNV|||HGNC|1101|1|||PMID:345678|||;CLNSIG=Conflicting_interpretations;AF=0.0012	GT:DP:AD	0/2:156:78,40,38	0/1:200:100,90,10
+# ClinVar: Likely_pathogenic
+17	43125487	.	T	C	450	PASS	GENE=BRCA1;CSQ=C|missense_variant|MODERATE|BRCA1|ENSG00000012048|Transcript|ENST00000357654|protein_coding|12/24||||||p.Thr234Met|c.702T>C|702|702|234|T/M|1||+|SNV|||HGNC|1100|1|||PMID:456789|||;CLNSIG=Likely_pathogenic;AF=0.0008	GT:DP:AD	0/1:180:95,85	./.:.:.
+# ClinVar: VUS (uncertain significance)
+17	41245466	.	A	G	200	PASS	GENE=TP53;CSQ=G|synonymous_variant|LOW|TP53|ENSG00000141510|Transcript|ENST00000269305|protein_coding|5/11||||||p.Leu78=|c.234A>G|234|234|78|L/L|1||+|SNV|||HGNC|11998|1|||PMID:567890|||;CLNSIG=Uncertain_significance;AF=0.15	GT:DP:AD	0/1:310:155,155	0/1:250:125,125
+# ClinVar: Benign
+7	55249071	.	C	T	150	PASS	GENE=EGFR;CSQ=T|intron_variant|MODIFIER|EGFR|ENSG00000146648|Transcript|ENST00000275493|protein_coding|2/28||||||||||||1||+|SNV|||HGNC|3236|1|||PMID:678901|||;CLNSIG=Benign;AF=0.25	GT:DP:AD	0/1:200:100,100	0/0:180:170,10
+# No ClinVar annotation (should be classified as Other)
+12	25398284	.	G	A	100	PASS	GENE=KRAS;CSQ=A|missense_variant|MODERATE|KRAS|ENSG00000133780|Transcript|ENST00000256078|protein_coding|2/6||||||p.Gly12Asp|c.35G>A|35|35|12|G/D|1||+|SNV|||HGNC|6407|1|||PMID:789012|||;AF=0.0005	GT:DP:AD	0/1:220:110,110	0/1:190:95,95
