@@ -1,0 +1,15 @@
+# FastQC Summary File - Test Fixture
+# Used for testing QC parsing in NGS-Agent
+
+Sample	Name	Status
+demo_sample	FastQC	PASS
+demo_sample	Per base sequence quality	PASS
+demo_sample	Per tile sequence quality	PASS
+demo_sample	Per sequence quality scores	PASS
+demo_sample	Per base sequence content	WARN
+demo_sample	Per sequence GC content	PASS
+demo_sample	Per base N content	PASS
+demo_sample	Sequence Length Distribution	PASS
+demo_sample	Sequence Duplication Levels	PASS
+demo_sample	Overrepresented sequences	PASS
+demo_sample	Adapter Content	PASS
