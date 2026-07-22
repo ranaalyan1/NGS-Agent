@@ -34,25 +34,88 @@ class QCMetric:
     status: str  # pass, warn, fail
 
 
+def _parse_csq_header(csq_header: str) -> dict[str, int]:
+    """Parse VEP CSQ header to build field-name→index map.
+    
+    VEP CSQ Format line looks like:
+    ##INFO=<ID=CSQ,...,Description=\"...Format: Allele|Consequence|IMPACT|SYMBOL|...\">
+    
+    Returns dict mapping field names (lowercase) to their index positions.
+    """
+    # Extract the Format portion from the description
+    match = re.search(r"Format:\s*([^\"]+)", csq_header)
+    if not match:
+        return {}
+    
+    fields = match.group(1).strip().split("|")
+    return {field.lower(): i for i, field in enumerate(fields)}
+
+
+def _parse_csq_value(csq_value: str, csq_map: dict[str, int]) -> tuple[str, str]:
+    """Extract consequence and gene from CSQ value using the field map.
+    
+    For multiallelic sites, CSQ may contain comma-separated entries.
+    We extract the first entry's consequence and gene.
+    
+    Returns (consequence, gene_symbol).
+    """
+    if not csq_value or not csq_map:
+        return ".", "."
+    
+    # Take first allele's CSQ for multiallelic sites
+    first_csq = csq_value.split(",")[0]
+    parts = first_csq.split("|")
+    
+    # Get consequence (field index 1 per VEP spec, but use map if available)
+    consequence_idx = csq_map.get("consequence", 1)
+    symbol_idx = csq_map.get("symbol", 3)
+    
+    consequence = parts[consequence_idx] if consequence_idx < len(parts) else "."
+    symbol = parts[symbol_idx] if symbol_idx < len(parts) else "."
+    
+    return consequence, symbol
+
+
 def parse_vcf(path: Path) -> list[Variant]:
     variants: list[Variant] = []
+    csq_map: dict[str, int] = {}
+    
     with path.open(encoding="utf-8") as fh:
         for line in fh:
+            # Parse CSQ header if present
+            if line.startswith("##INFO=<ID=CSQ"):
+                csq_map = _parse_csq_header(line)
+                continue
+            
             if line.startswith("#"):
                 continue
+            
             parts = line.strip().split("\t")
             if len(parts) < 8:
                 continue
+            
             chrom, pos_s, _id, ref, alt = parts[0], parts[1], parts[2], parts[3], parts[4]
             info = parts[7]
             fmt = parts[9] if len(parts) > 9 else ""
             format_keys = parts[8].split(":") if len(parts) > 8 else []
 
             gene = _info_field(info, "GENE") or _info_field(info, "SYMBOL") or "."
-            consequence = _info_field(info, "CSQ") or _info_field(info, "ANN") or "."
+            csq_raw = _info_field(info, "CSQ") or _info_field(info, "ANN") or ""
             clinvar = _info_field(info, "CLNSIG") or _info_field(info, "CLINVAR") or "."
             af = _parse_float(_info_field(info, "AF"))
             depth, vaf = _parse_sample(fmt, format_keys)
+
+            # Parse CSQ properly using header format if available
+            if csq_raw and csq_map:
+                consequence, csq_gene = _parse_csq_value(csq_raw, csq_map)
+                # Use gene from CSQ if GENE/SYMBOL not found
+                if gene == "." and csq_gene != ".":
+                    gene = csq_gene
+            elif csq_raw:
+                # Fallback: take first pipe-separated value (may be allele, not consequence)
+                consequence = csq_raw.split("|")[0] if "|" in csq_raw else csq_raw
+            else:
+                consequence = "."
 
             clinvar_lower = clinvar.lower()
             is_pathogenic = "pathogenic" in clinvar_lower and "conflict" not in clinvar_lower
@@ -69,7 +132,7 @@ def parse_vcf(path: Path) -> list[Variant]:
                     ref=ref,
                     alt=alt,
                     gene=gene,
-                    consequence=consequence.split("|")[0] if "|" in consequence else consequence,
+                    consequence=consequence,
                     clinvar=clinvar,
                     af=af,
                     depth=depth,
