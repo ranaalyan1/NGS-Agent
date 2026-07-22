@@ -1,0 +1,29 @@
+##FastQC         FastQC Summary File - Test Fixture
+
+>>Basic Statistics    pass
+#Measure      Value
+Filename      demo_sample.fastq.gz
+File type     Conventional base calls
+Encoding      Illumina 1.9
+Total Sequences     1000000
+Sequences flagged as poor quality   25000
+Sequence length     150
+%GC     45
+
+>>Per base sequence quality    pass
+#Base   Mean    Median  Lower Quartile  Upper Quartile  10th Percentile 90th Percentile
+1       38.5    39      37      40      35      41
+...
+150     36.2    37      35      38      33      39
+
+>>Per base sequence content    warn
+#Base   %A      %T      %G      %C
+1       25.0    25.0    25.0    25.0
+...
+150     24.5    24.8    25.2    25.5
+
+>>Sequence Duplication Levels    pass
+#Duplication Level      Count   Percentage
+1       800000  80.0
+2       100000  10.0
+...
