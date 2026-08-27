@@ -84,7 +84,6 @@ packages = ["ngs_agent"]
 [tool.hatch.build.targets.sdist]
 include = [
   "ngs_agent/",
-  "src/ngs_agent/",
   "agents/",
   "workflows/",
   "shared/",
