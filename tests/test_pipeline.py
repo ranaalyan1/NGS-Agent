@@ -4,8 +4,13 @@ import shutil
 import subprocess
 from pathlib import Path
 
-import boto3
 import pytest
+
+try:
+    import boto3
+    BOTO3_AVAILABLE = True
+except ImportError:
+    BOTO3_AVAILABLE = False
 
 
 pytestmark = pytest.mark.integration
@@ -67,6 +72,8 @@ def _head_size(s3_uri: str) -> int:
 
 
 def test_real_agents_pipeline_outputs():
+    if not BOTO3_AVAILABLE:
+        pytest.skip("boto3 not installed, skipping integration test")
     if os.environ.get("RUN_NGS_FUNCTIONAL") != "1":
         pytest.skip("Set RUN_NGS_FUNCTIONAL=1 to run integration test")
     if not _docker_available():

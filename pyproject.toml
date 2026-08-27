@@ -79,7 +79,7 @@ Repository = "https://github.com/ranaalyan1/NGS-Agent"
 ngsagent = "ngs_agent.cli:main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["ngs_agent", "src/ngs_agent"]
+packages = ["ngs_agent"]
 
 [tool.hatch.build.targets.sdist]
 include = [
