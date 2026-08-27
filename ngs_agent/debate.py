@@ -84,7 +84,42 @@ def debate_variant(variant: Variant, backend: LLMBackend) -> DebateResult:
 
 
 def _extract_stance(text: str) -> str:
+    """Extract clinical stance from LLM response with negation handling.
+    
+    Uses a priority-based approach to handle negations correctly:
+    1. Check for explicit negation patterns first
+    2. Then look for positive assertions
+    3. Default to Uncertain if no clear stance found
+    """
+    import re
+    
     lower = text.lower()
+    
+    # First, check for negation patterns - these should override positive matches
+    negation_patterns = [
+        (r"not\s+(?:likely\s+)?pathogenic", "not_pathogenic"),
+        (r"not\s+(?:likely\s+)?benign", "not_benign"),
+        (r"(?:unlikely|not)\s+pathogenic", "not_pathogenic"),
+        (r"(?:unlikely|not)\s+benign", "not_benign"),
+    ]
+    
+    for pattern, neg_type in negation_patterns:
+        if re.search(pattern, lower):
+            # If we find negation of pathogenic, lean toward benign/VUS
+            # If we find negation of benign, lean toward pathogenic/VUS
+            if neg_type == "not_pathogenic":
+                # Check if it suggests benign instead
+                if "benign" in lower and "not" not in lower.split("benign")[0].split()[-2:]:
+                    return "Benign"
+                return "Vus"
+            else:  # not_benign
+                # Check if it suggests pathogenic instead
+                if "pathogenic" in lower and "not" not in lower.split("pathogenic")[0].split()[-2:]:
+                    return "Pathogenic"
+                return "Vus"
+    
+    # No negation found - use standard priority matching
+    # Order matters: check more specific labels first
     for label in (
         "likely pathogenic",
         "pathogenic",
@@ -95,6 +130,7 @@ def _extract_stance(text: str) -> str:
     ):
         if label in lower:
             return label.title()
+    
     return "Uncertain"
 
 
