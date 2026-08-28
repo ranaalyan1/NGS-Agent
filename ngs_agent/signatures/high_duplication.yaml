@@ -3,6 +3,7 @@ name: High PCR Duplication Rate
 severity: warning
 patterns:
   - "duplication rate"
+  - "duplicate rate"
   - "duplicate reads"
   - "pct duplicated"
 threshold: 30

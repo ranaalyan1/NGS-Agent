@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NGS-Agent Clinical & Variant Report</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent: #38bdf8;
+      --green: #22c55e;
+      --yellow: #eab308;
+      --red: #ef4444;
+      --border: #334155;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 2rem;
+      line-height: 1.5;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    header {
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 1.5rem;
+      margin-bottom: 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    h1 { margin: 0; font-size: 1.8rem; color: var(--accent); }
+    .badge {
+      display: inline-block;
+      padding: 0.25rem 0.6rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .badge-pass, .badge-benign { background: rgba(34, 197, 94, 0.2); color: var(--green); border: 1px solid var(--green); }
+    .badge-warn, .badge-vus { background: rgba(234, 179, 8, 0.2); color: var(--yellow); border: 1px solid var(--yellow); }
+    .badge-fail, .badge-pathogenic { background: rgba(239, 68, 68, 0.2); color: var(--red); border: 1px solid var(--red); }
+    
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 0.5rem;
+      padding: 1.25rem;
+    }
+    .metric-title { font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.25rem; }
+    .metric-value { font-size: 1.5rem; font-weight: 700; display: flex; justify-content: space-between; align-items: center; }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 2rem;
+      background: var(--card-bg);
+      border-radius: 0.5rem;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    th, td {
+      padding: 0.85rem 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    th { background: #162032; color: var(--accent); font-size: 0.85rem; text-transform: uppercase; }
+    tr:hover { background: rgba(255, 255, 255, 0.02); }
+    
+    .debate-section {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 0.5rem;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    .opinion-box {
+      border-left: 3px solid var(--accent);
+      padding-left: 1rem;
+      margin: 1rem 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <h1>NGS-Agent Clinical & Variant Report</h1>
+        <div style="color: var(--text-muted); font-size: 0.9rem;">Automated Multi-Agent Interpretation</div>
+      </div>
+      <div style="text-align: right; color: var(--text-muted); font-size: 0.85rem;">
+        Generated: 2026-08-28 12:30:19<br>
+        Status: <strong>Ready</strong>
+      </div>
+    </header>
+
+    <h2>Quality Control Overview</h2>
+    <div class="grid">
+      
+            <div class="card">
+              <div class="metric-title">Total Sequences</div>
+              <div class="metric-value">
+                <span>1,000,000</span>
+                <span class="badge badge-pass">pass</span>
+              </div>
+            </div>
+            
+            <div class="card">
+              <div class="metric-title">GC Content</div>
+              <div class="metric-value">
+                <span>45.0%</span>
+                <span class="badge badge-pass">pass</span>
+              </div>
+            </div>
+            
+            <div class="card">
+              <div class="metric-title">Sequence Length</div>
+              <div class="metric-value">
+                <span>150 bp</span>
+                <span class="badge badge-pass">pass</span>
+              </div>
+            </div>
+            
+            <div class="card">
+              <div class="metric-title">Basic Statistics   </div>
+              <div class="metric-value">
+                <span>PASS</span>
+                <span class="badge badge-pass">pass</span>
+              </div>
+            </div>
+            
+            <div class="card">
+              <div class="metric-title">Per base sequence quality   </div>
+              <div class="metric-value">
+                <span>PASS</span>
+                <span class="badge badge-pass">pass</span>
+              </div>
+            </div>
+            
+            <div class="card">
+              <div class="metric-title">Per base sequence content   </div>
+              <div class="metric-value">
+                <span>WARN</span>
+                <span class="badge badge-warn">warn</span>
+              </div>
+            </div>
+            
+            <div class="card">
+              <div class="metric-title">Sequence Duplication Levels   </div>
+              <div class="metric-value">
+                <span>PASS</span>
+                <span class="badge badge-pass">pass</span>
+              </div>
+            </div>
+            
+    </div>
+
+    <h2>Annotated Variants (4)</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Gene</th>
+          <th>Location</th>
+          <th>Consequence</th>
+          <th>ClinVar</th>
+          <th>AF</th>
+          <th>Depth / VAF</th>
+          <th>Classification</th>
+        </tr>
+      </thead>
+      <tbody>
+        
+        <tr>
+          <td><strong>BRCA1</strong></td>
+          <td><code>17:43094692 G>A</code></td>
+          <td>missense_variant</td>
+          <td>Pathogenic</td>
+          <td>0.00002</td>
+          <td>245 / 50%</td>
+          <td><span class='badge badge-pathogenic'>Pathogenic</span></td>
+        </tr>
+        
+        <tr>
+          <td><strong>BRCA1</strong></td>
+          <td><code>17:43125487 T>C</code></td>
+          <td>missense_variant</td>
+          <td>Uncertain_significance</td>
+          <td>0.00080</td>
+          <td>180 / 47%</td>
+          <td><span class='badge badge-vus'>VUS</span></td>
+        </tr>
+        
+        <tr>
+          <td><strong>BRCA2</strong></td>
+          <td><code>13:32338077 G>A</code></td>
+          <td>missense_variant</td>
+          <td>Uncertain_significance</td>
+          <td>0.00120</td>
+          <td>156 / 50%</td>
+          <td><span class='badge badge-vus'>VUS</span></td>
+        </tr>
+        
+        <tr>
+          <td><strong>TP53</strong></td>
+          <td><code>17:41245466 A>G</code></td>
+          <td>synonymous_variant</td>
+          <td>Benign</td>
+          <td>0.15000</td>
+          <td>310 / 50%</td>
+          <td><span class='badge badge-benign'>Other / Benign</span></td>
+        </tr>
+        
+      </tbody>
+    </table>
+
+    
+  </div>
+</body>
+</html>

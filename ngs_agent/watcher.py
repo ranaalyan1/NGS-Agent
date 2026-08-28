@@ -63,14 +63,24 @@ def load_signatures(path: Path | None = None) -> list[Signature]:
 
 
 def _extract_value(line: str, field_name: str | None) -> float | None:
-    if not field_name:
-        numbers = re.findall(r"[-+]?\d*\.?\d+", line)
-        return float(numbers[-1]) if numbers else None
-    match = re.search(rf"{re.escape(field_name)}\s*[=:]\s*([-+]?\d*\.?\d+)", line, re.I)
-    if match:
-        return float(match.group(1))
-    numbers = re.findall(r"[-+]?\d*\.?\d+", line)
-    return float(numbers[-1]) if numbers else None
+    if not line:
+        return None
+    num_pattern = r"[-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?"
+    if field_name:
+        match = re.search(rf"{re.escape(field_name)}\s*[=:]\s*({num_pattern})", line, re.I)
+        if match:
+            try:
+                return float(match.group(1))
+            except ValueError:
+                pass
+    numbers = re.findall(num_pattern, line)
+    valid_nums: list[float] = []
+    for n in numbers:
+        try:
+            valid_nums.append(float(n))
+        except ValueError:
+            continue
+    return valid_nums[-1] if valid_nums else None
 
 
 def match_line(line: str, line_no: int, signatures: list[Signature]) -> list[Match]:

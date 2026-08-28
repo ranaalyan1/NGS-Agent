@@ -3,12 +3,15 @@
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Optional
 
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
+
+from ngs_agent.qc import QCMetric, QCParser
 
 
 @dataclass
@@ -25,31 +28,57 @@ class Variant:
     vaf: float | None
     is_pathogenic: bool = False
     is_vus: bool = False
+    samples: dict[str, dict[str, Any]] = field(default_factory=dict)
 
 
-@dataclass
-class QCMetric:
-    name: str
-    value: str
-    status: str  # pass, warn, fail
+def _parse_consequence(csq_or_ann: str | None) -> str:
+    if not csq_or_ann or csq_or_ann == ".":
+        return "."
+    first_allele_csq = csq_or_ann.split(",")[0]
+    if "|" in first_allele_csq:
+        parts = first_allele_csq.split("|")
+        if len(parts) > 1 and parts[1]:
+            return parts[1]
+        return parts[0]
+    return first_allele_csq
 
 
 def parse_vcf(path: Path) -> list[Variant]:
     variants: list[Variant] = []
     with path.open(encoding="utf-8") as fh:
+        sample_names: list[str] = []
         for line in fh:
-            if line.startswith("#"):
+            if line.startswith("##"):
                 continue
+            if line.startswith("#CHROM"):
+                headers = line.strip().split("\t")
+                if len(headers) > 9:
+                    sample_names = headers[9:]
+                continue
+
             parts = line.strip().split("\t")
             if len(parts) < 8:
                 continue
             chrom, pos_s, _id, ref, alt = parts[0], parts[1], parts[2], parts[3], parts[4]
             info = parts[7]
-            fmt = parts[9] if len(parts) > 9 else ""
             format_keys = parts[8].split(":") if len(parts) > 8 else []
+            fmt = parts[9] if len(parts) > 9 else ""
 
-            gene = _info_field(info, "GENE") or _info_field(info, "SYMBOL") or "."
-            consequence = _info_field(info, "CSQ") or _info_field(info, "ANN") or "."
+            csq_raw = _info_field(info, "CSQ") or _info_field(info, "ANN") or _info_field(info, "CONSEQUENCE") or "."
+            consequence = _parse_consequence(csq_raw)
+
+            gene = _info_field(info, "GENE") or _info_field(info, "SYMBOL")
+            if not gene or gene == ".":
+                if csq_raw != ".":
+                    first_csq = csq_raw.split(",")[0]
+                    csq_parts = first_csq.split("|")
+                    if len(csq_parts) >= 4 and csq_parts[3] and csq_parts[3] != ".":
+                        gene = csq_parts[3]
+                    elif len(csq_parts) >= 5 and csq_parts[4] and csq_parts[4] != ".":
+                        gene = csq_parts[4]
+            if not gene:
+                gene = "."
+
             clinvar = _info_field(info, "CLNSIG") or _info_field(info, "CLINVAR") or "."
             af = _parse_float(_info_field(info, "AF"))
             depth, vaf = _parse_sample(fmt, format_keys)
@@ -60,7 +89,17 @@ def parse_vcf(path: Path) -> list[Variant]:
                 "uncertain" in clinvar_lower
                 or "vus" in clinvar_lower
                 or "unknown significance" in clinvar_lower
+                or "unknown_significance" in clinvar_lower
             )
+
+            # Parse multisample columns if available
+            sample_data = {}
+            if sample_names and len(parts) > 9:
+                for idx, sname in enumerate(sample_names):
+                    if 9 + idx < len(parts):
+                        sfmt = parts[9 + idx]
+                        s_dp, s_vaf = _parse_sample(sfmt, format_keys)
+                        sample_data[sname] = {"dp": s_dp, "vaf": s_vaf, "raw": sfmt}
 
             variants.append(
                 Variant(
@@ -69,13 +108,14 @@ def parse_vcf(path: Path) -> list[Variant]:
                     ref=ref,
                     alt=alt,
                     gene=gene,
-                    consequence=consequence.split("|")[0] if "|" in consequence else consequence,
+                    consequence=consequence,
                     clinvar=clinvar,
                     af=af,
                     depth=depth,
                     vaf=vaf,
                     is_pathogenic=is_pathogenic,
                     is_vus=is_vus,
+                    samples=sample_data,
                 )
             )
     return variants
@@ -108,43 +148,24 @@ def _parse_sample(fmt: str, format_keys: list[str]) -> tuple[int | None, float |
     if "DP" in fields:
         try:
             depth = int(float(fields["DP"]))
-        except ValueError:
+        except (ValueError, TypeError):
             depth = None
-    if "AD" in fields and depth:
+    if "AD" in fields:
         try:
-            ads = [int(x) for x in fields["AD"].split(",")]
+            ad_parts = fields["AD"].split(",")
+            ads = [int(float(x)) for x in ad_parts if x not in (".", "")]
             if len(ads) >= 2 and sum(ads) > 0:
                 vaf = ads[1] / sum(ads)
-        except ValueError:
+                if depth is None:
+                    depth = sum(ads)
+        except (ValueError, TypeError):
             vaf = None
     return depth, vaf
 
 
 def scan_qc(path: Path) -> list[QCMetric]:
-    """Scan a MultiQC-style or plain-text QC summary file."""
-    metrics: list[QCMetric] = []
-    if not path.exists():
-        return metrics
-    text = path.read_text(encoding="utf-8", errors="replace")
-    rules = [
-        ("Mapping rate", r"mapping\s+rate[:\s]+(\d+\.?\d*)%?", lambda v: v >= 90, lambda v: v >= 75),
-        ("Mean coverage", r"mean\s+coverage[:\s]+(\d+\.?\d*)", lambda v: v >= 30, lambda v: v >= 15),
-        ("Duplication", r"duplicat(?:ion|e)\s+rate[:\s]+(\d+\.?\d*)%?", lambda v: v <= 20, lambda v: v <= 40),
-        ("Q30", r"Q30[:\s]+(\d+\.?\d*)%?", lambda v: v >= 85, lambda v: v >= 70),
-    ]
-    for name, pattern, pass_fn, warn_fn in rules:
-        match = re.search(pattern, text, re.I)
-        if not match:
-            continue
-        value = float(match.group(1))
-        if pass_fn(value):
-            status = "pass"
-        elif warn_fn(value):
-            status = "warn"
-        else:
-            status = "fail"
-        metrics.append(QCMetric(name=name, value=f"{value:.1f}", status=status))
-    return metrics
+    """Scan any QC file (FastQC, MultiQC, Samtools, or plain text)."""
+    return QCParser.parse(path)
 
 
 def render_report(

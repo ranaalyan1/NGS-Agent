@@ -1,29 +1,33 @@
-"""Click CLI entry point."""
+"""Click CLI canonical entry point for NGS-Agent."""
 
 from __future__ import annotations
 
 import sys
 from pathlib import Path
+from typing import Optional
 
 import click
 from rich.console import Console
 from rich.panel import Panel
+from rich.table import Table
 
 from ngs_agent.analyzer import parse_vcf, render_report, scan_qc
 from ngs_agent.backends.base import NoBackend
 from ngs_agent.backends.factory import get_backend
 from ngs_agent.config import CONFIG_PATH, load_config, run_wizard, save_config
 from ngs_agent.debate import debate_variant
+from ngs_agent.doctor import print_diagnostics, run_diagnostics
+from ngs_agent.reports import generate_html_report
 from ngs_agent.watcher import load_signatures, scan_file, tail_file
 
 console = Console(force_terminal=True, legacy_windows=False)
 
 
 @click.group(invoke_without_command=True)
-@click.version_option(package_name="ngs_agent")
+@click.version_option("0.2.0", "--version", "-V")
 @click.pass_context
 def main(ctx: click.Context) -> None:
-    """NGS-Agent: monitor pipeline logs and interpret VCF/QC for wet-lab teams."""
+    """NGS-Agent: Autonomous bioinformatics CLI, log watcher, and variant interpreter."""
     if ctx.invoked_subcommand is None:
         from ngs_agent.tui import run_tui
         run_tui()
@@ -72,19 +76,25 @@ def _print_match(match) -> None:
 
 @main.command()
 @click.argument("vcffile", type=click.Path(exists=True, path_type=Path))
-@click.option("--qc", type=click.Path(exists=True, path_type=Path), default=None, help="QC summary file.")
-def analyze(vcffile: Path, qc: Path | None) -> None:
-    """Parse a VCF and render a variant/QC report (no LLM required)."""
+@click.option("--qc", type=click.Path(exists=True, path_type=Path), default=None, help="QC summary or FastQC file.")
+@click.option("--html", type=click.Path(path_type=Path), default=None, help="Export interactive HTML report.")
+def analyze(vcffile: Path, qc: Path | None, html: Path | None) -> None:
+    """Parse a VCF and render a variant/QC report."""
     variants = parse_vcf(vcffile)
     qc_metrics = scan_qc(qc) if qc else []
     render_report(variants, qc_metrics, console=console)
+
+    if html:
+        generate_html_report(variants, qc_metrics=qc_metrics, output_path=html)
+        console.print(f"[green]HTML report exported to:[/green] [bold]{html}[/bold]")
 
 
 @main.command()
 @click.argument("vcffile", type=click.Path(exists=True, path_type=Path))
 @click.option("--gene", default=None, help="Debate a specific gene (default: all VUS).")
-def debate(vcffile: Path, gene: str | None) -> None:
-    """Run a 3-persona LLM debate on VUS variants."""
+@click.option("--html", type=click.Path(path_type=Path), default=None, help="Export HTML debate report.")
+def debate(vcffile: Path, gene: str | None, html: Path | None) -> None:
+    """Run a 3-persona LLM debate on VUS variants with ACMG criteria."""
     cfg = load_config()
     backend = get_backend(cfg)
 
@@ -94,7 +104,7 @@ def debate(vcffile: Path, gene: str | None) -> None:
                 "[bold red]No LLM backend configured.[/bold red]\n\n"
                 "The `debate` command requires an LLM. `watch` and `analyze` work without one.\n\n"
                 f"Run: [bold]ngsagent config wizard[/bold]\n"
-                f"Or edit: {CONFIG_PATH}",
+                f"Or set: GEMINI_API_KEY / ANTHROPIC_API_KEY / OPENAI_API_KEY",
                 title="LLM Required",
                 border_style="red",
             )
@@ -109,19 +119,57 @@ def debate(vcffile: Path, gene: str | None) -> None:
         console.print("[yellow]No VUS variants to debate.[/yellow]")
         return
 
+    results = []
     for variant in variants:
-        console.print(Panel(f"[bold]{variant.gene}[/bold] {variant.chrom}:{variant.pos}", style="magenta"))
+        console.print(Panel(f"[bold]{variant.gene}[/bold] {variant.chrom}:{variant.pos} {variant.ref}>{variant.alt}", style="magenta"))
         try:
             result = debate_variant(variant, backend)
+            results.append(result)
         except RuntimeError as exc:
             console.print(f"[red]{exc}[/red]")
             sys.exit(1)
 
         for op in result.opinions:
-            console.print(f"\n[bold]{op.persona}[/bold] — {op.stance}")
+            acmg_str = f" [cyan]({' '.join(op.acmg_criteria)})[/cyan]" if op.acmg_criteria else ""
+            console.print(f"\n[bold]{op.persona}[/bold] — [yellow]{op.stance}[/yellow]{acmg_str}")
             console.print(op.reasoning)
         console.print(f"\n[bold]Consensus:[/bold] {result.consensus}")
+        console.print(f"[bold]ACMG Evaluation:[/bold] {result.acmg_evaluation.classification} ({result.acmg_evaluation.explanation})")
         console.print(f"[bold]Recommendation:[/bold] {result.recommendation}\n")
+
+    if html:
+        generate_html_report(variants, debates=results, output_path=html)
+        console.print(f"[green]Debate report exported to:[/green] [bold]{html}[/bold]")
+
+
+@main.command()
+def doctor() -> None:
+    """Run environment, bioinformatics tools, and LLM readiness checks."""
+    checks = run_diagnostics(console=console)
+    print_diagnostics(checks, console=console)
+
+
+@main.command("plan")
+@click.argument("intent", nargs=-1)
+@click.option("--workflow", default="auto", help="Workflow (rnaseq, wgs, wes, auto)")
+def plan(intent: tuple[str, ...], workflow: str) -> None:
+    """Preview steps for an agentic bioinformatics workflow."""
+    goal = " ".join(intent) if intent else "RNA-Seq differential expression analysis"
+    console.print(Panel(f"[bold]Pipeline Execution Plan[/bold]\nObjective: {goal}", style="blue"))
+    table = Table(show_header=True)
+    table.add_column("Stage", style="cyan")
+    table.add_column("Tool / Subagent")
+    table.add_column("ETA")
+    table.add_column("Expected Artifacts")
+
+    table.add_row("1. Ingestion & QC", "FastQC + Trimmomatic", "2-5 min", "fastqc_report.html, clean_reads.fq.gz")
+    table.add_row("2. Spliced Alignment", "HISAT2 / STAR", "15-45 min", "aligned_sorted.bam, align.log")
+    table.add_row("3. Quantification", "featureCounts / StringTie", "5-15 min", "counts_matrix.tsv")
+    table.add_row("4. Differential Expression", "DESeq2 / EdgeR", "3-8 min", "de_results.csv, volcano_plot.png")
+    table.add_row("5. Interpretation & Report", "Multi-Agent Interpreter", "1-3 min", "clinical_report.html")
+
+    con = console
+    con.print(table)
 
 
 @main.group()
@@ -149,7 +197,7 @@ def config_wizard() -> None:
 def config_set(key: str, value: str) -> None:
     """Set a config value."""
     cfg = load_config()
-    if key in ("anthropic_model", "ollama_model", "ollama_host", "llm"):
+    if key in ("anthropic_model", "ollama_model", "ollama_host", "llm", "gemini_model", "openai_model"):
         cfg[key] = value
     else:
         try:
