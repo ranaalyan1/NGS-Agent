@@ -11,6 +11,7 @@ from ngs_agent.watcher import (
     match_line,
     scan_file,
     signatures_dir,
+    tail_file,
 )
 
 DATA_DIR = Path(__file__).parent / "data"
@@ -101,3 +102,18 @@ class TestScanFile:
         sig_ids = [m.signature.id for m in matches]
         assert "low_alignment_rate" in sig_ids
         assert "high_duplication" in sig_ids
+
+    def test_tail_file_reports_line_numbers(self, tmp_path, monkeypatch):
+        """Followed-file matches use line numbers, not byte offsets."""
+        log_file = tmp_path / "test.log"
+        log_file.write_text("header\n", encoding="utf-8")
+
+        def append_line(_interval):
+            with log_file.open("a", encoding="utf-8") as handle:
+                handle.write("Overall alignment rate: 65.0%\n")
+
+        monkeypatch.setattr("ngs_agent.watcher.time.sleep", append_line)
+        match = next(tail_file(log_file, load_signatures(), poll_interval=0))
+
+        assert match.line_no == 2
+        assert match.signature.id == "low_alignment_rate"
