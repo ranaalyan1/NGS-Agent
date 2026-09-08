@@ -14,7 +14,7 @@ Agentic bioinformatics CLI for wet-lab NGS teams. Monitor pipeline logs in real 
 pip install ngs-agent
 ```
 
-Core install pulls only `click`, `rich`, and `PyYAML`. No Docker, no Conda environment, no Temporal server.
+Core install pulls only `click`, `rich`, and `PyYAML`. 
 
 To use the `debate` command with an LLM:
 
