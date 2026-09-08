@@ -1,0 +1,7 @@
+[2026-09-06 09:00:00] Starting demo alignment run
+[2026-09-06 09:01:12] Adapter contamination detected in overrepresented sequences (12.3%)
+[2026-09-06 09:02:04] Overall alignment rate: 68.5%
+[2026-09-06 09:02:11] Mean coverage: 12.4x
+[2026-09-06 09:02:18] Duplicate rate: 45.0%
+[2026-09-06 09:02:26] Median insert size: 120 bp
+[2026-09-06 09:02:30] Demo run complete

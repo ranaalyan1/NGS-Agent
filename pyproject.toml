@@ -4,10 +4,10 @@ build-backend = "hatchling.build"
 
 [project]
 name = "ngs-agent"
-version = "0.2.0"
+version = "0.2.1"
 description = "Pipeline log watcher, VCF/QC interpreter, and multi-agent debate platform for wet-lab NGS teams"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.9"
 license = { text = "Apache-2.0" }
 authors = [
   { name = "Muhammad Alyan Ashraf", email = "ranaaliyan887@gmail.com" }
@@ -19,6 +19,8 @@ classifiers = [
   "Topic :: Scientific/Engineering :: Bio-Informatics",
   "License :: OSI Approved :: Apache Software License",
   "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Environment :: Console",
@@ -31,6 +33,8 @@ dependencies = [
   "PyYAML>=6.0.2",
   "typing-extensions>=4.12.2",
   "httpx>=0.28.1",
+  "pyfiglet>=1.0",
+  "prompt_toolkit>=3.0",
 ]
 
 [project.optional-dependencies]
@@ -38,11 +42,6 @@ llm = [
   "anthropic>=0.49.0",
   "openai>=1.0.0",
   "httpx>=0.28.1",
-]
-
-tui = [
-  "pyfiglet>=1.0",
-  "prompt_toolkit>=3.0",
 ]
 
 swarm = [
@@ -75,10 +74,10 @@ Repository = "https://github.com/ranaalyan1/NGS-Agent"
 
 [project.scripts]
 ngsagent = "ngs_agent.cli:main"
-ngs = "ngs_agent.cli:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["ngs_agent"]
+force-include = { "ngs_agent/demo_data/sample.log" = "ngs_agent/demo_data/sample.log" }
 
 [tool.hatch.build.targets.sdist]
 include = [

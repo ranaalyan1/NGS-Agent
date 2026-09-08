@@ -2,35 +2,92 @@
 
 from __future__ import annotations
 
-import sys
+from importlib.metadata import PackageNotFoundError, version as metadata_version
 from pathlib import Path
-from typing import Optional
 
 import click
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
+from ngs_agent import __version__
 from ngs_agent.analyzer import parse_vcf, render_report, scan_qc
 from ngs_agent.backends.base import NoBackend
 from ngs_agent.backends.factory import get_backend
-from ngs_agent.config import CONFIG_PATH, load_config, run_wizard, save_config
+from ngs_agent.config import load_config, run_wizard, save_config
 from ngs_agent.debate import debate_variant
 from ngs_agent.doctor import print_diagnostics, run_diagnostics
 from ngs_agent.reports import generate_html_report
 from ngs_agent.watcher import load_signatures, scan_file, tail_file
 
 console = Console(force_terminal=True, legacy_windows=False)
+DEMO_DATA_DIR = Path(__file__).resolve().parent / "demo_data"
+
+
+def _get_version() -> str:
+    try:
+        return metadata_version("ngs-agent")
+    except PackageNotFoundError:
+        return __version__
+
+
+def _copy_demo_data(target_root: Path) -> Path:
+    demo_dir = target_root / "demo_data"
+    demo_dir.mkdir(parents=True, exist_ok=True)
+
+    for name in ("sample.log", "sample.vcf"):
+        source = DEMO_DATA_DIR / name
+        destination = demo_dir / name
+        destination.write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
+
+    return demo_dir
+
+
+def _print_demo_paths(base_dir: Path) -> None:
+    console.print(Panel(f"[bold]Bundled demo files[/bold]\n{base_dir}", style="cyan"))
+    for name in ("sample.log", "sample.vcf"):
+        console.print(f"  [bold]{base_dir / name}[/bold]")
+
+
+def _print_demo_next_steps() -> None:
+    console.print()
+    console.print("Next steps:")
+    console.print("  ngsagent watch demo_data/sample.log")
+    console.print("  ngsagent analyze demo_data/sample.vcf")
 
 
 @click.group(invoke_without_command=True)
-@click.version_option("0.2.0", "--version", "-V")
+@click.version_option(_get_version(), "--version", "-V")
 @click.pass_context
 def main(ctx: click.Context) -> None:
     """NGS-Agent: Autonomous bioinformatics CLI, log watcher, and variant interpreter."""
     if ctx.invoked_subcommand is None:
         from ngs_agent.tui import run_tui
         run_tui()
+
+
+@main.command()
+@click.option("--list", "list_only", is_flag=True, help="Print packaged demo file paths without copying them.")
+@click.option(
+    "--copy",
+    "copy_dir",
+    type=click.Path(file_okay=False, path_type=Path),
+    default=None,
+    help="Copy demo_data into the given directory.",
+)
+def demo(list_only: bool, copy_dir: Path | None) -> None:
+    """Create or inspect the bundled demo files."""
+    if list_only and copy_dir is not None:
+        raise click.UsageError("--list cannot be combined with --copy.")
+
+    if list_only:
+        _print_demo_paths(DEMO_DATA_DIR)
+        return
+
+    target_root = copy_dir or Path.cwd()
+    copied_dir = _copy_demo_data(target_root)
+    console.print(Panel(f"[bold green]Copied demo files to[/bold green] {copied_dir}", style="green"))
+    _print_demo_next_steps()
 
 
 @main.command()

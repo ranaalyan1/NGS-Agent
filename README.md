@@ -2,7 +2,7 @@
 
 Agentic bioinformatics CLI for wet-lab NGS teams. Monitor pipeline logs in real time, parse and interpret VCF and QC outputs, and run three-perspective LLM debates on Variants of Uncertain Significance — all from a single `pip install`.
 
-[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue)](https://www.python.org)
+[![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue)](https://www.python.org)
 [![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-green)](LICENSE)
 [![PyPI](https://img.shields.io/badge/pypi-ngs--agent-orange)](https://pypi.org/project/ngs-agent/)
 
@@ -14,7 +14,13 @@ Agentic bioinformatics CLI for wet-lab NGS teams. Monitor pipeline logs in real 
 pip install ngs-agent
 ```
 
-Core install pulls only `click`, `rich`, and `PyYAML`. 
+NGS-Agent installs as a regular console app and opens the TUI when you run `ngsagent` with no subcommand.
+
+If the console script is not on your `PATH` on Windows, use the module fallback:
+
+```bash
+python -m ngs_agent
+```
 
 To use the `debate` command with an LLM:
 
@@ -33,6 +39,7 @@ pip install "ngs-agent[swarm]"
 ## Usage
 
 ```bash
+ngsagent demo
 ngsagent watch pipeline.log
 ngsagent watch --tail pipeline.log
 ngsagent analyze variants.vcf
@@ -42,9 +49,10 @@ ngsagent debate variants.vcf --gene BRCA2
 ngsagent config wizard
 ```
 
-Try it immediately with the bundled demo files:
+Start with the bundled demo files, then point `watch` and `analyze` at the copied examples:
 
 ```bash
+ngsagent demo
 ngsagent watch demo_data/sample.log
 ngsagent analyze demo_data/sample.vcf
 ```
@@ -207,7 +215,8 @@ All file artifacts are uploaded to MinIO at `s3://ngs-artifacts/<run_id>/<agent>
 ## Project Layout
 
 ```
-ngs_agent/              pip-installable CLI (watch, analyze, debate, config)
+ngs_agent/              pip-installable CLI (demo, watch, analyze, debate, config)
+  demo_data/            sample.log and sample.vcf bundled into the wheel
   backends/             LLM provider abstraction: Anthropic, Ollama, NoBackend
   signatures/           YAML failure signatures loaded by the watch command
 agents/                 Docker containers, one per pipeline step

@@ -39,7 +39,7 @@ NGS_ACCENT = "#00CC7A"
 
 SLASH_COMMANDS = ["/help", "/theme", "/files", "/status", "/clear", "/exit", "/quit"]
 
-SUBCOMMANDS = ["watch", "analyze", "debate", "config"]
+SUBCOMMANDS = ["demo", "watch", "analyze", "debate", "config"]
 
 FILE_EXTENSIONS = {".vcf", ".log", ".txt", ".tsv", ".csv", ".yaml", ".yml"}
 
@@ -280,12 +280,13 @@ def _render_welcome_panels(console: Console, theme: dict[str, str]) -> None:
     """Quickstart + slash-commands panels. Shared by render_welcome and the live intro."""
     quickstart = Panel(
         Text.from_markup(
-            f"[{theme['muted']}]ngsagent watch pipeline.log[/{theme['muted']}]\n"
+            f"[{theme['muted']}]ngsagent demo[/{theme['muted']}]\n"
             f"[{theme['muted']}]ngsagent analyze variants.vcf --qc multiqc.txt[/{theme['muted']}]\n"
             f"[{theme['muted']}]ngsagent debate variants.vcf --gene BRCA2[/{theme['muted']}]\n"
-            f"\n[{theme['muted']}]Or run a command here:[/{theme['muted']}]\n"
-            f"[{theme['accent']}]> watch demo_data/sample.log[/{theme['accent']}]\n"
-            f"[{theme['accent']}]> analyze demo_data/sample.vcf[/{theme['accent']}]"
+            f"\n[{theme['muted']}]Start with the bundled demo:[/{theme['muted']}]\n"
+            f"[{theme['accent']}]> ngsagent demo[/{theme['accent']}]\n"
+            f"[{theme['accent']}]> ngsagent watch demo_data/sample.log[/{theme['accent']}]\n"
+            f"[{theme['accent']}]> ngsagent analyze demo_data/sample.vcf[/{theme['accent']}]"
         ),
         title=f"[{theme['panel_title']}]Quick start[/{theme['panel_title']}]",
         border_style=theme["border"],
@@ -354,7 +355,9 @@ def show_help(console: Console, theme: dict[str, str]) -> None:
     console.print()
 
     console.print(Text("Subcommands (run as if from the shell):", style=theme["muted"]))
-    for name, usage, desc in [
+    for _cmd, usage, desc in [
+        ("demo",    "demo [--list] [--copy DIR]",
+         "Copy or inspect the bundled demo data."),
         ("watch",   "watch <logfile> [--tail] [--signatures DIR]",
          "Scan a pipeline log against failure signatures."),
         ("analyze", "analyze <vcffile> [--qc <qcfile>]",
@@ -529,7 +532,7 @@ def _resolve_ngsagent() -> list[str]:
     import shutil
     if shutil.which("ngsagent"):
         return ["ngsagent"]
-    return [sys.executable, "-m", "ngs_agent.cli"]
+    return [sys.executable, "-m", "ngs_agent"]
 
 
 def dispatch_command(line: str, console: Console, theme: dict[str, str]) -> None:

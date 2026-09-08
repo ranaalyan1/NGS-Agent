@@ -26,7 +26,7 @@ publish the name soon before someone else takes it.
 cd /home/user/NGS-Agent
 python -m venv .venv-publish && . .venv-publish/bin/activate
 python -m pip install --upgrade pip build twine
-python -m build          # creates dist/ngs_agent-0.2.0-py3-none-any.whl + .tar.gz
+python -m build          # creates dist/ngs_agent-0.2.1-py3-none-any.whl + .tar.gz
 ```
 
 Inspect the wheel *before* uploading:
@@ -126,8 +126,8 @@ Trusted Publishing means PyPI gives GitHub permission to upload on your behalf â
 3. Publish by tagging a release:
 
    ```bash
-   git tag v0.2.0
-   git push origin v0.2.0
+  git tag v0.2.1
+  git push origin v0.2.1
    ```
 
    The workflow builds `dist/` and uploads it automatically. GitHub shows the
@@ -142,24 +142,24 @@ Trusted Publishing means PyPI gives GitHub permission to upload on your behalf â
 ## Things to fix before/at first publish (they affect users)
 
 These are repository issues, not PyPI issues â€” they only become visible *after*
-the package is up, so fix them in the same round as the publish:
+the package is up, so keep the same guards in CI and the wheel audit:
 
-| Issue | Effect on users | Fix |
+| Issue | Status | Guard that keeps it fixed |
 |---|---|---|
-| `demo_data/` is not in the wheel | README's `ngsagent watch demo_data/sample.log` fails for everyone | Bundle demos inside the package (e.g. `ngs_agent/demo_data/`) and add `ngsagent demo` to print/copy them |
-| `requires-python = ">=3.11"` | Blocks PCs with Python 3.8â€“3.10 (old Ubuntu, many HPC nodes) | Drop to `>=3.9` or `>=3.10` once code is verified on those versions |
-| No `ngs_agent/__main__.py` | `python -m ngs_agent` doesn't work (useful on Windows when Scripts isn't on PATH) | Add a two-line `__main__.py` |
-| Generic `ngs` console script | Can collide with other packages' `ngs` binary and silently break | Ship only `ngsagent` (+ `ngs-agent` alias if you like) |
-| Version hardcoded in `ngs_agent/cli.py` | `--version` drifts from the released version | Single-source from `importlib.metadata` |
-| Duplicate `src/ngs_agent` package | Risk of accidentally shipping the v2 engine under the same import name | Add a CI test asserting the wheel contains only the intended package |
+| `ngs_agent/demo_data/` is bundled in the wheel | DONE | Wheel audit checks `ngs_agent/demo_data/sample.log` and `ngs_agent/demo_data/sample.vcf` are present |
+| `requires-python = ">=3.9"` | DONE | Wheel metadata audit checks `Requires-Python: >=3.9` |
+| `ngs_agent/__main__.py` exists | DONE | `python -m ngs_agent --version` smoke test passes from a clean install |
+| Only `ngsagent` is shipped as a console script | DONE | `entry_points.txt` contains exactly one console entry point |
+| CLI version is single-sourced | DONE | `ngsagent --version` matches the installed distribution version |
+| `src/ngs_agent` stays out of the wheel | DONE | Wheel audit fails if any `src/ngs_agent/*` file appears in the archive |
 
 ---
 
 ## Release checklist
 
 1. All tests green: `python -m pytest -m "not integration"`
-2. `python -m build` succeeds and wheel contains `ngs_agent/signatures/*.yaml`
-3. Clean-venv install + smoke test (`ngsagent --version`, `watch`, `analyze`)
-4. Bump version, commit, tag `vX.Y.Z`, push tag
+2. `python -m build --wheel` succeeds and the wheel audit passes (`ngs_agent/demo_data/*`, `ngs_agent/__main__.py`, `ngs_agent/signatures/*.yaml`, only `ngsagent` in `entry_points.txt`)
+3. Clean-venv install + smoke test (`ngsagent --version`, `python -m ngs_agent --version`, `ngsagent demo`, `watch`, `analyze`)
+4. Bump version to `0.2.1`, commit, tag `v0.2.1`, push tag
 5. Confirm the Actions run published successfully
-6. `pip install ngs-agent` from a clean venv works
+6. `pip install ngs-agent` from a clean venv resolves `0.2.1` and the demo smoke test passes
