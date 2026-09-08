@@ -62,6 +62,10 @@ dev = [
   "pytest-cov>=6.0.0",
   "ruff>=0.9.9",
   "mypy>=1.15.0",
+  # The integration test imports boto3 during collection, even when the
+  # functional test is skipped. Keep the documented `.[dev]` test command
+  # self-contained; swarm users still get the same dependency from [swarm].
+  "boto3>=1.37.0",
 ]
 
 [project.urls]

@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import re
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Optional
 
 from ngs_agent.acmg import compute_acmg_classification, ACMGEvaluation
 from ngs_agent.analyzer import Variant

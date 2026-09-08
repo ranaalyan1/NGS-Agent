@@ -163,13 +163,10 @@ def _render_title_lines() -> list[str]:
 def render_title(console: Console, theme: dict[str, str]) -> None:
     """Print the ASCII art title with a dim shadow offset by 1 col."""
     lines = _render_title_lines()
-    width = console.size.columns
 
-    for i, line in enumerate(lines):
+    for line in lines:
         # shadow: same line shifted right by 2 chars, dimmed
         shadow = Text(" " * 2 + line, style=theme["shadow"])
-        # foreground line
-        fg = Text(line, style=theme["title"])
         # center both — print shadow first, then overprint with fg
         console.print(shadow, justify="center", highlight=False, overflow="crop")
 

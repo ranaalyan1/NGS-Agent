@@ -80,6 +80,6 @@ def normalize_params(params: dict[Any, Any] | None) -> dict[str, Any]:
 
     sw = str(merged.get("SLIDINGWINDOW", ""))
     if not re.match(r"^\d+:\d+$", sw):
-        sw = DEFAULT_TRIM_PARAMS["SLIDINGWINDOW"]
+        sw = str(DEFAULT_TRIM_PARAMS["SLIDINGWINDOW"])
     merged["SLIDINGWINDOW"] = sw
     return merged

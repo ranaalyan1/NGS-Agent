@@ -25,6 +25,8 @@ dist/
 
 # Logs and temporary files
 *.log
+# This small log is part of the documented demo command.
+!demo_data/sample.log
 *.tmp
 *.swp
 

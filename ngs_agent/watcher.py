@@ -119,12 +119,16 @@ def tail_file(
     """Tail a log file and yield matches as new lines appear."""
     sigs = signatures or load_signatures()
     with path.open(encoding="utf-8", errors="replace") as fh:
+        # ``tell()`` returns a byte offset, not a line number. Count the
+        # existing lines first so matches from a followed file retain the
+        # same line numbering as ``scan_file``.
+        line_no = sum(1 for _ in fh)
         fh.seek(0, 2)
         while True:
             line = fh.readline()
             if not line:
                 time.sleep(poll_interval)
                 continue
-            line_no = fh.tell()
+            line_no += 1
             for match in match_line(line, line_no, sigs):
                 yield match

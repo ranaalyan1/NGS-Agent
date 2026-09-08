@@ -21,7 +21,7 @@ import select
 import sys
 import threading
 import time
-from typing import Callable, List, Literal, Optional
+from typing import Any, Callable, List, Literal, Optional
 
 from rich.align import Align
 from rich.console import Console, Group
@@ -282,7 +282,7 @@ class MouseTracker:
         self.callbacks: List[Callable[[int, int], None]] = []
         self.keypresses: "queue.Queue[bytes]" = queue.Queue()
         self._fd: Optional[int] = None
-        self._old_termios: object = None
+        self._old_termios: Any = None
 
     def add_callback(self, cb: Callable[[int, int], None]) -> None:
         self.callbacks.append(cb)
