@@ -11,6 +11,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
+from ngs_agent import __version__
 from ngs_agent.analyzer import parse_vcf, render_report, scan_qc
 from ngs_agent.backends.base import NoBackend
 from ngs_agent.backends.factory import get_backend
@@ -24,13 +25,20 @@ console = Console(force_terminal=True, legacy_windows=False)
 
 
 @click.group(invoke_without_command=True)
-@click.version_option("0.2.0", "--version", "-V")
+@click.version_option(__version__, "--version", "-V")
 @click.pass_context
 def main(ctx: click.Context) -> None:
     """NGS-Agent: Autonomous bioinformatics CLI, log watcher, and variant interpreter."""
     if ctx.invoked_subcommand is None:
         from ngs_agent.tui import run_tui
         run_tui()
+
+
+@main.command()
+def tui() -> None:
+    """Start the interactive terminal (same as running ngsagent with no command)."""
+    from ngs_agent.tui import run_tui
+    run_tui()
 
 
 @main.command()

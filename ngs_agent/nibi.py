@@ -239,6 +239,104 @@ def render_nibi(
 
 
 # ---------------------------------------------------------------------------
+# Mini Nibi — compact head-only variant for banners and status areas
+# ---------------------------------------------------------------------------
+
+_MINI_BODY: dict[Expression, list[str]] = {
+    "happy": [
+        " ╭═╮   ╭═╮ ",
+        " ║G║   ║C║ ",
+        "╭─────────╮",
+        "│ (◉) (◉) │",
+        "│   ‿‿‿   │",
+        "│  · ⊛ ·  │",
+        "╰─────────╯",
+    ],
+    "thinking": [
+        " ╭═╮   ╭═╮ ",
+        " ║G║   ║C║ ",
+        "╭─────────╮",
+        "│ (◔) (◉) │",
+        "│   ···   │",
+        "│  · ⊛ ·  │",
+        "╰─────────╯",
+    ],
+    "analyzing": [
+        " ╭═╮   ╭═╮ ",
+        " ║G║   ║C║ ",
+        "╭─────────╮",
+        "│ (◈) (◈) │",
+        "│  ─────  │",
+        "│  · ⊛ ·  │",
+        "╰─────────╯",
+    ],
+    "success": [
+        " ╭═╮   ╭═╮ ",
+        " ║G║   ║C║ ",
+        "╭─────────╮",
+        "│ (★) (★) │",
+        "│ \\(^▽^)/ │",
+        "│  · ⊛ ·  │",
+        "╰─────────╯",
+    ],
+    "error": [
+        " ╭═╮   ╭═╮ ",
+        " ║G║   ║C║ ",
+        "╭─────────╮",
+        "│ (×) (×) │",
+        "│    ︵   │",
+        "│  · ⊛ ·  │",
+        "╰─────────╯",
+    ],
+    "curious": [
+        " ╭═╮   ╭═╮ ",
+        " ║G║   ║C║ ",
+        "╭─────────╮",
+        "│ (◉) (◉) │",
+        "│   ·‿·   │",
+        "│  · ⊛ ·  │",
+        "╰─────────╯",
+    ],
+}
+
+
+def render_nibi_mini(theme: dict, expression: Expression = "happy") -> Text:
+    """Render a compact 7-row head-only Nibi as a styled rich.Text.
+
+    Used in the REPL welcome banner where the full 15-row mascot
+    would take too much vertical space.
+    """
+    accent = theme.get("accent", "#00FF9C")
+    accent_dim = theme.get("accent_dim", "#00805A")
+    body_color = "#FF6B6B"
+
+    grid = _MINI_BODY.get(expression, _MINI_BODY["happy"])
+    out = Text(no_wrap=True)
+    for row in grid:
+        for ch in row:
+            if ch in ("╭", "╮", "╰", "╯", "─", "│", "═", "║"):
+                out.append(ch, style=f"bold {body_color}")
+            elif ch in ("◉", "◔", "◈"):
+                out.append(ch, style="bold white")
+            elif ch == "★":
+                out.append(ch, style="bold yellow")
+            elif ch == "×":
+                out.append(ch, style="bold red")
+            elif ch == "⊛":
+                out.append(ch, style=f"bold {accent}")
+            elif ch in ("G", "C", "A", "T"):
+                out.append(ch, style=f"bold {accent_dim}")
+            elif ch == "‿":
+                out.append(ch, style=f"bold {body_color}")
+            elif ch == "·":
+                out.append(ch, style=theme.get("muted", "dim white"))
+            else:
+                out.append(ch)
+        out.append("\n")
+    return out
+
+
+# ---------------------------------------------------------------------------
 # Expression hint text shown below Nibi
 # ---------------------------------------------------------------------------
 

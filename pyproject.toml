@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "ngs-agent"
-version = "0.2.0"
+version = "0.3.0"
 description = "Pipeline log watcher, VCF/QC interpreter, and multi-agent debate platform for wet-lab NGS teams"
 readme = "README.md"
 requires-python = ">=3.11"

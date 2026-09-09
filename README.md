@@ -14,7 +14,11 @@ Agentic bioinformatics CLI for wet-lab NGS teams. Monitor pipeline logs in real 
 pip install ngs-agent
 ```
 
-Core install pulls only `click`, `rich`, and `PyYAML`. 
+Core install pulls only `click`, `rich`, `PyYAML`, and `prompt_toolkit` (for the interactive terminal). For the large pyfiglet ASCII banner, install the `tui` extra:
+
+```bash
+pip install "ngs-agent[tui]"
+```
 
 To use the `debate` command with an LLM:
 
@@ -32,6 +36,44 @@ pip install "ngs-agent[swarm]"
 
 ## Usage
 
+### Interactive terminal (Claude Code / OpenCode style)
+
+Run `ngsagent` with no arguments to drop into the interactive terminal:
+
+```bash
+ngsagent
+```
+
+![NGS-Agent interactive terminal](docs/tui-preview.svg)
+
+You get a bordered input box with contextual Tab completion, persistent history (↑/↓ with ghost-text suggestions), slash commands, and a shell escape — commands execute in-process, so there is no startup delay between prompts:
+
+```
+        ███╗   ██╗ ██████╗ ███████╗      █████╗  ██████╗ ███████╗███╗   ██╗████████╗
+        ...
+  Agentic bioinformatics CLI for wet-lab NGS teams  ·  v0.3.0
+
+  ● no LLM  ·  watch & analyze need none  ·  /model to add   📁 ~/ngs-agent
+
+  ╭──────────────────────────────────────────────────────────────────────────╮
+  │ ❯ analyze demo_data/sample.vcf                                          │
+  ╰──────────────────────────────────────────────────────────────────────────╯
+    tab complete · ↑↓ history · /help · !shell · ctrl+c clear · ctrl+d exit
+```
+
+| Feature | How |
+|---|---|
+| Tab completion | Completes subcommands, flags (`--qc`, `--html`, …), flag values, and file paths — `watch` prefers `.log`, `analyze`/`debate` prefer `.vcf` |
+| History | ↑ / ↓ walks through previous commands (persisted in `~/.ngsagent/history`); → accepts the gray ghost-text suggestion |
+| Slash commands | `/help` `/files` `/status` `/model` `/theme` `/doctor` `/nibi` `/clear` `/exit` |
+| Shell escape | `!ls -la` runs a shell command; bare `!` spawns a subshell |
+| Cancel / exit | Ctrl+C clears the input (press twice to exit); Ctrl+D exits |
+| `/files` | Numbered file browser — picking a file prefills the right command |
+| `/model` | Reconfigure the LLM backend without leaving the terminal |
+| `/theme` | Switch between dark, light, colorblind, ansi, ansi-light, midnight |
+
+Every subcommand also works directly from the shell — the interactive terminal is a wrapper around the same Click CLI, so nothing is duplicated:
+
 ```bash
 ngsagent watch pipeline.log
 ngsagent watch --tail pipeline.log
@@ -39,6 +81,7 @@ ngsagent analyze variants.vcf
 ngsagent analyze variants.vcf --qc multiqc_summary.txt
 ngsagent debate variants.vcf
 ngsagent debate variants.vcf --gene BRCA2
+ngsagent doctor
 ngsagent config wizard
 ```
 
@@ -207,7 +250,8 @@ All file artifacts are uploaded to MinIO at `s3://ngs-artifacts/<run_id>/<agent>
 ## Project Layout
 
 ```
-ngs_agent/              pip-installable CLI (watch, analyze, debate, config)
+ngs_agent/              pip-installable CLI (watch, analyze, debate, config, doctor)
+  tui.py                Claude Code-style interactive terminal (ngsagent with no args)
   backends/             LLM provider abstraction: Anthropic, Ollama, NoBackend
   signatures/           YAML failure signatures loaded by the watch command
 agents/                 Docker containers, one per pipeline step
