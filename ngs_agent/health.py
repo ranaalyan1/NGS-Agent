@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
+from typing import Optional
 
 from ngs_agent.watcher import Match
 
@@ -36,14 +37,14 @@ class RunHealth:
     total_issues: int
 
 
-def extract_sample_id(line: str) -> str | None:
+def extract_sample_id(line: str) -> Optional[str]:
     match = SAMPLE_RE.search(line)
     return match.group(1).upper() if match else None
 
 
 def dedupe_matches(matches: list[Match]) -> list[Match]:
     """Keep one match per (sample, signature) pair — highest severity wins."""
-    best: dict[tuple[str | None, str], Match] = {}
+    best: dict[tuple[Optional[str], str], Match] = {}
     for m in matches:
         key = (m.sample_id, m.signature.id)
         existing = best.get(key)

@@ -15,7 +15,7 @@ DEFAULT_TRIM_PARAMS = {
 }
 
 
-def extract_json(text: str) -> dict[str, Any] | None:
+def extract_json(text: str) -> Optional[dict[str, Any]]:
     """Extract and parse JSON object from raw text (handles markdown fences and mixed text)."""
     if not text or not isinstance(text, str):
         return None
@@ -51,7 +51,7 @@ def extract_json(text: str) -> dict[str, Any] | None:
     return None
 
 
-def normalize_verdict(raw: str) -> str | None:
+def normalize_verdict(raw: str) -> Optional[str]:
     """Normalize QC or decision verdict to canonical pass / trim_required / fail."""
     if not raw or not isinstance(raw, str):
         return None
@@ -68,7 +68,7 @@ def normalize_verdict(raw: str) -> str | None:
     return None
 
 
-def normalize_params(params: dict[Any, Any] | None) -> dict[str, Any]:
+def normalize_params(params: Optional[dict[Any, Any]]) -> dict[str, Any]:
     """Clamp and sanitize read trimming parameters."""
     merged = {**DEFAULT_TRIM_PARAMS, **(params or {})}
     try:

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from importlib.metadata import PackageNotFoundError, version as metadata_version
 from pathlib import Path
+from typing import Optional
 
 import click
 from rich.console import Console
@@ -75,7 +76,7 @@ def main(ctx: click.Context) -> None:
     default=None,
     help="Copy demo_data into the given directory.",
 )
-def demo(list_only: bool, copy_dir: Path | None) -> None:
+def demo(list_only: bool, copy_dir: Optional[Path]) -> None:
     """Create or inspect the bundled demo files."""
     if list_only and copy_dir is not None:
         raise click.UsageError("--list cannot be combined with --copy.")
@@ -94,7 +95,7 @@ def demo(list_only: bool, copy_dir: Path | None) -> None:
 @click.argument("logfile", type=click.Path(exists=True, path_type=Path))
 @click.option("--tail", is_flag=True, help="Follow the log file for new lines.")
 @click.option("--signatures", type=click.Path(exists=True, path_type=Path), default=None)
-def watch(logfile: Path, tail: bool, signatures: Path | None) -> None:
+def watch(logfile: Path, tail: bool, signatures: Optional[Path]) -> None:
     """Scan or tail a pipeline log for known failure signatures."""
     sigs = load_signatures(signatures)
     console.print(Panel(f"[bold]Watching[/bold] {logfile}", style="cyan"))
@@ -135,7 +136,7 @@ def _print_match(match) -> None:
 @click.argument("vcffile", type=click.Path(exists=True, path_type=Path))
 @click.option("--qc", type=click.Path(exists=True, path_type=Path), default=None, help="QC summary or FastQC file.")
 @click.option("--html", type=click.Path(path_type=Path), default=None, help="Export interactive HTML report.")
-def analyze(vcffile: Path, qc: Path | None, html: Path | None) -> None:
+def analyze(vcffile: Path, qc: Optional[Path], html: Optional[Path]) -> None:
     """Parse a VCF and render a variant/QC report."""
     variants = parse_vcf(vcffile)
     qc_metrics = scan_qc(qc) if qc else []
@@ -150,7 +151,7 @@ def analyze(vcffile: Path, qc: Path | None, html: Path | None) -> None:
 @click.argument("vcffile", type=click.Path(exists=True, path_type=Path))
 @click.option("--gene", default=None, help="Debate a specific gene (default: all VUS).")
 @click.option("--html", type=click.Path(path_type=Path), default=None, help="Export HTML debate report.")
-def debate(vcffile: Path, gene: str | None, html: Path | None) -> None:
+def debate(vcffile: Path, gene: Optional[str], html: Optional[Path]) -> None:
     """Run a 3-persona LLM debate on VUS variants with ACMG criteria."""
     cfg = load_config()
     backend = get_backend(cfg)

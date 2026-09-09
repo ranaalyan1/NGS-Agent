@@ -17,7 +17,7 @@ import json
 import os
 import urllib.error
 import urllib.request
-from typing import Any
+from typing import Any, Optional
 
 from ngs_agent.backends.base import LLMBackend
 
@@ -51,9 +51,9 @@ class OpenAICompatBackend(LLMBackend):
     def __init__(
         self,
         base_url: str = "https://openrouter.ai/api/v1",
-        api_key: str | None = None,
+        api_key: Optional[str] = None,
         model: str = "openrouter/auto",
-        extra_headers: dict[str, str] | None = None,
+        extra_headers: Optional[dict[str, str]] = None,
     ) -> None:
         self.base_url = base_url.rstrip("/")
         self.api_key = api_key or os.environ.get("OPENAI_COMPAT_API_KEY", "")

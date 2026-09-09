@@ -13,7 +13,7 @@ import shlex
 import subprocess
 import sys
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 from rich.columns import Columns
 from rich.console import Console
@@ -417,7 +417,7 @@ def show_status(console: Console, theme: dict[str, str], cfg: dict[str, Any]) ->
 # /files picker
 # ---------------------------------------------------------------------------
 
-def show_files(console: Console, theme: dict[str, str]) -> str | None:
+def show_files(console: Console, theme: dict[str, str]) -> Optional[str]:
     """List relevant files in cwd. Returns a suggested command string or None."""
     cwd = Path.cwd()
     files = sorted(
@@ -645,7 +645,7 @@ def read_line(
     prompt_session: Any,
     theme: dict[str, str],
     console: Console,
-) -> str | None:
+) -> Optional[str]:
     """Read one line from the user. Returns None on EOF / Ctrl+D."""
     prompt_str = f"> "
 

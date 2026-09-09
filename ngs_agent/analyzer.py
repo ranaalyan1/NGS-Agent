@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional, Tuple
 
 from rich.console import Console
 from rich.panel import Panel
@@ -23,15 +23,15 @@ class Variant:
     gene: str
     consequence: str
     clinvar: str
-    af: float | None
-    depth: int | None
-    vaf: float | None
+    af: Optional[float]
+    depth: Optional[int]
+    vaf: Optional[float]
     is_pathogenic: bool = False
     is_vus: bool = False
     samples: dict[str, dict[str, Any]] = field(default_factory=dict)
 
 
-def _parse_consequence(csq_or_ann: str | None) -> str:
+def _parse_consequence(csq_or_ann: Optional[str]) -> str:
     if not csq_or_ann or csq_or_ann == ".":
         return "."
     first_allele_csq = csq_or_ann.split(",")[0]
@@ -121,14 +121,14 @@ def parse_vcf(path: Path) -> list[Variant]:
     return variants
 
 
-def _info_field(info: str, key: str) -> str | None:
+def _info_field(info: str, key: str) -> Optional[str]:
     for part in info.split(";"):
         if part.startswith(f"{key}="):
             return part.split("=", 1)[1]
     return None
 
 
-def _parse_float(value: str | None) -> float | None:
+def _parse_float(value: Optional[str]) -> Optional[float]:
     if value is None:
         return None
     try:
@@ -137,7 +137,7 @@ def _parse_float(value: str | None) -> float | None:
         return None
 
 
-def _parse_sample(fmt: str, format_keys: list[str]) -> tuple[int | None, float | None]:
+def _parse_sample(fmt: str, format_keys: list[str]) -> Tuple[Optional[int], Optional[float]]:
     if not fmt or fmt == ".":
         return None, None
     values = fmt.split(":")
@@ -170,8 +170,8 @@ def scan_qc(path: Path) -> list[QCMetric]:
 
 def render_report(
     variants: list[Variant],
-    qc_metrics: list[QCMetric] | None = None,
-    console: Console | None = None,
+    qc_metrics: Optional[list[QCMetric]] = None,
+    console: Optional[Console] = None,
 ) -> None:
     con = console or Console()
     pathogenic = [v for v in variants if v.is_pathogenic]

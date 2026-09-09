@@ -6,7 +6,7 @@ import re
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Iterator
+from typing import Iterator, Optional
 
 import yaml
 
@@ -17,9 +17,9 @@ class Signature:
     name: str
     severity: str
     patterns: list[str]
-    threshold: float | None
-    threshold_field: str | None
-    threshold_op: str | None  # "lt" or "gt" — omit for pattern-only
+    threshold: Optional[float]
+    threshold_field: Optional[str]
+    threshold_op: Optional[str]  # "lt" or "gt" — omit for pattern-only
     explanation: str
     suggested_fix: str
     _compiled: list[re.Pattern[str]] = field(default_factory=list, repr=False)
@@ -33,15 +33,15 @@ class Match:
     signature: Signature
     line: str
     line_no: int
-    value: float | None = None
-    sample_id: str | None = None
+    value: Optional[float] = None
+    sample_id: Optional[str] = None
 
 
 def signatures_dir() -> Path:
     return Path(__file__).parent / "signatures"
 
 
-def load_signatures(path: Path | None = None) -> list[Signature]:
+def load_signatures(path: Optional[Path] = None) -> list[Signature]:
     root = path or signatures_dir()
     sigs: list[Signature] = []
     for yaml_path in sorted(root.glob("*.yaml")):
@@ -62,7 +62,7 @@ def load_signatures(path: Path | None = None) -> list[Signature]:
     return sigs
 
 
-def _extract_value(line: str, field_name: str | None) -> float | None:
+def _extract_value(line: str, field_name: Optional[str]) -> Optional[float]:
     if not line:
         return None
     num_pattern = r"[-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?"
@@ -102,7 +102,7 @@ def match_line(line: str, line_no: int, signatures: list[Signature]) -> list[Mat
     return matches
 
 
-def scan_file(path: Path, signatures: list[Signature] | None = None) -> list[Match]:
+def scan_file(path: Path, signatures: Optional[list[Signature]] = None) -> list[Match]:
     sigs = signatures or load_signatures()
     all_matches: list[Match] = []
     with path.open(encoding="utf-8", errors="replace") as fh:
@@ -113,7 +113,7 @@ def scan_file(path: Path, signatures: list[Signature] | None = None) -> list[Mat
 
 def tail_file(
     path: Path,
-    signatures: list[Signature] | None = None,
+    signatures: Optional[list[Signature]] = None,
     poll_interval: float = 0.5,
 ) -> Iterator[Match]:
     """Tail a log file and yield matches as new lines appear."""
