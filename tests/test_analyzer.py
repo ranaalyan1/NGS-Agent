@@ -2,10 +2,8 @@
 
 from pathlib import Path
 
-import pytest
 
 from ngs_agent.analyzer import (
-    Variant,
     parse_vcf,
     scan_qc,
     _info_field,
@@ -149,7 +147,6 @@ class TestParseSample:
 
     def test_dp_and_ad_parsing(self):
         """Parse DP and AD from FORMAT fields."""
-        fmt = "GT:DP:AD"
         format_keys = ["GT", "DP", "AD"]
         values = "0/1:245:122,123"
         
@@ -160,7 +157,6 @@ class TestParseSample:
     
     def test_missing_ad_returns_none_vaf(self):
         """Missing AD should return None for VAF."""
-        fmt = "GT:DP"
         format_keys = ["GT", "DP"]
         values = "0/1:245"
         
@@ -184,4 +180,4 @@ class TestScanQC:
     def test_scan_qc_missing_file_returns_empty(self):
         """Non-existent file should return empty list."""
         metrics = scan_qc(Path("/nonexistent/path/qc.txt"))
-        assert metrics == []
+        assert not metrics

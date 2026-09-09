@@ -5,7 +5,6 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-
 ACMG_CRITERIA: dict[str, dict[str, Any]] = {
     "PVS1": {
         "code": "PVS1",

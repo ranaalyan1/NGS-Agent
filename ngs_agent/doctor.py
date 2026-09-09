@@ -24,7 +24,6 @@ class DiagnosticCheck:
 
 
 def run_diagnostics(console: Optional[Console] = None) -> List[DiagnosticCheck]:
-    con = console or Console()
     checks: List[DiagnosticCheck] = []
 
     # 1. Python runtime
@@ -57,11 +56,9 @@ def run_diagnostics(console: Optional[Console] = None) -> List[DiagnosticCheck]:
         ("Apptainer / Singularity", "apptainer"),
         ("Podman", "podman"),
     ]
-    has_container = False
     for label, binary in container_tools:
         path = shutil.which(binary)
         if path:
-            has_container = True
             checks.append(DiagnosticCheck("Containers", label, "OK", path))
         else:
             checks.append(DiagnosticCheck("Containers", label, "INFO", "Not installed"))

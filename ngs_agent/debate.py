@@ -2,15 +2,13 @@
 
 from __future__ import annotations
 
-import json
 import re
 from dataclasses import dataclass, field
 from typing import Optional
 
-from ngs_agent.acmg import compute_acmg_classification, ACMGEvaluation
+from ngs_agent.acmg import ACMGEvaluation, compute_acmg_classification
 from ngs_agent.analyzer import Variant
 from ngs_agent.backends.base import LLMBackend, NoBackend
-from ngs_agent.common import extract_json
 
 
 @dataclass
@@ -82,7 +80,7 @@ def debate_variant(variant: Variant, backend: LLMBackend) -> DebateResult:
     opinions: list[PersonaOpinion] = []
     all_codes: list[str] = []
 
-    for key, persona in PERSONAS.items():
+    for persona in PERSONAS.values():
         try:
             text = backend.complete(_variant_prompt(variant), system=persona["system"])
         except Exception as exc:

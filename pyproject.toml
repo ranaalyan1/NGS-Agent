@@ -31,6 +31,7 @@ dependencies = [
   "PyYAML>=6.0.2",
   "typing-extensions>=4.12.2",
   "httpx>=0.28.1",
+  "prompt_toolkit>=3.0.48",
 ]
 
 [project.optional-dependencies]
@@ -42,7 +43,6 @@ llm = [
 
 tui = [
   "pyfiglet>=1.0",
-  "prompt_toolkit>=3.0",
 ]
 
 swarm = [
@@ -96,6 +96,57 @@ include = [
 [tool.ruff]
 line-length = 100
 target-version = "py311"
+
+[tool.ruff.lint]
+# Pin the lint rule set so results stay stable across ruff releases
+# (newer ruff versions keep expanding their default rule set, which broke CI).
+# E4/E7/E9 = pycodestyle errors, F = pyflakes, I = isort.
+select = ["E4", "E7", "E9", "F", "I"]
+
+[tool.pylint.main]
+# src/ holds the unmaintained v2 scaffold; the installed package is ngs_agent/.
+ignore-paths = ["^src/"]
+# Keep in sync with ruff.
+max-line-length = 100
+# ngs_agent/tui.py is a single cohesive REPL module.
+max-module-lines = 1500
+
+[tool.pylint."messages control"]
+disable = [
+  # Formatting and docstrings are covered by ruff / project style.
+  "missing-module-docstring",
+  "missing-class-docstring",
+  "missing-function-docstring",
+  "line-too-long",
+  "trailing-whitespace",
+  # The CI pylint job installs only pylint, not the project dependencies,
+  # so import inference (import-error / no-name-in-module / no-member)
+  # produces false positives on every third-party import.
+  "import-error",
+  "no-name-in-module",
+  "no-member",
+  "unexpected-keyword-arg",
+  # Deliberate patterns in this codebase.
+  "import-outside-toplevel",   # lazy imports keep CLI startup fast
+  "cyclic-import",             # cli <-> tui import each other lazily
+  "protected-access",          # priming prompt_toolkit history internals
+  "broad-exception-caught",    # the REPL must never crash on user input
+  "redefined-outer-name",      # pytest fixtures
+  "unused-argument",
+  "subprocess-run-check",
+  "no-value-for-parameter",    # click main() under __main__
+  # Opinionated style checks that add churn without catching bugs.
+  "duplicate-code",
+  "too-many-locals",
+  "too-many-arguments",
+  "too-many-branches",
+  "too-many-statements",
+  "too-many-return-statements",
+  "too-many-public-methods",
+  "too-many-positional-arguments",  # click commands take many options
+  "too-few-public-methods",
+  "too-many-instance-attributes",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

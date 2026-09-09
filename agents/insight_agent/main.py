@@ -6,7 +6,6 @@ from pathlib import Path
 
 import pandas as pd
 from anthropic import Anthropic
-
 from base_agent import BaseAgent
 from storage import MinioStorage
 
@@ -57,7 +56,6 @@ class InsightAgent(BaseAgent):
 
     def execute(self, inputs, routing_ctx):
         run_id = routing_ctx.get("run_id", "unknown")
-        de_summary = inputs.get("payload", {}).get("de_summary", {})
         de_artifacts = inputs.get("payload", {}).get("artifacts", {})
         go_input_uri = inputs.get("go_input") or routing_ctx.get("go_input")
         if not go_input_uri:

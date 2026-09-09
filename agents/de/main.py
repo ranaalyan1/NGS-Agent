@@ -1,5 +1,4 @@
 import logging
-from pathlib import Path
 
 from base_agent import BaseAgent
 
@@ -15,8 +14,6 @@ class DEAgent(BaseAgent):
         This mock implementation provides realistic fallback values
         when running without the full R/DESeq2 environment.
         """
-        run_id = routing_ctx.get("run_id", "unknown")
-        
         # Check if we're running with real DE results from upstream
         payload = inputs.get("payload", {})
         de_summary = payload.get("de_summary", {})

@@ -10,7 +10,6 @@ from ngs_agent.analyzer import Variant
 from ngs_agent.debate import DebateResult
 from ngs_agent.qc import QCMetric
 
-
 HTML_TEMPLATE = """<!DOCTYPE html>
 <html lang="en">
 <head>

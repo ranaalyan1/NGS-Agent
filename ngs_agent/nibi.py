@@ -179,8 +179,6 @@ def render_nibi(
     movable = expression in ("happy", "running", "curious", "thinking", "analyzing")
     if movable:
         dx = max(PUPIL_DX_RANGE[0], min(PUPIL_DX_RANGE[1], pupil_dx))
-        dy = max(PUPIL_DY_RANGE[0], min(PUPIL_DY_RANGE[1], pupil_dy))
-        eye_row = list(grid[_EYE_ROW + dy] if dy != 0 else grid[_EYE_ROW])
         # The pupil chars sit at fixed relative positions within the eye string.
         # We shift them horizontally by dx within the ( ) bracket.
         # Left eye bracket spans roughly cols 5-9, right eye cols 15-19.
@@ -359,7 +357,7 @@ EXPRESSION_HINTS: dict[Expression, str] = {
 
 try:
     import termios  # type: ignore[import]
-    import tty      # type: ignore[import]
+    import tty  # type: ignore[import]
     HAVE_TERMIOS = True
 except ImportError:
     HAVE_TERMIOS = False
@@ -569,7 +567,6 @@ def show_nibi_inline(
     expression: Expression = "happy",
 ) -> None:
     """Print Nibi statically (no Live block, no mouse tracking)."""
-    from rich.align import Align
     console.print(Align.center(render_nibi(theme, expression)))
     hint = EXPRESSION_HINTS.get(expression, "")
     if hint:
@@ -596,7 +593,6 @@ if __name__ == "__main__":
     con.print()
 
     # Cycle through all expressions
-    import time as _t
     exprs: list[Expression] = [
         "happy", "thinking", "analyzing", "running",
         "success", "error", "curious", "coffee", "sleeping",
@@ -605,7 +601,7 @@ if __name__ == "__main__":
         con.clear()
         show_nibi_inline(con, theme, expr)
         con.print(Align.center(Text(f"Expression: {expr}", style=theme["accent"])))
-        _t.sleep(1.5)
+        time.sleep(1.5)
 
     con.clear()
     con.print()

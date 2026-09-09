@@ -3,8 +3,6 @@ import subprocess
 import tempfile
 from pathlib import Path
 
-import pandas as pd
-
 from base_agent import BaseAgent
 from storage import MinioStorage
 
@@ -34,7 +32,6 @@ class GATKAgent(BaseAgent):
             dedup_bam = os.path.join(workdir, "dedup.bam")
             metrics = os.path.join(workdir, "dedup.metrics.txt")
             recal_table = os.path.join(workdir, "recal.table")
-            post_recal_table = os.path.join(workdir, "post_recal.table")
             recal_bam = os.path.join(workdir, "recalibrated.bam")
             vcf_gz = os.path.join(workdir, "variants.vcf.gz")
 

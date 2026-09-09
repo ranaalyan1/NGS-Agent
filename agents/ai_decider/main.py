@@ -4,9 +4,7 @@ import re
 from typing import Any, Dict
 
 from anthropic import Anthropic
-
 from base_agent import BaseAgent
-
 
 DEFAULT_TRIM_PARAMS = {
     "LEADING": 3,

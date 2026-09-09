@@ -693,7 +693,7 @@ def _rounded_frame(body: Any) -> Any:
     """Wrap ``body`` in a rounded box-drawing frame (╭─╮ │ ╰─╯)."""
     from prompt_toolkit.layout import HSplit, VSplit, Window
 
-    def bar(left: str, right: str) -> Any:
+    def frame_bar(left: str, right: str) -> Any:
         return VSplit([
             Window(width=1, height=1, char=left, style="class:frame"),
             Window(height=1, char="─", style="class:frame"),
@@ -701,13 +701,13 @@ def _rounded_frame(body: Any) -> Any:
         ])
 
     return HSplit([
-        bar("╭", "╮"),
+        frame_bar("╭", "╮"),
         VSplit([
             Window(width=1, char="│", style="class:frame"),
             body,
             Window(width=1, char="│", style="class:frame"),
         ]),
-        bar("╰", "╯"),
+        frame_bar("╰", "╯"),
     ])
 
 
@@ -907,7 +907,7 @@ def show_files(console: Console, theme: dict[str, str]) -> str | None:
         idx = int(raw) - 1
     except ValueError:
         return None
-    if not (0 <= idx < len(files)):
+    if idx < 0 or idx >= len(files):
         return None
 
     chosen = files[idx]

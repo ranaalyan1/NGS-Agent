@@ -9,7 +9,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import boto3
-
 from base_agent import BaseAgent
 
 # ---------------------------------------------------------------------------
@@ -191,13 +190,6 @@ class QCAgent(BaseAgent):
         if not api_key:
             _log("warn", "No ANTHROPIC_API_KEY set, falling back to heuristic")
             return heuristic
-
-        read_len_hint = (
-            f"- The actual read length is {read_length}bp. "
-            f"recommended_trim_bp MUST be ≤ {read_length} and ≥ 36.\n"
-            if read_length
-            else ""
-        )
 
         prompt = (
             "You are an expert bioinformatician reviewing FastQC output for a "

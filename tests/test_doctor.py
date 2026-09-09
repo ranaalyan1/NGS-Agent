@@ -1,6 +1,5 @@
 """Unit tests for system doctor and diagnostics."""
 
-import pytest
 from rich.console import Console
 
 from ngs_agent.doctor import run_diagnostics, print_diagnostics, DiagnosticCheck

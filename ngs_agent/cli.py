@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-from typing import Optional
 
 import click
 from rich.console import Console
@@ -15,7 +14,7 @@ from ngs_agent import __version__
 from ngs_agent.analyzer import parse_vcf, render_report, scan_qc
 from ngs_agent.backends.base import NoBackend
 from ngs_agent.backends.factory import get_backend
-from ngs_agent.config import CONFIG_PATH, load_config, run_wizard, save_config
+from ngs_agent.config import load_config, run_wizard, save_config
 from ngs_agent.debate import debate_variant
 from ngs_agent.doctor import print_diagnostics, run_diagnostics
 from ngs_agent.reports import generate_html_report
@@ -111,8 +110,8 @@ def debate(vcffile: Path, gene: str | None, html: Path | None) -> None:
             Panel(
                 "[bold red]No LLM backend configured.[/bold red]\n\n"
                 "The `debate` command requires an LLM. `watch` and `analyze` work without one.\n\n"
-                f"Run: [bold]ngsagent config wizard[/bold]\n"
-                f"Or set: GEMINI_API_KEY / ANTHROPIC_API_KEY / OPENAI_API_KEY",
+                "Run: [bold]ngsagent config wizard[/bold]\n"
+                "Or set: GEMINI_API_KEY / ANTHROPIC_API_KEY / OPENAI_API_KEY",
                 title="LLM Required",
                 border_style="red",
             )

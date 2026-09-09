@@ -1,4 +1,3 @@
-import json
 import os
 import subprocess
 import tempfile
@@ -6,7 +5,6 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import pandas as pd
-
 from base_agent import BaseAgent
 from storage import MinioStorage
 

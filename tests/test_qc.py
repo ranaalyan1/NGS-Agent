@@ -1,8 +1,7 @@
 """Unit tests for multi-format QC parser."""
 
 from pathlib import Path
-import pytest
-from ngs_agent.qc import QCParser, QCMetric
+from ngs_agent.qc import QCParser
 
 DATA_DIR = Path(__file__).parent / "data"
 
