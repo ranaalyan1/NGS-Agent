@@ -130,5 +130,4 @@ def tail_file(
                 time.sleep(poll_interval)
                 continue
             line_no += 1
-            for match in match_line(line, line_no, sigs):
-                yield match
+            yield from match_line(line, line_no, sigs)

@@ -9,7 +9,7 @@ from ngs_agent.backends.anthropic import AnthropicBackend
 from ngs_agent.backends.base import LLMBackend, NoBackend
 from ngs_agent.backends.gemini import GeminiBackend
 from ngs_agent.backends.ollama import OllamaBackend
-from ngs_agent.backends.openai_compat import OpenAICompatBackend, PROVIDER_PRESETS
+from ngs_agent.backends.openai_compat import PROVIDER_PRESETS, OpenAICompatBackend
 
 
 def get_backend(cfg: dict[str, Any]) -> LLMBackend:

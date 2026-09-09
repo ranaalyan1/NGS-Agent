@@ -1,7 +1,6 @@
 """Unit tests for shared helpers - _extract_json, _normalize_verdict, _normalize_params."""
 
 import json
-import pytest
 
 
 class TestExtractJson:

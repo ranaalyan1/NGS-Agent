@@ -1,6 +1,5 @@
 """Unit tests for debate module - stance extraction and consensus logic."""
 
-import pytest
 
 from ngs_agent.debate import (
     _extract_stance,

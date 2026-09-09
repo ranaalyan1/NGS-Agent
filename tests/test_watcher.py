@@ -1,16 +1,12 @@
 """Unit tests for NGS-Agent log watcher module."""
 
 from pathlib import Path
-import pytest
 
 from ngs_agent.watcher import (
-    Signature,
-    Match,
     load_signatures,
     _extract_value,
     match_line,
     scan_file,
-    signatures_dir,
     tail_file,
 )
 
@@ -81,8 +77,8 @@ class TestMatchLine:
 
     def test_comment_or_empty_line_skipped(self):
         sigs = load_signatures()
-        assert match_line("# Comment line with 5% alignment", 1, sigs) == []
-        assert match_line("   ", 2, sigs) == []
+        assert not match_line("# Comment line with 5% alignment", 1, sigs)
+        assert not match_line("   ", 2, sigs)
 
 class TestScanFile:
     """Test scanning files."""
