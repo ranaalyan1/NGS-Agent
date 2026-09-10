@@ -38,7 +38,7 @@ def ensure_file(path_value: str, label: str) -> None:
 )
 @click.option("--ref-genome", required=True, help="HISAT2 index basename path")
 @click.option("--reference-fasta", required=False, help="Reference FASTA path for DNA branch tools")
-@click.option("--gtf", required=False, help="Annotation GTF path (required for RNA-Seq counting)")
+@click.option("--gtf", required=False, help="Annotation GTF path (optional, for RNA-Seq counting if needed)")
 @click.option("--panel-bed", required=False, help="Optional panel BED for DNA coverage plots")
 @click.option("--known-sites", required=False, multiple=True, help="Known sites VCFs for GATK BQSR (repeatable)")
 @click.option("--paired/--single", default=False, help="Use paired-end mode")
@@ -73,10 +73,8 @@ def submit(
     if reference_fasta:
         ensure_file(reference_fasta, "--reference-fasta")
 
-    if experiment == "RNA-Seq" and not gtf:
-        raise click.BadParameter("RNA-Seq requires --gtf")
-    if gtf:
-        ensure_file(gtf, "--gtf")
+    if gtf and not Path(gtf).exists():
+        raise click.BadParameter(f"--gtf path does not exist: {gtf}")
     if panel_bed:
         ensure_file(panel_bed, "--panel-bed")
     for known_site in known_sites:
@@ -287,6 +285,65 @@ def wizard(output_env: str, output_csv: str) -> None:
 
     click.echo(f"\nWrote {output_env} and {output_csv}")
     click.echo(f"Next: run `python cli.py submit-batch --sample-sheet {output_csv} --organism {organism} --ref-genome {ref_genome} {('--gtf ' + gtf) if gtf else ''}`")
+
+
+# Quick submit a single RNA-Seq run with minimal options
+@cli.command("quick")
+@click.option("--fastq", required=True, help="Path to FASTQ file")
+@click.option("--organism", default="human", type=click.Choice(["human", "mouse", "rat", "zebrafish", "yeast", "other"]), help="Organism (default: human)")
+def quick(fastq: str, organism: str) -> None:
+    """Quick submit a single pipeline run with minimal flags."""
+    experiment = "RNA-Seq"
+    # Choose reference genome based on organism
+    if organism == "human":
+        ref_genome = "hg38"
+    elif organism == "mouse":
+        ref_genome = "mm10"
+    else:
+        ref_genome = "hg38"  # fallback
+
+    if not Path(fastq).exists():
+        raise click.BadParameter(f"--fastq path does not exist: {fastq}")
+
+    run_id = f"quick-{uuid.uuid4().hex[:8]}"
+    routing_ctx = {
+        "experiment_type": experiment,
+        "organism": organism,
+        "paired_end": False,
+        "reference_genome": ref_genome,
+        "reference_fasta": None,
+        "gtf": None,
+        "panel_bed": None,
+        "known_sites": [],
+        "run_id": run_id,
+    }
+    inputs = {"ref_genome": ref_genome, "gtf": None, "reference_fasta": None}
+    samples = [
+        {
+            "sample_id": "sample-01",
+            "condition": "unknown",
+            "replicate_group": "1",
+            "species": organism,
+            "fastq_path": fastq,
+            "fastq_r1": None,
+            "fastq_r2": None,
+        }
+    ]
+    inputs["samples"] = samples
+
+    async def run_submit() -> None:
+        temporal_host = os.environ.get("TEMPORAL_HOST", "localhost:7233")
+        client = await Client.connect(temporal_host)
+        handle = await client.start_workflow(
+            NGSPipelineWorkflow.run,
+            RunInput(run_id, experiment, routing_ctx, inputs),
+            id=f"ngs-{run_id}",
+            task_queue="ngs-pipeline",
+        )
+        click.echo(f"Quick run submitted: {run_id}")
+        click.echo(f"Monitor at http://localhost:8080/namespaces/default/workflows/{handle.id}")
+
+    asyncio.run(run_submit())
 
 
 if __name__ == "__main__":
