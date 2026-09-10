@@ -54,9 +54,11 @@ class DockerBackend(ExecutionBackend):
         console_callback = None
         if spec.stream_output:
 
-            def console_callback(line: str, stream_name: str) -> None:  # noqa: F811 - conditional redefinition
+            def _stream_to_console(line: str, stream_name: str) -> None:
                 style = "white" if stream_name == "stdout" else "yellow"
                 console.print(line, style=style)
+
+            console_callback = _stream_to_console
 
         result = run_streaming_process(
             wrapped,
