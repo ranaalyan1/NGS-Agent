@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 from pathlib import Path
 from typing import Any
 
@@ -26,12 +27,17 @@ def ensure_config_dir() -> None:
 
 
 def load_config() -> dict[str, Any]:
-    if not CONFIG_PATH.exists():
-        return dict(DEFAULT_CONFIG)
-    with CONFIG_PATH.open(encoding="utf-8") as fh:
-        data = yaml.safe_load(fh) or {}
+    """Load DEFAULT < global config < project `.ngsagent.yaml` overlay."""
+    from ngs_agent.detect import PROJECT_CONFIG_NAME
+
     merged = dict(DEFAULT_CONFIG)
-    merged.update(data)
+    if CONFIG_PATH.exists():
+        with CONFIG_PATH.open(encoding="utf-8") as fh:
+            merged.update(yaml.safe_load(fh) or {})
+    project_cfg = Path.cwd() / PROJECT_CONFIG_NAME
+    if project_cfg.exists():
+        with contextlib.suppress(OSError, yaml.YAMLError), project_cfg.open(encoding="utf-8") as fh:
+            merged.update(yaml.safe_load(fh) or {})
     return merged
 
 
@@ -41,16 +47,57 @@ def save_config(cfg: dict[str, Any]) -> None:
         yaml.safe_dump(cfg, fh, default_flow_style=False, sort_keys=False)
 
 
-def run_wizard() -> dict[str, Any]:
+def run_wizard(yes: bool = False) -> dict[str, Any]:
+    """Interactive LLM setup, or zero-prompt auto-setup with `yes=True`.
+
+    Auto-detection runs first: any provider with a key in the environment,
+    a key already in config, or a reachable local Ollama is marked ready
+    and becomes the default choice.
+    """
     from rich.console import Console
     from rich.prompt import Confirm, Prompt
+
+    from ngs_agent.detect import DEFAULT_MODELS, detect_providers
 
     console = Console()
     console.print("\n[bold]NGS-Agent configuration wizard[/bold]")
     console.print("LLM is optional. [dim]watch[/dim] and [dim]analyze[/dim] work without one.\n")
 
     cfg = load_config()
-    use_llm = Confirm.ask("Configure an LLM backend for [bold]debate[/bold]?", default=False)
+    providers = detect_providers(cfg)
+    detected_ids = {p.id for p in providers}
+
+    if yes:
+        # Non-interactive: pick the best detected provider, else disable LLM.
+        if providers:
+            best = providers[0]
+            cfg["llm"] = best.id
+            model_key = f"{best.id}_model"
+            cfg.setdefault(model_key, best.model)
+            save_config(cfg)
+            console.print(
+                f"[green]Saved.[/green] LLM backend: [bold]{best.id}[/bold] "
+                f"[dim]({best.source}, model {cfg[model_key]})[/dim]"
+            )
+        else:
+            cfg["llm"] = "none"
+            save_config(cfg)
+            console.print(
+                "[green]Saved.[/green] No API keys detected — LLM disabled.\n"
+                "[dim]Set e.g. OPENAI_API_KEY or GEMINI_API_KEY and re-run "
+                "`ngsagent init` to enable debate.[/dim]"
+            )
+        return cfg
+
+    if providers:
+        console.print("[bold]Detected and ready:[/bold]")
+        for p in providers:
+            console.print(f"  [green]✓[/green] {p.label}  [dim]({p.source})[/dim]")
+        console.print()
+
+    use_llm = Confirm.ask(
+        "Configure an LLM backend for [bold]debate[/bold]?", default=bool(providers)
+    )
     if not use_llm:
         cfg["llm"] = "none"
         save_config(cfg)
@@ -61,18 +108,23 @@ def run_wizard() -> dict[str, Any]:
     console.print("[bold]Choose a backend:[/bold]")
     backends = [
         ("anthropic",    "Anthropic Claude  (requires ANTHROPIC_API_KEY)"),
+        ("openai",       "OpenAI            (requires OPENAI_API_KEY)"),
+        ("gemini",       "Google Gemini     (requires GEMINI_API_KEY)"),
         ("openrouter",   "OpenRouter        (free & paid models, requires OPENROUTER_API_KEY)"),
         ("groq",         "Groq              (fast inference, requires GROQ_API_KEY)"),
         ("deepseek",     "DeepSeek          (requires DEEPSEEK_API_KEY)"),
-        ("gemini",       "Google Gemini     (requires GEMINI_API_KEY)"),
         ("ollama",       "Ollama            (local, no API key)"),
         ("openai_compat","Other OpenAI-compatible provider"),
     ]
+    default_idx = 0
     for i, (key, label) in enumerate(backends, 1):
-        console.print(f"  [cyan]{i}[/cyan]. {label}")
+        badge = "  [green]✓ ready[/green]" if key in detected_ids else ""
+        console.print(f"  [cyan]{i}[/cyan]. {label}{badge}")
+        if providers and key == providers[0].id and default_idx == 0:
+            default_idx = i
     console.print()
 
-    choice_raw = Prompt.ask("Backend number", default="1").strip()
+    choice_raw = Prompt.ask("Backend number", default=str(default_idx or 1)).strip()
     try:
         choice_idx = int(choice_raw) - 1
         choice = backends[choice_idx][0] if 0 <= choice_idx < len(backends) else "anthropic"
@@ -83,6 +135,9 @@ def run_wizard() -> dict[str, Any]:
             choice = "anthropic"
 
     cfg["llm"] = choice
+    # Persist a sane model default for the chosen provider if unset.
+    if f"{choice}_model" not in cfg and choice in DEFAULT_MODELS:
+        cfg[f"{choice}_model"] = DEFAULT_MODELS[choice]
 
     if choice == "anthropic":
         cfg["anthropic_model"] = Prompt.ask(
@@ -90,6 +145,15 @@ def run_wizard() -> dict[str, Any]:
             default=cfg.get("anthropic_model", DEFAULT_CONFIG["anthropic_model"]),
         )
         console.print("[dim]Set ANTHROPIC_API_KEY in your environment.[/dim]")
+
+    elif choice == "openai":
+        cfg["openai_model"] = Prompt.ask(
+            "Model",
+            default=cfg.get("openai_model", "gpt-4o"),
+        )
+        key = Prompt.ask("API key [dim](leave blank to use OPENAI_API_KEY env var)[/dim]", default="", password=True)
+        if key:
+            cfg["openai_api_key"] = key
 
     elif choice == "openrouter":
         cfg["openrouter_model"] = Prompt.ask(

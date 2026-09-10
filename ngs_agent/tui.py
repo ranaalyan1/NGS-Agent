@@ -37,9 +37,12 @@ NGS_GREEN = "#00FF9C"
 NGS_GREEN_DIM = "#00805A"
 NGS_ACCENT = "#00CC7A"
 
-SLASH_COMMANDS = ["/help", "/theme", "/files", "/status", "/clear", "/exit", "/quit"]
+SLASH_COMMANDS = ["/help", "/init", "/models", "/doctor", "/theme", "/files", "/status", "/clear", "/exit", "/quit"]
 
-SUBCOMMANDS = ["watch", "analyze", "debate", "config"]
+SUBCOMMANDS = ["watch", "analyze", "debate", "run", "init", "doctor", "models", "plan", "config", "pipeline"]
+
+#: First word of a line that counts as an explicit subcommand (no NL guessing).
+EXPLICIT_COMMANDS = set(SUBCOMMANDS) | {"analyse", "status", "help"}
 
 FILE_EXTENSIONS = {".vcf", ".log", ".txt", ".tsv", ".csv", ".yaml", ".yml"}
 
@@ -321,13 +324,19 @@ def _render_welcome_panels(console: Console, theme: dict[str, str]) -> None:
 def render_status_bar(console: Console, theme: dict[str, str], cfg: dict[str, Any]) -> None:
     llm = cfg.get("llm", "none")
     if llm and llm != "none":
-        model_label = cfg.get("anthropic_model") or cfg.get("ollama_model") or llm
+        model_label = cfg.get(f"{llm}_model") or llm
         dot = Text("● ", style=theme["llm_ok"])
         dot.append(llm, style=theme["llm_ok"])
         dot.append(f" · {model_label}", style=theme["muted"])
     else:
+        from ngs_agent.detect import cached_providers
+
+        detected = cached_providers(cfg)
         dot = Text("● none", style=theme["llm_none"])
-        dot.append(" · no LLM", style=theme["muted"])
+        if detected:
+            dot.append(f" · {len(detected)} key(s) detected — run /init", style=theme["muted"])
+        else:
+            dot.append(" · no LLM", style=theme["muted"])
 
     cwd_text = Text(f"  📁 {Path.cwd()}  ", style=theme["muted"])
     clock = Text(datetime.datetime.now().strftime("🕐 %H:%M"), style=theme["muted"])
@@ -353,14 +362,35 @@ def show_help(console: Console, theme: dict[str, str]) -> None:
     )
     console.print()
 
-    console.print(Text("Subcommands (run as if from the shell):", style=theme["muted"]))
+    console.print(Text("Just type what you want (no flags needed):", style=theme["muted"]))
+    for example in [
+        "check my pipeline log",
+        "analyze variants.vcf",
+        "debate the VUS in BRCA2",
+        "follow pipeline.log live",
+        "is my system ready?",
+    ]:
+        console.print(f"  [{theme['accent']}]{example}[/{theme['accent']}]")
+
+    console.print()
+    console.print(Text("Subcommands (file arguments are optional — auto-detected):", style=theme["muted"]))
     for name, usage, desc in [
-        ("watch",   "watch <logfile> [--tail] [--signatures DIR]",
+        ("watch",   "watch [logfile] [--tail]",
          "Scan a pipeline log against failure signatures."),
-        ("analyze", "analyze <vcffile> [--qc <qcfile>]",
+        ("analyze", "analyze [vcffile] [--qc <qcfile>]",
          "Parse VCF + optional QC summary; render colour-coded report."),
-        ("debate",  "debate <vcffile> [--gene <GENE>]",
+        ("debate",  "debate [vcffile] [--gene <GENE>]",
          "Run three-persona LLM debate on every VUS. Requires LLM."),
+        ("run",     'run "..."',
+         "Do something in plain English, e.g. run \"check my log\"."),
+        ("init",    "init [--yes]",
+         "One-command setup: detect keys, pick backend, find data."),
+        ("doctor",  "doctor [--fix]",
+         "Environment, tools, and LLM readiness checks."),
+        ("models",  "models",
+         "List LLM providers and which are ready."),
+        ("plan",    "plan <goal>",
+         "Preview steps for an agentic bioinformatics workflow."),
         ("config",  "config wizard | show | set <key> <value>",
          "Inspect or modify ~/.ngsagent/config.yaml."),
     ]:
@@ -371,6 +401,9 @@ def show_help(console: Console, theme: dict[str, str]) -> None:
     console.print(Text("Slash commands (TUI only):", style=theme["muted"]))
     for cmd, desc in [
         ("/help",   "Show this palette."),
+        ("/init",   "One-command setup."),
+        ("/models", "List LLM providers."),
+        ("/doctor", "System readiness check."),
         ("/theme",  "Switch color theme."),
         ("/files",  "Browse VCF / log / QC files in cwd."),
         ("/status", "Show config + LLM backend."),
@@ -386,6 +419,7 @@ def show_help(console: Console, theme: dict[str, str]) -> None:
         "Up/Down arrows cycle through command history.",
         "Tab autocompletes subcommand + slash names.",
         "Any subcommand streams its output live in this window.",
+        "Omit file paths — the newest .vcf / .log here is used automatically.",
     ]:
         console.print(f"  [{theme['muted']}]• {tip}[/{theme['muted']}]")
     console.print()
@@ -498,6 +532,18 @@ def handle_slash(
         show_help(console, theme)
         return True, False, theme, cfg
 
+    if name == "/init":
+        dispatch_command("init", console, theme)
+        return True, False, theme, load_config()
+
+    if name == "/models":
+        dispatch_command("models", console, theme)
+        return True, False, theme, cfg
+
+    if name == "/doctor":
+        dispatch_command("doctor", console, theme)
+        return True, False, theme, cfg
+
     if name == "/theme":
         new_name = pick_theme(console)
         theme = THEMES[new_name]
@@ -550,6 +596,37 @@ def dispatch_command(line: str, console: Console, theme: dict[str, str]) -> None
         return
 
     if not tokens:
+        return
+
+    # Plain English? Route through the intent parser (OpenCode-style).
+    first = tokens[0].lower().lstrip("/")
+    if first not in EXPLICIT_COMMANDS and not first.startswith("-"):
+        from ngs_agent.intent import parse_intent, to_command
+
+        intent = parse_intent(line)
+        translated = to_command(intent)
+        if translated is not None:
+            console.print(f"  [{theme['muted']}]✨ {intent.describe()}[/{theme['muted']}]")
+            dispatch_command(shlex.join(translated), console, theme)
+            return
+        if intent.action in ("help", "status"):
+            if intent.action == "help":
+                show_help(console, theme)
+            else:
+                show_status(console, theme, load_config())
+            return
+        console.print(
+            f"  [{theme['muted']}]Hmm — I didn't understand that. Try things like:[/{theme['muted']}]"
+        )
+        for example in [
+            "check my pipeline log",
+            "analyze variants.vcf",
+            "debate the VUS in BRCA2",
+            "is my system ready?",
+        ]:
+            console.print(f"  [{theme['accent']}]{example}[/{theme['accent']}]")
+        console.print(f"  [{theme['muted']}]Or type /help for every command.[/{theme['muted']}]")
+        console.print()
         return
 
     # Pick Nibi's pre-run expression based on subcommand
@@ -691,6 +768,13 @@ def run_tui() -> None:
     show_nibi_intro(console, theme, duration=8.0)
     console.print()
     _render_welcome_panels(console, theme)
+
+    if not CONFIG_PATH.exists():
+        console.print(
+            f"  [{theme['accent']}]👋 First time here? Type /init for one-command setup "
+            f"(keys, backend, and data auto-detected).[/{theme['accent']}]"
+        )
+        console.print()
 
     render_status_bar(console, theme, cfg)
     console.print()

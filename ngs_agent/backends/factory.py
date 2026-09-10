@@ -12,22 +12,59 @@ from ngs_agent.backends.ollama import OllamaBackend
 from ngs_agent.backends.openai_compat import OpenAICompatBackend, PROVIDER_PRESETS
 
 
-def get_backend(cfg: dict[str, Any]) -> LLMBackend:
-    llm = cfg.get("llm", "none").lower()
+def _auto_backend(cfg: dict[str, Any]) -> LLMBackend | None:
+    """Return the best available backend, or None if nothing is usable.
 
-    if not llm or llm == "none":
-        # Auto-detect from environment variables if not set in config
-        if os.environ.get("GEMINI_API_KEY"):
-            return GeminiBackend(model=cfg.get("gemini_model", "gemini-2.0-flash"))
-        if os.environ.get("ANTHROPIC_API_KEY"):
-            return AnthropicBackend(model=cfg.get("anthropic_model", "claude-3-7-sonnet-20250219"))
-        if os.environ.get("OPENAI_API_KEY"):
+    Priority: explicit-feeling cloud keys (env or config-stored) first,
+    then a reachable local Ollama. Never prompts, never hangs.
+    """
+    from ngs_agent.detect import PROVIDER_ENV_KEYS, ollama_reachable
+
+    for pid in ("anthropic", "openai", "gemini", "openrouter", "groq", "deepseek"):
+        env_key = PROVIDER_ENV_KEYS[pid]
+        api_key = cfg.get(f"{pid}_api_key") or os.environ.get(env_key, "")
+        if not api_key:
+            continue
+        if pid == "anthropic":
+            return AnthropicBackend(
+                model=cfg.get("anthropic_model", "claude-sonnet-4-20250514"),
+                api_key=api_key,
+            )
+        if pid == "gemini" and not cfg.get(f"{pid}_use_openai_compat"):
+            return GeminiBackend(
+                model=cfg.get("gemini_model", "gemini-2.0-flash"),
+                api_key=api_key,
+            )
+        if pid == "openai":
             return OpenAICompatBackend(
                 base_url="https://api.openai.com/v1",
-                api_key=os.environ.get("OPENAI_API_KEY", ""),
+                api_key=api_key,
                 model=cfg.get("openai_model", "gpt-4o"),
             )
-        return NoBackend()
+        base_url, default_model = PROVIDER_PRESETS[pid]
+        extra: dict[str, str] = {}
+        if pid == "openrouter":
+            extra["HTTP-Referer"] = "https://github.com/ranaalyan1/NGS-Agent"
+            extra["X-Title"] = "NGS-Agent"
+        return OpenAICompatBackend(
+            base_url=base_url,
+            api_key=api_key,
+            model=cfg.get(f"{pid}_model", default_model),
+            extra_headers=extra,
+        )
+
+    host = cfg.get("ollama_host", "http://localhost:11434")
+    if ollama_reachable(host):
+        return OllamaBackend(model=cfg.get("ollama_model", "llama3.2"), host=host)
+    return None
+
+
+def get_backend(cfg: dict[str, Any]) -> LLMBackend:
+    llm = (cfg.get("llm", "none") or "none").lower()
+
+    if llm in ("none", "auto", ""):
+        # Zero-config: use whatever provider is available right now.
+        return _auto_backend(cfg) or NoBackend()
 
     if llm == "gemini":
         return GeminiBackend(

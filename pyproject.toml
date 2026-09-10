@@ -31,6 +31,10 @@ dependencies = [
   "PyYAML>=6.0.2",
   "typing-extensions>=4.12.2",
   "httpx>=0.28.1",
+  # Interactive assistant (TUI) ships in the default install so
+  # `pip install ngs-agent` is the only step — no extras to memorize.
+  "pyfiglet>=1.0",
+  "prompt_toolkit>=3.0",
 ]
 
 [project.optional-dependencies]
@@ -40,6 +44,8 @@ llm = [
   "httpx>=0.28.1",
 ]
 
+# Kept for backwards compatibility (`pip install "ngs-agent[tui]"` still
+# works); the TUI is now included in the base install.
 tui = [
   "pyfiglet>=1.0",
   "prompt_toolkit>=3.0",

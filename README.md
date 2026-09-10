@@ -14,32 +14,33 @@ Agentic bioinformatics CLI for wet-lab NGS teams. Monitor pipeline logs in real 
 pip install ngs-agent
 ```
 
-Core install pulls only `click`, `rich`, and `PyYAML`. 
+That's the whole install — CLI, interactive assistant, log watcher, and VCF
+interpreter all ship in the base package. No extras to memorize.
 
-To use the `debate` command with an LLM:
-
-```bash
-pip install "ngs-agent[llm]"
-```
-
-To run the full Temporal-orchestrated swarm pipeline (RNA-Seq, WGS, WES end-to-end):
+Only two cases need more:
 
 ```bash
-pip install "ngs-agent[swarm]"
+pip install "ngs-agent[llm]"    # Anthropic/OpenAI SDKs for `debate`
+                                # (Gemini, Ollama, OpenRouter, Groq, DeepSeek work with zero extras)
+pip install "ngs-agent[swarm]"  # full Temporal-orchestrated pipeline (RNA-Seq, WGS, WES end-to-end)
 ```
 
 ---
 
-## Usage
+## Quickstart (60 seconds)
 
 ```bash
-ngsagent watch pipeline.log
-ngsagent watch --tail pipeline.log
-ngsagent analyze variants.vcf
-ngsagent analyze variants.vcf --qc multiqc_summary.txt
-ngsagent debate variants.vcf
-ngsagent debate variants.vcf --gene BRCA2
-ngsagent config wizard
+ngsagent init     # one-command setup: detects API keys, picks a backend, finds your data
+ngsagent          # open the interactive assistant and just describe what you want
+```
+
+Or skip setup entirely — `watch` and `analyze` need no LLM and no config:
+
+```bash
+ngsagent run "check my pipeline log"     # plain English, like `opencode run`
+ngsagent run "analyze variants.vcf"
+ngsagent analyze                         # no path? your .vcf is auto-detected
+ngsagent watch --tail                    # no path? your .log is auto-detected
 ```
 
 Try it immediately with the bundled demo files:
@@ -47,7 +48,35 @@ Try it immediately with the bundled demo files:
 ```bash
 ngsagent watch demo_data/sample.log
 ngsagent analyze demo_data/sample.vcf
+ngsagent run "debate the VUS in demo_data/sample.vcf"
 ```
+
+---
+
+## Usage
+
+```bash
+ngsagent init                                # guided one-command setup (like OpenCode's /init)
+ngsagent run "check my pipeline log"         # plain-English one-shot (like `opencode run`)
+ngsagent                                     # interactive assistant (natural language + slash commands)
+ngsagent watch [pipeline.log] [--tail]       # file optional — auto-detected
+ngsagent analyze [variants.vcf] [--qc ...]   # file optional — auto-detected
+ngsagent debate [variants.vcf] [--gene ...]  # file optional — auto-detected
+ngsagent models                              # which LLM providers are ready
+ngsagent doctor [--fix]                      # readiness checks (+ auto-fix)
+ngsagent config wizard                       # manual LLM configuration
+```
+
+Things you can say to `run` (or type directly in the assistant):
+
+| Say this | It runs |
+|---|---|
+| "check my pipeline log" | `watch` on your log |
+| "follow pipeline.log live" | `watch --tail` |
+| "analyze variants.vcf" | `analyze` + auto-attached QC |
+| "debate the VUS in BRCA2" | `debate --gene BRCA2` |
+| "is my system ready?" | `doctor` |
+| "set things up" | `init` |
 
 ---
 
@@ -58,7 +87,7 @@ ngsagent analyze demo_data/sample.vcf
 Scans a pipeline log against five built-in failure signatures. Pass `--tail` to follow a log as it grows.
 
 ```bash
-ngsagent watch <logfile> [--tail] [--signatures <dir>]
+ngsagent watch [logfile] [--tail] [--signatures <dir>]
 ```
 
 Each match prints the matched line, a plain-English explanation of the failure mode, and a concrete suggested fix. Signature severity levels are `critical` and `warning`. No LLM is involved.
@@ -77,13 +106,58 @@ You can supply your own YAML signatures directory with `--signatures`. The schem
 
 ---
 
+### run
+
+Plain-English one-shot — no flags to memorize. The request is parsed locally
+(no LLM needed for routing) and the interpretation is echoed before running.
+
+```bash
+ngsagent run "check my pipeline log"
+ngsagent run "analyze variants.vcf"
+ngsagent run "debate the VUS in BRCA2"
+ngsagent run "is my system ready?"
+```
+
+The same understanding powers the interactive assistant: just run `ngsagent`
+and type `check my pipeline log` at the prompt.
+
+---
+
+### init
+
+One-command guided setup. Detects API keys in your environment (and a running
+Ollama), picks the best LLM backend, discovers VCF / log / QC files in the
+current folder, and prints concrete next steps.
+
+```bash
+ngsagent init          # interactive
+ngsagent init --yes    # non-interactive: auto-detect everything
+```
+
+---
+
+### models
+
+Lists every LLM provider with its readiness status, active model, and where
+the key came from — so you always know what `debate` will use.
+
+```bash
+ngsagent models
+```
+
+---
+
 ### analyze
 
 Parses a VCF file and renders a colour-coded variant report in the terminal. Accepts an optional QC summary text file (MultiQC output or any plaintext file containing metrics).
 
 ```bash
-ngsagent analyze <vcffile> [--qc <qcfile>]
+ngsagent analyze [vcffile] [--qc <qcfile>] [--html <report.html>]
 ```
+
+The VCF path is optional: with no argument, the `.vcf` in the current folder
+is used automatically (a picker appears if there are several). A lone QC file
+is attached automatically too.
 
 VCF parsing reads `GENE`, `CSQ`, `CLNSIG`, and `AF` from the INFO field, and `DP` and `AD` from the sample column to compute read depth and variant allele fraction. Variants are classified automatically:
 
@@ -100,8 +174,10 @@ QC parsing extracts mapping rate, mean coverage, duplication rate, and Q30 fract
 Submits every VUS in a VCF to three independent LLM personas simultaneously. Each persona evaluates the variant from a different disciplinary angle, then the tool builds a consensus and recommendation.
 
 ```bash
-ngsagent debate <vcffile> [--gene <GENE_SYMBOL>]
+ngsagent debate [vcffile] [--gene <GENE_SYMBOL>] [--html <report.html>]
 ```
+
+The VCF path is optional — auto-detected like `analyze`.
 
 The three personas:
 
@@ -111,13 +187,31 @@ The three personas:
 
 Consensus logic: if all three agree the variant is pathogenic, it's escalated for clinical follow-up. If all three call it benign, it's flagged for deprioritisation. Mixed opinions surface the disagreement verbatim so the reviewing scientist sees exactly where uncertainty lies.
 
-Requires an LLM backend. Configure one with `ngsagent config wizard`.
+Requires an LLM backend. Easiest path: set a key and run `ngsagent init` —
+any of `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY`,
+`OPENROUTER_API_KEY`, `GROQ_API_KEY`, or `DEEPSEEK_API_KEY` is picked up
+automatically, or a running Ollama is used with no key at all.
+
+---
+
+### doctor
+
+Environment, bioinformatics tools, and LLM readiness checks. Pass `--fix` to
+auto-repair what can be repaired (missing config, unselected-but-detected
+backend).
+
+```bash
+ngsagent doctor
+ngsagent doctor --fix
+```
 
 ---
 
 ### config
 
-Manages `~/.ngsagent/config.yaml`.
+Manages `~/.ngsagent/config.yaml`. A project-local `.ngsagent.yaml` in the
+current directory overrides global values for that project only (like
+`opencode.json`). `config show` redacts secrets.
 
 ```bash
 ngsagent config wizard
@@ -133,6 +227,16 @@ ngsagent config set ollama_host http://localhost:11434
 
 ## LLM Setup
 
+Zero-config (recommended):
+
+```bash
+export OPENAI_API_KEY=sk-...   # or GEMINI / ANTHROPIC / OPENROUTER / GROQ / DEEPSEEK
+ngsagent init --yes
+```
+
+That's it — the key is detected, the backend is selected, and `debate` works.
+Manual alternatives per provider:
+
 ### Anthropic
 
 ```bash
@@ -146,9 +250,8 @@ Default model is `claude-sonnet-4-20250514`. Override with `ngsagent config set 
 ### Ollama (local, no API key)
 
 ```bash
-pip install "ngs-agent[llm]"
 ollama pull llama3.2
-ngsagent config set llm ollama
+ngsagent init --yes
 ```
 
 Ollama talks to `http://localhost:11434` by default. Override the host and model via `config set`.
@@ -207,9 +310,12 @@ All file artifacts are uploaded to MinIO at `s3://ngs-artifacts/<run_id>/<agent>
 ## Project Layout
 
 ```
-ngs_agent/              pip-installable CLI (watch, analyze, debate, config)
+ngs_agent/              pip-installable CLI (watch, analyze, debate, run, init, ...)
   backends/             LLM provider abstraction: Anthropic, Ollama, NoBackend
   signatures/           YAML failure signatures loaded by the watch command
+  detect.py             auto-discovery: project files + LLM providers
+  intent.py             offline natural-language router for `run` + TUI input
+  onboard.py            one-command `init` setup flow
 agents/                 Docker containers, one per pipeline step
   base/base_agent.py    Agent contract: reads AGENT_INPUTS + ROUTING_CONTEXT env vars, prints JSON to stdout
 workflows/              Temporal workflow definitions and activity dispatcher
