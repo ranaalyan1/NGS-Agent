@@ -4,7 +4,9 @@ import re
 import subprocess
 import sys
 import tempfile
-from datetime import UTC, datetime
+
+# NOTE: containers run Python 3.10 (ubuntu:22.04); datetime.UTC is 3.11+.
+from datetime import datetime, timezone
 from pathlib import Path
 
 from base_agent import BaseAgent
@@ -17,7 +19,7 @@ from storage import MinioStorage
 def _log(level: str, msg: str, **extra) -> None:
     """Emit a structured JSON log line to stderr."""
     entry = {
-        "ts": datetime.now(UTC).isoformat(),
+        "ts": datetime.now(timezone.utc).isoformat(),
         "level": level,
         "agent": "align",
         "msg": msg,

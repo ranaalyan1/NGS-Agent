@@ -139,7 +139,9 @@ ignore = ["BLE001", "UP042"]
 "tests/test_pipeline.py" = ["E501"]
 "tests/test_reports.py" = ["E501"]
 # Swarm agent containers: safe auto-fixes applied; deeper refactors deferred.
-"agents/*" = ["E501", "W293", "W291", "UP006", "F841", "B008", "UP035"]
+# UP017 stays off: the containers run Python 3.10 (ubuntu:22.04) and
+# datetime.UTC is 3.11+; the timezone.utc spelling must be kept.
+"agents/*" = ["E501", "W293", "W291", "UP006", "F841", "B008", "UP035", "UP017"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
