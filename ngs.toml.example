@@ -1,8 +1,16 @@
 [ngs]
+# Execution backend: auto | native | docker | apptainer | slurm | pbs
+# auto = scheduler if one is installed (HPC), else native when tools are on
+# PATH, else apptainer, else docker, else native.
 backend_preference = "auto"
 anthropic_api_key = ""
-anthropic_model = "claude-opus-4-7"
+# Stable alias (no dated snapshot); override freely.
+anthropic_model = "claude-sonnet-4-5"
 artifacts_dir = "./artifacts"
 logs_dir = "./logs"
 require_confirmation_for = ["expensive", "destructive"]
 allow_destructive_without_confirmation = false
+# Upper bound on concurrently executing plan steps (per-sample branches).
+max_parallel_steps = 4
+# Default thread count for multi-threaded tools (hisat2/samtools/...).
+default_threads = 4

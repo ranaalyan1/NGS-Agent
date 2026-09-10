@@ -4,12 +4,10 @@ from __future__ import annotations
 
 import datetime
 from pathlib import Path
-from typing import List, Optional
 
 from ngs_agent.analyzer import Variant
 from ngs_agent.debate import DebateResult
 from ngs_agent.qc import QCMetric
-
 
 HTML_TEMPLATE = """<!DOCTYPE html>
 <html lang="en">
@@ -61,7 +59,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     .badge-pass, .badge-benign { background: rgba(34, 197, 94, 0.2); color: var(--green); border: 1px solid var(--green); }
     .badge-warn, .badge-vus { background: rgba(234, 179, 8, 0.2); color: var(--yellow); border: 1px solid var(--yellow); }
     .badge-fail, .badge-pathogenic { background: rgba(239, 68, 68, 0.2); color: var(--red); border: 1px solid var(--red); }
-    
+
     .grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -76,7 +74,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     }
     .metric-title { font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.25rem; }
     .metric-value { font-size: 1.5rem; font-weight: 700; display: flex; justify-content: space-between; align-items: center; }
-    
+
     table {
       width: 100%;
       border-collapse: collapse;
@@ -93,7 +91,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     }
     th { background: #162032; color: var(--accent); font-size: 0.85rem; text-transform: uppercase; }
     tr:hover { background: rgba(255, 255, 255, 0.02); }
-    
+
     .debate-section {
       background: var(--card-bg);
       border: 1px solid var(--border);
@@ -152,10 +150,10 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 
 
 def generate_html_report(
-    variants: List[Variant],
-    qc_metrics: Optional[List[QCMetric]] = None,
-    debates: Optional[List[DebateResult]] = None,
-    output_path: Optional[Path] = None,
+    variants: list[Variant],
+    qc_metrics: list[QCMetric] | None = None,
+    debates: list[DebateResult] | None = None,
+    output_path: Path | None = None,
 ) -> str:
     """Generate a self-contained interactive HTML report."""
     now_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")

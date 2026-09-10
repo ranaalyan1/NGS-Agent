@@ -6,7 +6,6 @@ from pathlib import Path
 
 import pandas as pd
 from anthropic import Anthropic
-
 from base_agent import BaseAgent
 from storage import MinioStorage
 
@@ -44,7 +43,7 @@ class InsightAgent(BaseAgent):
         client = Anthropic(api_key=api_key)
         prompt = self._build_prompt(treatment, control, go_terms, sig_genes)
         msg = client.messages.create(
-            model=os.environ.get("ANTHROPIC_MODEL", "claude-3-5-sonnet-20241022"),
+            model=os.environ.get("ANTHROPIC_MODEL", "claude-sonnet-4-5"),
             max_tokens=500,
             temperature=0,
             messages=[{"role": "user", "content": prompt}],

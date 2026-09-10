@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import os
-from typing import Optional
 
 import httpx
 
@@ -15,13 +14,13 @@ class GeminiBackend(LLMBackend):
 
     def __init__(
         self,
-        api_key: Optional[str] = None,
+        api_key: str | None = None,
         model: str = "gemini-2.0-flash",
     ) -> None:
         self.api_key = api_key or os.environ.get("GEMINI_API_KEY", "")
         self.model = model
 
-    def complete(self, prompt: str, system: Optional[str] = None) -> str:
+    def complete(self, prompt: str, system: str | None = None) -> str:
         if not self.api_key:
             raise RuntimeError(
                 "Gemini API key not found. Set GEMINI_API_KEY environment variable or run `ngsagent config wizard`."

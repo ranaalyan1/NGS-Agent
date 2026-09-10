@@ -1,6 +1,7 @@
 """Unit tests for Gemini LLM backend."""
 
 import pytest
+
 from ngs_agent.backends.gemini import GeminiBackend
 
 

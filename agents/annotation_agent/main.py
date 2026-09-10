@@ -1,4 +1,3 @@
-import json
 import os
 import subprocess
 import tempfile
@@ -6,7 +5,6 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import pandas as pd
-
 from base_agent import BaseAgent
 from storage import MinioStorage
 
@@ -32,7 +30,7 @@ class AnnotationAgent(BaseAgent):
 
     def _parse_vcf(self, vcf_path: str) -> pd.DataFrame:
         rows = []
-        with open(vcf_path, "r", encoding="utf-8") as handle:
+        with open(vcf_path, encoding="utf-8") as handle:
             for line in handle:
                 if not line.strip() or line.startswith("#"):
                     continue
@@ -93,7 +91,7 @@ class AnnotationAgent(BaseAgent):
             coverage_csv = None
             if local_bed and local_bam:
                 rows = []
-                with open(local_bed, "r", encoding="utf-8") as handle:
+                with open(local_bed, encoding="utf-8") as handle:
                     for line in handle:
                         if not line.strip() or line.startswith("#"):
                             continue

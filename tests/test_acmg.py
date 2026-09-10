@@ -1,10 +1,7 @@
 """Unit tests for ACMG/AMP criteria evaluation engine."""
 
-import pytest
 from ngs_agent.acmg import (
     compute_acmg_classification,
-    ACMG_CRITERIA,
-    ACMGEvaluation,
 )
 
 

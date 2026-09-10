@@ -21,7 +21,8 @@ import select
 import sys
 import threading
 import time
-from typing import Any, Callable, List, Literal, Optional
+from collections.abc import Callable
+from typing import Any, Literal
 
 from rich.align import Align
 from rich.console import Console, Group
@@ -261,7 +262,7 @@ EXPRESSION_HINTS: dict[Expression, str] = {
 
 try:
     import termios  # type: ignore[import]
-    import tty      # type: ignore[import]
+    import tty  # type: ignore[import]
     HAVE_TERMIOS = True
 except ImportError:
     HAVE_TERMIOS = False
@@ -278,10 +279,10 @@ class MouseTracker:
 
     def __init__(self) -> None:
         self.running: bool = False
-        self.thread: Optional[threading.Thread] = None
-        self.callbacks: List[Callable[[int, int], None]] = []
-        self.keypresses: "queue.Queue[bytes]" = queue.Queue()
-        self._fd: Optional[int] = None
+        self.thread: threading.Thread | None = None
+        self.callbacks: list[Callable[[int, int], None]] = []
+        self.keypresses: queue.Queue[bytes] = queue.Queue()
+        self._fd: int | None = None
         self._old_termios: Any = None
 
     def add_callback(self, cb: Callable[[int, int], None]) -> None:
@@ -330,7 +331,7 @@ class MouseTracker:
     def has_keypress(self) -> bool:
         return not self.keypresses.empty()
 
-    def get_keypress(self, timeout: float = 0.0) -> Optional[bytes]:
+    def get_keypress(self, timeout: float = 0.0) -> bytes | None:
         try:
             return self.keypresses.get(timeout=timeout)
         except queue.Empty:
@@ -384,7 +385,7 @@ class MouseTracker:
                             cb(x, y)
                 except (ValueError, UnicodeDecodeError):
                     pass
-            except (OSError, IOError):
+            except OSError:
                 break
 
 
@@ -397,7 +398,7 @@ def show_nibi_intro(
     theme: dict,
     duration: float = 8.0,
     expression: Expression = "happy",
-    on_skip: Optional[Callable[[], None]] = None,
+    on_skip: Callable[[], None] | None = None,
 ) -> None:
     """Render Nibi with live mouse-tracking pupils in a rich.Live block.
 

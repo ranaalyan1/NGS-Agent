@@ -23,8 +23,8 @@ from rich.table import Table
 from rich.text import Text
 
 from ngs_agent import __version__
-from ngs_agent.config import CONFIG_PATH, load_config, save_config
-from ngs_agent.nibi import Expression, render_nibi, show_nibi_intro, show_nibi_inline
+from ngs_agent.config import load_config, save_config
+from ngs_agent.nibi import Expression, render_nibi, show_nibi_intro
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -617,9 +617,9 @@ def _make_prompt_session(theme: dict[str, str]) -> Any:
     """Build a prompt_toolkit PromptSession with history + autocomplete."""
     try:
         from prompt_toolkit import PromptSession  # type: ignore[import]
-        from prompt_toolkit.history import FileHistory  # type: ignore[import]
         from prompt_toolkit.auto_suggest import AutoSuggestFromHistory  # type: ignore[import]
         from prompt_toolkit.completion import WordCompleter  # type: ignore[import]
+        from prompt_toolkit.history import FileHistory  # type: ignore[import]
 
         history_path = Path.home() / ".ngsagent" / "history"
         history_path.parent.mkdir(parents=True, exist_ok=True)
@@ -644,7 +644,7 @@ def read_line(
     console: Console,
 ) -> str | None:
     """Read one line from the user. Returns None on EOF / Ctrl+D."""
-    prompt_str = f"> "
+    prompt_str = "> "
 
     if prompt_session is not None:
         try:

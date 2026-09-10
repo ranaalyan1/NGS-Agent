@@ -5,11 +5,10 @@ import subprocess
 import sys
 import tempfile
 import zipfile
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import boto3
-
 from base_agent import BaseAgent
 
 # ---------------------------------------------------------------------------
@@ -20,7 +19,7 @@ def _log(level: str, msg: str, **extra) -> None:
     """Emit a structured JSON log line to stderr (stdout is reserved for
     the agent output consumed by the activity layer)."""
     entry = {
-        "ts": datetime.now(timezone.utc).isoformat(),
+        "ts": datetime.now(UTC).isoformat(),
         "level": level,
         "agent": "qc",
         "msg": msg,
@@ -186,7 +185,7 @@ class QCAgent(BaseAgent):
         heuristic = self._heuristic_verdict(summary_text)
 
         api_key = os.environ.get("ANTHROPIC_API_KEY")
-        model = os.environ.get("ANTHROPIC_MODEL", "claude-3-5-sonnet-20241022")
+        model = os.environ.get("ANTHROPIC_MODEL", "claude-sonnet-4-5")
 
         if not api_key:
             _log("warn", "No ANTHROPIC_API_KEY set, falling back to heuristic")

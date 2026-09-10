@@ -9,7 +9,7 @@ from ngs_agent.backends.anthropic import AnthropicBackend
 from ngs_agent.backends.base import LLMBackend, NoBackend
 from ngs_agent.backends.gemini import GeminiBackend
 from ngs_agent.backends.ollama import OllamaBackend
-from ngs_agent.backends.openai_compat import OpenAICompatBackend, PROVIDER_PRESETS
+from ngs_agent.backends.openai_compat import PROVIDER_PRESETS, OpenAICompatBackend
 
 
 def get_backend(cfg: dict[str, Any]) -> LLMBackend:
@@ -20,7 +20,7 @@ def get_backend(cfg: dict[str, Any]) -> LLMBackend:
         if os.environ.get("GEMINI_API_KEY"):
             return GeminiBackend(model=cfg.get("gemini_model", "gemini-2.0-flash"))
         if os.environ.get("ANTHROPIC_API_KEY"):
-            return AnthropicBackend(model=cfg.get("anthropic_model", "claude-3-7-sonnet-20250219"))
+            return AnthropicBackend(model=cfg.get("anthropic_model", "claude-sonnet-4-5"))
         if os.environ.get("OPENAI_API_KEY"):
             return OpenAICompatBackend(
                 base_url="https://api.openai.com/v1",
@@ -37,7 +37,7 @@ def get_backend(cfg: dict[str, Any]) -> LLMBackend:
 
     if llm == "anthropic":
         return AnthropicBackend(
-            model=cfg.get("anthropic_model", "claude-3-7-sonnet-20250219"),
+            model=cfg.get("anthropic_model", "claude-sonnet-4-5"),
             api_key=cfg.get("anthropic_api_key"),
         )
 

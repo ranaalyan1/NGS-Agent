@@ -89,7 +89,7 @@ class IngestAgent(BaseAgent):
             logger.warning(f"{reasoning} - using mock mode")
 
         status = "mock" if is_mock else "ok"
-        
+
         return {
             "agent": "ingest",
             "status": status,

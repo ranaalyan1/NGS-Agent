@@ -9,7 +9,7 @@ from storage import MinioStorage
 
 class CountAgent(BaseAgent):
     def _count_rows_cols(self, matrix_file: str) -> tuple[int, int]:
-        with open(matrix_file, "r", encoding="utf-8") as handle:
+        with open(matrix_file, encoding="utf-8") as handle:
             reader = csv.reader(handle, delimiter="\t")
             rows = list(reader)
         if not rows:
