@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [ main, master ]
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -132,3 +136,17 @@ jobs:
         path: |
           /tmp/integration-pytest.log
           /tmp/minio.log
+
+    - name: Post failure diagnostics to PR
+      if: failure()
+      env:
+        GH_TOKEN: ${{ github.token }}
+        PR_NUMBER: ${{ github.event.pull_request.number }}
+      run: |
+        {
+          echo "### Integration test diagnostics (auto-posted on failure)"
+          echo '```'
+          tail -c 20000 /tmp/integration-pytest.log
+          echo '```'
+        } > /tmp/comment.md
+        gh pr comment "$PR_NUMBER" --body-file /tmp/comment.md || true
