@@ -210,6 +210,8 @@ All file artifacts are uploaded to MinIO at `s3://ngs-artifacts/<run_id>/<agent>
 ngs_agent/              pip-installable CLI (watch, analyze, debate, config)
   backends/             LLM provider abstraction: Anthropic, Ollama, NoBackend
   signatures/           YAML failure signatures loaded by the watch command
+  agentic/              agentic pipeline engine (planner/executor/verifier/reporter)
+                        CLI: `ngs-agentic` — requires `pip install ngs-agent[agentic]`
 agents/                 Docker containers, one per pipeline step
   base/base_agent.py    Agent contract: reads AGENT_INPUTS + ROUTING_CONTEXT env vars, prints JSON to stdout
 workflows/              Temporal workflow definitions and activity dispatcher

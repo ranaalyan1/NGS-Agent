@@ -40,6 +40,14 @@ llm = [
   "httpx>=0.28.1",
 ]
 
+# Dependencies for the agentic engine (ngs_agent.agentic): planner/executor/
+# verifier/reporter agents and the `ngs-agentic` CLI.
+agentic = [
+  "typer>=0.12.0",
+  "pydantic>=2.10.6",
+  "platformdirs>=4.0.0",
+]
+
 tui = [
   "pyfiglet>=1.0",
   "prompt_toolkit>=3.0",
@@ -66,6 +74,10 @@ dev = [
   # functional test is skipped. Keep the documented `.[dev]` test command
   # self-contained; swarm users still get the same dependency from [swarm].
   "boto3>=1.37.0",
+  # Needed to import and test the agentic engine (ngs_agent.agentic).
+  "typer>=0.12.0",
+  "pydantic>=2.10.6",
+  "platformdirs>=4.0.0",
 ]
 
 [project.urls]
@@ -76,6 +88,7 @@ Repository = "https://github.com/ranaalyan1/NGS-Agent"
 [project.scripts]
 ngsagent = "ngs_agent.cli:main"
 ngs = "ngs_agent.cli:main"
+ngs-agentic = "ngs_agent.agentic:launch_cli"
 
 [tool.hatch.build.targets.wheel]
 packages = ["ngs_agent"]

@@ -151,7 +151,7 @@ the package is up, so fix them in the same round as the publish:
 | No `ngs_agent/__main__.py` | `python -m ngs_agent` doesn't work (useful on Windows when Scripts isn't on PATH) | Add a two-line `__main__.py` |
 | Generic `ngs` console script | Can collide with other packages' `ngs` binary and silently break | Ship only `ngsagent` (+ `ngs-agent` alias if you like) |
 | Version hardcoded in `ngs_agent/cli.py` | `--version` drifts from the released version | Single-source from `importlib.metadata` |
-| Duplicate `src/ngs_agent` package | Risk of accidentally shipping the v2 engine under the same import name | Add a CI test asserting the wheel contains only the intended package |
+| ~~Duplicate `src/ngs_agent` package~~ | Resolved: the v2 engine now lives inside the main package as `ngs_agent.agentic` and ships in the wheel (its extra deps are behind `pip install ngs-agent[agentic]`) | Done |
 
 ---
 
