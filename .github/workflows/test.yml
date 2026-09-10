@@ -65,16 +65,34 @@ jobs:
 
     - name: Start MinIO artifact storage
       run: |
-        docker run -d --name minio -p 9000:9000 -p 9001:9001 \
+        # MinIO Community Edition Docker images are discontinued (source-only
+        # since Oct 2025); pin a known-good release so CI stays deterministic.
+        docker run -d --name minio -p 9000:9000 \
           -e MINIO_ROOT_USER=minioadmin -e MINIO_ROOT_PASSWORD=minioadmin \
-          minio/minio server /data --console-address ":9001"
+          minio/minio:RELEASE.2025-04-22T22-12-26Z server /data
+        healthy=0
         for i in $(seq 1 30); do
-          curl -sf http://localhost:9000/minio/health/live && break || sleep 2
+          if curl -sf http://localhost:9000/minio/health/live; then healthy=1; break; fi
+          sleep 2
         done
-        docker run --rm --network host minio/mc sh -c "
-          until /usr/bin/mc alias set myminio http://localhost:9000 minioadmin minioadmin; do sleep 2; done;
-          /usr/bin/mc mb --ignore-existing myminio/ngs-artifacts;
-          /usr/bin/mc mb --ignore-existing myminio/ngs-cache"
+        if [ "$healthy" != "1" ]; then
+          echo "::error::MinIO did not become healthy; container logs follow"
+          docker logs minio || true
+          exit 1
+        fi
+        python - << 'EOF'
+        import boto3
+
+        s3 = boto3.client(
+            "s3",
+            endpoint_url="http://localhost:9000",
+            aws_access_key_id="minioadmin",
+            aws_secret_access_key="minioadmin",
+        )
+        for bucket in ("ngs-artifacts", "ngs-cache"):
+            s3.create_bucket(Bucket=bucket)
+        print("buckets ready:", [b["Name"] for b in s3.list_buckets()["Buckets"]])
+        EOF
 
     - name: Generate tiny RNA-Seq test dataset and build HISAT2 index
       run: |

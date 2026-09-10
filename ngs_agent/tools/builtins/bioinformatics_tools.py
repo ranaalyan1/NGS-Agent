@@ -14,6 +14,7 @@ from pydantic import BaseModel, Field
 from rich.console import Console
 
 from ngs_agent.bioinformatics.common import fastqc_stem
+from ngs_agent.common import anthropic_create_message
 from ngs_agent.config.settings import DEFAULT_ANTHROPIC_MODEL
 from ngs_agent.execution.models import CommandSpec
 from ngs_agent.tools.base import Tool, ToolContext
@@ -512,10 +513,10 @@ class TrimmomaticTool(BioinformaticsTool[TrimmomaticInput, TrimmomaticOutput]):
         model = os.environ.get("ANTHROPIC_MODEL", DEFAULT_ANTHROPIC_MODEL)
         try:
             client = Anthropic(api_key=api_key)
-            response = client.messages.create(
+            response = anthropic_create_message(
+                client,
                 model=model,
                 max_tokens=400,
-                temperature=0,
                 messages=[
                     {
                         "role": "user",

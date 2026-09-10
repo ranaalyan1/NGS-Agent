@@ -82,3 +82,30 @@ def normalize_params(params: dict[Any, Any] | None) -> dict[str, Any]:
         sw = str(DEFAULT_TRIM_PARAMS["SLIDINGWINDOW"])
     merged["SLIDINGWINDOW"] = sw
     return merged
+
+
+def anthropic_create_message(
+    client: Any,
+    *,
+    model: str,
+    max_tokens: int,
+    messages: list[dict[str, Any]],
+    temperature: float = 0.0,
+) -> Any:
+    """Call ``client.messages.create`` across anthropic SDK versions.
+
+    The ``temperature`` keyword was removed from ``Messages.create`` in
+    anthropic SDK 1.x, so it is passed only when the installed SDK accepts
+    it. Arguments are splatted through a dict for the same reason: the
+    call shape is validated at runtime, not against one SDK's signatures.
+    """
+    base: dict[str, Any] = {
+        "model": model,
+        "max_tokens": max_tokens,
+        "messages": messages,
+    }
+    try:
+        return client.messages.create(**base, temperature=temperature)
+    except TypeError:
+        # SDK >= 1.0: temperature is no longer a create() keyword.
+        return client.messages.create(**base)

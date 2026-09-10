@@ -15,6 +15,7 @@ from ngs_agent.agent.report_template import (
     render_markdown,
 )
 from ngs_agent.artifacts.store import LocalArtifactStore
+from ngs_agent.common import anthropic_create_message
 from ngs_agent.config.settings import NGSSettings
 from ngs_agent.provenance.manifest import RunManifest
 
@@ -54,10 +55,10 @@ class ReporterAgent:
 
         try:
             client = Anthropic(api_key=self.settings.anthropic_api_key)
-            response = client.messages.create(
+            response = anthropic_create_message(
+                client,
                 model=self.settings.anthropic_model,
                 max_tokens=700,
-                temperature=0,
                 messages=[
                     {
                         "role": "user",

@@ -229,12 +229,16 @@ class QCAgent(BaseAgent):
         try:
             from anthropic import Anthropic
             client = Anthropic(api_key=api_key)
-            msg = client.messages.create(
-                model=model,
-                max_tokens=600,
-                temperature=0,
-                messages=[{"role": "user", "content": prompt}],
-            )
+            kwargs = {
+                "model": model,
+                "max_tokens": 600,
+                "messages": [{"role": "user", "content": prompt}],
+            }
+            try:
+                msg = client.messages.create(**kwargs, temperature=0)
+            except TypeError:
+                # anthropic SDK >= 1.0 removed the temperature keyword.
+                msg = client.messages.create(**kwargs)
 
             # extract text from response blocks
             text = ""

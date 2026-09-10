@@ -11,6 +11,7 @@ from ngs_agent.agent.models import ExperimentContext, Plan, PlanStep
 from ngs_agent.bioinformatics.common import fastqc_stem
 from ngs_agent.bioinformatics.samplesheet import SampleRecord, parse_samplesheet
 from ngs_agent.bioinformatics.workflows import WorkflowInference, get_workflow, infer_workflow
+from ngs_agent.common import anthropic_create_message
 from ngs_agent.config.settings import NGSSettings
 from ngs_agent.environment import platform_warnings, verify_tool_environment
 from ngs_agent.tools.permissions import SafetyLevel
@@ -642,10 +643,10 @@ class PlannerAgent:
 
         try:
             client = Anthropic(api_key=self.settings.anthropic_api_key)
-            response = client.messages.create(
+            response = anthropic_create_message(
+                client,
                 model=self.settings.anthropic_model,
                 max_tokens=800,
-                temperature=0,
                 messages=[
                     {
                         "role": "user",
