@@ -1,8 +1,8 @@
 """Unit tests for multi-format QC parser."""
 
 from pathlib import Path
-import pytest
-from ngs_agent.qc import QCParser, QCMetric
+
+from ngs_agent.qc import QCParser
 
 DATA_DIR = Path(__file__).parent / "data"
 
@@ -13,11 +13,11 @@ class TestQCParser:
         fastqc_file = DATA_DIR / "fastqc_data.txt"
         metrics = QCParser.parse(fastqc_file)
         assert len(metrics) > 0
-        
+
         names = [m.name for m in metrics]
         assert "Total Sequences" in names
         assert "GC Content" in names
-        
+
         gc_metric = next(m for m in metrics if m.name == "GC Content")
         assert "45" in gc_metric.value
         assert gc_metric.status == "pass"
@@ -33,7 +33,7 @@ class TestQCParser:
         )
         metrics = QCParser.parse(stat_file)
         assert len(metrics) >= 2
-        
+
         map_metric = next(m for m in metrics if m.name == "Mapping Rate")
         assert map_metric.value == "95.0%"
         assert map_metric.status == "pass"

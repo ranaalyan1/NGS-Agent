@@ -1,12 +1,11 @@
 """Unit tests for debate module - stance extraction and consensus logic."""
 
-import pytest
 
 from ngs_agent.debate import (
-    _extract_stance,
+    PersonaOpinion,
     _build_consensus,
     _build_recommendation,
-    PersonaOpinion,
+    _extract_stance,
 )
 
 
@@ -21,22 +20,22 @@ class TestExtractStance:
         """Clear pathogenic call should be extracted."""
         text = "This variant is Pathogenic based on ACMG criteria."
         assert _extract_stance(text) == "Pathogenic"
-    
+
     def test_explicit_likely_pathogenic(self):
         """Clear likely pathogenic call should be extracted."""
         text = "I classify this as Likely Pathogenic."
         assert _extract_stance(text) == "Likely Pathogenic"
-    
+
     def test_explicit_benign(self):
         """Clear benign call should be extracted."""
         text = "This variant is Benign in my assessment."
         assert _extract_stance(text) == "Benign"
-    
+
     def test_explicit_vus(self):
         """VUS classification should be extracted."""
         text = "Remains a Variant of Uncertain Significance (VUS)."
         assert _extract_stance(text) in ("Vus", "Uncertain")
-    
+
     def test_negation_not_pathogenic_should_not_match_pathogenic(self):
         """BUG TEST: 'not likely pathogenic' should NOT be classified as 'Likely Pathogenic'.
         
@@ -51,7 +50,7 @@ class TestExtractStance:
         # After fix, should NOT return "Likely Pathogenic"
         assert result != "Likely Pathogenic", \
             f"BUG: Negated 'not likely pathogenic' incorrectly classified as '{result}'"
-    
+
     def test_negation_not_benign(self):
         """BUG TEST: 'not benign' should NOT be classified as 'Benign'."""
         text = "The variant is not benign; it shows pathogenic features."
@@ -59,7 +58,7 @@ class TestExtractStance:
         # Currently buggy - will match "benign" substring
         assert result != "Benign", \
             f"BUG: Negated 'not benign' incorrectly classified as '{result}'"
-    
+
     def test_no_stance_returns_uncertain(self):
         """When no stance keywords found, should return 'Uncertain'."""
         text = "The data is inconclusive and requires more study."
@@ -79,7 +78,7 @@ class TestBuildConsensus:
         consensus = _build_consensus(opinions)
         assert "pathogenic" in consensus.lower()
         assert "All" in consensus
-    
+
     def test_all_benign_consensus(self):
         """All personas agree on benign → strong consensus."""
         opinions = [
@@ -90,7 +89,7 @@ class TestBuildConsensus:
         consensus = _build_consensus(opinions)
         assert "benign" in consensus.lower()
         assert "All" in consensus
-    
+
     def test_mixed_opinions_no_consensus(self):
         """Mixed opinions → no consensus."""
         opinions = [
@@ -100,7 +99,7 @@ class TestBuildConsensus:
         ]
         consensus = _build_consensus(opinions)
         assert "Mixed" in consensus or "no consensus" in consensus.lower()
-    
+
     def test_all_vus_consensus(self):
         """All agree on VUS → remains VUS."""
         opinions = [
@@ -123,7 +122,7 @@ class TestBuildRecommendation:
             gene = "BRCA1"
         rec = _build_recommendation(consensus, MockVariant())  # type: ignore
         assert "clinical" in rec.lower() or "prioritize" in rec.lower()
-    
+
     def test_benign_recommendation(self):
         """Benign consensus → deprioritize recommendation."""
         consensus = "All personas lean benign."
@@ -131,7 +130,7 @@ class TestBuildRecommendation:
             gene = "TP53"
         rec = _build_recommendation(consensus, MockVariant())  # type: ignore
         assert "deprioritize" in rec.lower() or "benign" in rec.lower()
-    
+
     def test_vus_recommendation(self):
         """VUS → further study recommendation."""
         consensus = "All personas agree: remains VUS."

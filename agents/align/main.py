@@ -4,6 +4,8 @@ import re
 import subprocess
 import sys
 import tempfile
+
+# NOTE: containers run Python 3.10 (ubuntu:22.04); datetime.UTC is 3.11+.
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -59,7 +61,7 @@ class AlignAgent(BaseAgent):
     def _ask_claude(self, stderr_log: str, mapping_rate: float) -> dict:
         """Send HISAT2 stderr to Claude to determine why alignment failed."""
         api_key = os.environ.get("ANTHROPIC_API_KEY")
-        model = os.environ.get("ANTHROPIC_MODEL", "claude-3-5-sonnet-20241022")
+        model = os.environ.get("ANTHROPIC_MODEL", "claude-sonnet-4-5")
 
         if not api_key:
             _log("warn", "No ANTHROPIC_API_KEY set, cannot run alignment AI diagnosis")
@@ -94,16 +96,20 @@ class AlignAgent(BaseAgent):
         try:
             from anthropic import Anthropic
             client = Anthropic(api_key=api_key)
-            msg = client.messages.create(
-                model=model,
-                max_tokens=400,
-                temperature=0,
-                messages=[{"role": "user", "content": prompt}],
-            )
+            kwargs = {
+                "model": model,
+                "max_tokens": 400,
+                "messages": [{"role": "user", "content": prompt}],
+            }
+            try:
+                msg = client.messages.create(**kwargs, temperature=0)
+            except TypeError:
+                # anthropic SDK >= 1.0 removed the temperature keyword.
+                msg = client.messages.create(**kwargs)
 
             text = "".join(block.text for block in msg.content if getattr(block, "type", "") == "text")
             parsed = self._extract_json(text)
-            
+
             if not parsed or "action" not in parsed:
                 return {"reasoning": "Failed to parse AI JSON output.", "action": "abort"}
 

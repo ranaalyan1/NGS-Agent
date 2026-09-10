@@ -9,7 +9,7 @@ from storage import MinioStorage
 
 class CountAgent(BaseAgent):
     def _count_rows_cols(self, matrix_file: str) -> tuple[int, int]:
-        with open(matrix_file, "r", encoding="utf-8") as handle:
+        with open(matrix_file, encoding="utf-8") as handle:
             reader = csv.reader(handle, delimiter="\t")
             rows = list(reader)
         if not rows:
@@ -46,8 +46,12 @@ class CountAgent(BaseAgent):
                 gtf,
                 "-o",
                 counts_tsv,
-                local_bam,
             ]
+            if routing_ctx.get("paired_end"):
+                # Counting a paired-end BAM in single-end mode is a hard
+                # featureCounts error; count fragments (read pairs).
+                cmd += ["-p", "--countReadPairs"]
+            cmd.append(local_bam)
             res = subprocess.run(cmd, capture_output=True, text=True)
             if res.returncode != 0:
                 raise RuntimeError(f"featureCounts failed: {res.stderr.strip()}")

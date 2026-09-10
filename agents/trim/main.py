@@ -39,7 +39,7 @@ class TrimAgent(BaseAgent):
         payload = inputs.get("payload", {})
         trim_params = payload.get("trim_params", {})
 
-        # Trimmomatic uses SLIDINGWINDOW, LEADING, TRAILING, and MINLEN 
+        # Trimmomatic uses SLIDINGWINDOW, LEADING, TRAILING, and MINLEN
         # from the AI decider's output, avoiding hard-truncation (CROP).
 
         fastq_single = payload.get("raw_reads") or inputs.get("fastq_path")

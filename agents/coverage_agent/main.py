@@ -1,5 +1,4 @@
 import csv
-import os
 import tempfile
 from pathlib import Path
 
@@ -16,7 +15,7 @@ class CoverageAgent(BaseAgent):
 
     def _mean_depth_from_csv(self, csv_path: str) -> float | None:
         values: list[float] = []
-        with open(csv_path, "r", encoding="utf-8") as handle:
+        with open(csv_path, encoding="utf-8") as handle:
             reader = csv.DictReader(handle)
             for row in reader:
                 if "mean_depth" not in row:

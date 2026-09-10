@@ -1,9 +1,8 @@
 """Unit tests for system doctor and diagnostics."""
 
-import pytest
 from rich.console import Console
 
-from ngs_agent.doctor import run_diagnostics, print_diagnostics, DiagnosticCheck
+from ngs_agent.doctor import DiagnosticCheck, print_diagnostics, run_diagnostics
 
 
 class TestDoctorDiagnostics:

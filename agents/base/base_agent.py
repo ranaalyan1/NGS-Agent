@@ -1,6 +1,6 @@
 import json
 import os
-from typing import Any, Dict
+from typing import Any
 
 
 class BaseAgent:
@@ -10,5 +10,5 @@ class BaseAgent:
         output = self.execute(inputs, routing_ctx)
         print(json.dumps(output), flush=True)
 
-    def execute(self, inputs: Dict[str, Any], routing_ctx: Dict[str, Any]) -> Dict[str, Any]:
+    def execute(self, inputs: dict[str, Any], routing_ctx: dict[str, Any]) -> dict[str, Any]:
         raise NotImplementedError

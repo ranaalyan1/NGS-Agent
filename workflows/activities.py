@@ -159,7 +159,7 @@ async def run_agent_container(
         "-e",
         f"ANTHROPIC_API_KEY={os.environ.get('ANTHROPIC_API_KEY', '')}",
         "-e",
-        f"ANTHROPIC_MODEL={os.environ.get('ANTHROPIC_MODEL', 'claude-3-5-sonnet-20241022')}",
+        f"ANTHROPIC_MODEL={os.environ.get('ANTHROPIC_MODEL', 'claude-sonnet-4-5')}",
         "-e",
         f"OPENROUTER_API_KEY={os.environ.get('OPENROUTER_API_KEY', '')}",
         "-e",

@@ -7,7 +7,6 @@ from pathlib import Path
 import boto3
 import pytest
 
-
 pytestmark = pytest.mark.integration
 
 
@@ -24,6 +23,11 @@ def _docker_available() -> bool:
 
 def _run_container(agent: str, inputs: dict, routing: dict, mounts: list[tuple[str, str]] | None = None):
     cmd = ["docker", "run", "--rm"]
+    # The agents reach MinIO at S3_ENDPOINT (http://localhost:9000 on the CI
+    # host); with the default bridge network "localhost" would be the agent
+    # container itself, so share the host network like the workflow's own
+    # MinIO bootstrap step does.
+    cmd += ["--network", "host"]
     if mounts:
         for src, dst in mounts:
             cmd.extend(["-v", f"{src}:{dst}:ro"])
@@ -47,7 +51,15 @@ def _run_container(agent: str, inputs: dict, routing: dict, mounts: list[tuple[s
             f"ngs/{agent}-agent:latest",
         ]
     )
-    res = subprocess.run(cmd, capture_output=True, text=True, check=True)
+    res = subprocess.run(cmd, capture_output=True, text=True, check=False)
+    if res.returncode != 0:
+        # Surface the agent's own logs: agent contracts print JSON to
+        # stdout and structured logs to stderr.
+        raise AssertionError(
+            f"agent '{agent}' exited with code {res.returncode}\n"
+            f"--- stdout ---\n{res.stdout[-4000:]}\n"
+            f"--- stderr ---\n{res.stderr[-4000:]}"
+        )
     return json.loads(res.stdout.strip())
 
 

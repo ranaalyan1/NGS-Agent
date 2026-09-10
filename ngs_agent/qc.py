@@ -6,7 +6,6 @@ import json
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Optional
 
 
 @dataclass
@@ -15,14 +14,14 @@ class QCMetric:
     value: str
     status: str  # pass, warn, fail
     source: str = "General"
-    details: Optional[str] = None
+    details: str | None = None
 
 
 class QCParser:
     """Multi-format QC parser for Next-Generation Sequencing pipelines."""
 
     @staticmethod
-    def parse(path: Path) -> List[QCMetric]:
+    def parse(path: Path) -> list[QCMetric]:
         if not path.exists():
             return []
 
@@ -48,8 +47,8 @@ class QCParser:
         return QCParser._parse_generic_summary(text)
 
     @staticmethod
-    def _parse_fastqc(text: str) -> List[QCMetric]:
-        metrics: List[QCMetric] = []
+    def _parse_fastqc(text: str) -> list[QCMetric]:
+        metrics: list[QCMetric] = []
 
         # Extract basic statistics
         total_seq = re.search(r"Total Sequences\s+(\d+)", text)
@@ -77,8 +76,8 @@ class QCParser:
         return metrics
 
     @staticmethod
-    def _parse_samtools_flagstat(text: str) -> List[QCMetric]:
-        metrics: List[QCMetric] = []
+    def _parse_samtools_flagstat(text: str) -> list[QCMetric]:
+        metrics: list[QCMetric] = []
         map_match = re.search(r"(\d+\.?\d*)%\s*:\s*mapped", text) or re.search(r"mapped\s*\((\d+\.?\d*)%", text)
         if map_match:
             val = float(map_match.group(1))
@@ -95,8 +94,8 @@ class QCParser:
         return metrics
 
     @staticmethod
-    def _parse_multiqc_json(data: dict) -> List[QCMetric]:
-        metrics: List[QCMetric] = []
+    def _parse_multiqc_json(data: dict) -> list[QCMetric]:
+        metrics: list[QCMetric] = []
         general = data.get("report_general_stats_data", [])
         for block in general:
             for sample_id, stats in block.items():
@@ -107,8 +106,8 @@ class QCParser:
         return metrics
 
     @staticmethod
-    def _parse_generic_summary(text: str) -> List[QCMetric]:
-        metrics: List[QCMetric] = []
+    def _parse_generic_summary(text: str) -> list[QCMetric]:
+        metrics: list[QCMetric] = []
         rules = [
             ("Mapping Rate", r"mapping\s+rate[:\s]+(\d+\.?\d*)%?", lambda v: v >= 90, lambda v: v >= 75),
             ("Mean Coverage", r"mean\s+coverage[:\s]+(\d+\.?\d*)", lambda v: v >= 30, lambda v: v >= 15),

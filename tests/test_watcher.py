@@ -1,16 +1,12 @@
 """Unit tests for NGS-Agent log watcher module."""
 
 from pathlib import Path
-import pytest
 
 from ngs_agent.watcher import (
-    Signature,
-    Match,
-    load_signatures,
     _extract_value,
+    load_signatures,
     match_line,
     scan_file,
-    signatures_dir,
     tail_file,
 )
 

@@ -1,8 +1,8 @@
 """Integration and command tests for Click CLI."""
 
 from pathlib import Path
+
 from click.testing import CliRunner
-import pytest
 
 from ngs_agent.cli import main
 

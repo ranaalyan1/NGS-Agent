@@ -6,7 +6,6 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import pandas as pd
-
 from base_agent import BaseAgent
 from storage import MinioStorage
 
@@ -26,7 +25,7 @@ class BWAMem2Agent(BaseAgent):
 
     def _coverage_from_bed(self, bam: str, panel_bed: str, workdir: str) -> str:
         coverage_rows = []
-        with open(panel_bed, "r", encoding="utf-8") as handle:
+        with open(panel_bed, encoding="utf-8") as handle:
             for line in handle:
                 if not line.strip() or line.startswith("#"):
                     continue

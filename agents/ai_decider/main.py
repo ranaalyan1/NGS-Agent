@@ -1,12 +1,10 @@
 import json
 import os
 import re
-from typing import Any, Dict
+from typing import Any
 
 from anthropic import Anthropic
-
 from base_agent import BaseAgent
-
 
 DEFAULT_TRIM_PARAMS = {
     "LEADING": 3,
@@ -17,7 +15,7 @@ DEFAULT_TRIM_PARAMS = {
 
 
 class AIDeciderAgent(BaseAgent):
-    def _normalize_params(self, params: Dict[str, Any]) -> Dict[str, Any]:
+    def _normalize_params(self, params: dict[str, Any]) -> dict[str, Any]:
         merged = {**DEFAULT_TRIM_PARAMS, **(params or {})}
 
         try:
@@ -33,7 +31,7 @@ class AIDeciderAgent(BaseAgent):
         merged["SLIDINGWINDOW"] = sw
         return merged
 
-    def _extract_json_object(self, text: str) -> Dict[str, Any] | None:
+    def _extract_json_object(self, text: str) -> dict[str, Any] | None:
         if not text:
             return None
         candidates = [text.strip()]
@@ -50,7 +48,7 @@ class AIDeciderAgent(BaseAgent):
                 continue
         return None
 
-    def _heuristic_decision(self, fastqc_data: str) -> Dict[str, Any]:
+    def _heuristic_decision(self, fastqc_data: str) -> dict[str, Any]:
         if not fastqc_data:
             return {
                 "trim": False,
@@ -80,7 +78,7 @@ class AIDeciderAgent(BaseAgent):
             "source": "heuristic",
         }
 
-    def _validate_model_decision(self, parsed: Dict[str, Any]) -> Dict[str, Any] | None:
+    def _validate_model_decision(self, parsed: dict[str, Any]) -> dict[str, Any] | None:
         if "trim" not in parsed:
             return None
         normalized = {
@@ -93,11 +91,11 @@ class AIDeciderAgent(BaseAgent):
         normalized["confidence"] = max(0.0, min(1.0, normalized["confidence"]))
         return normalized
 
-    def _ask_model(self, fastqc_data: str, is_paired: bool) -> Dict[str, Any]:
+    def _ask_model(self, fastqc_data: str, is_paired: bool) -> dict[str, Any]:
         heuristic = self._heuristic_decision(fastqc_data)
 
         api_key = os.environ.get("ANTHROPIC_API_KEY")
-        model = os.environ.get("ANTHROPIC_MODEL", "claude-3-5-sonnet-20241022")
+        model = os.environ.get("ANTHROPIC_MODEL", "claude-sonnet-4-5")
         if not api_key:
             return {
                 **heuristic,
@@ -119,12 +117,16 @@ class AIDeciderAgent(BaseAgent):
 
         try:
             client = Anthropic(api_key=api_key)
-            msg = client.messages.create(
-                model=model,
-                max_tokens=500,
-                temperature=0,
-                messages=[{"role": "user", "content": prompt}],
-            )
+            kwargs = {
+                "model": model,
+                "max_tokens": 500,
+                "messages": [{"role": "user", "content": prompt}],
+            }
+            try:
+                msg = client.messages.create(**kwargs, temperature=0)
+            except TypeError:
+                # anthropic SDK >= 1.0 removed the temperature keyword.
+                msg = client.messages.create(**kwargs)
             text = ""
             for block in msg.content:
                 if getattr(block, "type", "") == "text":

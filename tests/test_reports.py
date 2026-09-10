@@ -1,7 +1,5 @@
 """Unit tests for HTML and Markdown report generation."""
 
-from pathlib import Path
-import pytest
 
 from ngs_agent.analyzer import Variant
 from ngs_agent.debate import DebateResult, PersonaOpinion

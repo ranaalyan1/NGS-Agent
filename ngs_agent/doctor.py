@@ -6,7 +6,6 @@ import os
 import shutil
 import sys
 from dataclasses import dataclass
-from typing import List, Optional
 
 from rich.console import Console
 from rich.table import Table
@@ -23,9 +22,9 @@ class DiagnosticCheck:
     hint: str = ""
 
 
-def run_diagnostics(console: Optional[Console] = None) -> List[DiagnosticCheck]:
+def run_diagnostics(console: Console | None = None) -> list[DiagnosticCheck]:
     con = console or Console()
-    checks: List[DiagnosticCheck] = []
+    checks: list[DiagnosticCheck] = []
 
     # 1. Python runtime
     py_ver = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
@@ -82,7 +81,7 @@ def run_diagnostics(console: Optional[Console] = None) -> List[DiagnosticCheck]:
     return checks
 
 
-def print_diagnostics(checks: List[DiagnosticCheck], console: Optional[Console] = None) -> None:
+def print_diagnostics(checks: list[DiagnosticCheck], console: Console | None = None) -> None:
     con = console or Console()
     table = Table(title="NGS-Agent System Doctor & Readiness Check", show_header=True)
     table.add_column("Category", style="cyan")

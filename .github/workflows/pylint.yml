@@ -17,7 +17,14 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install pylint
+        pip install -e ".[dev]" pylint
     - name: Analysing the code with pylint
+      # Errors-only on the maintained package (style rules are ruff's job,
+      # enforced in test.yml). Disables are documented false positives:
+      # import-error: optional extras ([llm], [tui]) are not installed here.
+      # no-value-for-parameter: typer decorators rewrite CLI entrypoints.
+      # not-an-iterable: pydantic v2 metaclass attributes confuse pylint.
       run: |
-        pylint $(git ls-files '*.py')
+        pylint --errors-only \
+          --disable=import-error,no-value-for-parameter,not-an-iterable \
+          ngs_agent/

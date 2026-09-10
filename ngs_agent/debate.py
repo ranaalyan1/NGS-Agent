@@ -2,15 +2,12 @@
 
 from __future__ import annotations
 
-import json
 import re
 from dataclasses import dataclass, field
-from typing import Optional
 
-from ngs_agent.acmg import compute_acmg_classification, ACMGEvaluation
+from ngs_agent.acmg import ACMGEvaluation, compute_acmg_classification
 from ngs_agent.analyzer import Variant
 from ngs_agent.backends.base import LLMBackend, NoBackend
-from ngs_agent.common import extract_json
 
 
 @dataclass
@@ -183,7 +180,7 @@ def _extract_acmg_codes(text: str) -> list[str]:
     return list(dict.fromkeys(c.upper() for c in codes))
 
 
-def _build_consensus(opinions: list[PersonaOpinion], acmg_eval: Optional[ACMGEvaluation] = None) -> str:
+def _build_consensus(opinions: list[PersonaOpinion], acmg_eval: ACMGEvaluation | None = None) -> str:
     stances = [o.stance.lower() for o in opinions]
     if all("pathogenic" in s for s in stances):
         return "All personas lean pathogenic."
@@ -198,7 +195,7 @@ def _build_consensus(opinions: list[PersonaOpinion], acmg_eval: Optional[ACMGEva
     return "Mixed opinions — no consensus."
 
 
-def _build_recommendation(consensus: str, variant: Variant, acmg_eval: Optional[ACMGEvaluation] = None) -> str:
+def _build_recommendation(consensus: str, variant: Variant, acmg_eval: ACMGEvaluation | None = None) -> str:
     if "pathogenic" in consensus.lower():
         return f"Prioritize {variant.gene} for clinical correlation and segregation testing."
     if "benign" in consensus.lower():

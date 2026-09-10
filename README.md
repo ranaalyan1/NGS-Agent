@@ -123,7 +123,7 @@ Manages `~/.ngsagent/config.yaml`.
 ngsagent config wizard
 ngsagent config show
 ngsagent config set llm anthropic
-ngsagent config set anthropic_model claude-sonnet-4-20250514
+ngsagent config set anthropic_model claude-sonnet-4-5
 ngsagent config set llm ollama
 ngsagent config set ollama_model llama3.2
 ngsagent config set ollama_host http://localhost:11434
@@ -141,7 +141,7 @@ export ANTHROPIC_API_KEY=sk-ant-...
 ngsagent config set llm anthropic
 ```
 
-Default model is `claude-sonnet-4-20250514`. Override with `ngsagent config set anthropic_model <model>`.
+Default model is `claude-sonnet-4-5` (a stable alias that keeps resolving as dated snapshots retire). Override with `ngsagent config set anthropic_model <model>`.
 
 ### Ollama (local, no API key)
 
@@ -207,15 +207,22 @@ All file artifacts are uploaded to MinIO at `s3://ngs-artifacts/<run_id>/<agent>
 ## Project Layout
 
 ```
-ngs_agent/              pip-installable CLI (watch, analyze, debate, config)
-  backends/             LLM provider abstraction: Anthropic, Ollama, NoBackend
+ngs_agent/              pip-installable CLI and agent core
+  agent/                models, planner, executor (parallel DAG), orchestrator, verifier, reporter
+  bioinformatics/       samplesheet parsing, workflow catalogue, shared R scripts
+  execution/            backend abstraction (native, Docker, Apptainer, SLURM, PBS) + selector
+  tools/                tool registry, safety/permissions, built-in bioinformatics tools
+  provenance/           streaming SHA-256 manifest (artifacts/manifest.jsonl)
+  artifacts/            local artifact store
+  backends/             LLM provider abstraction: Anthropic, Ollama, Gemini, NoBackend
   signatures/           YAML failure signatures loaded by the watch command
-agents/                 Docker containers, one per pipeline step
+agents/                 Container swarm, one agent per pipeline step (integration path)
   base/base_agent.py    Agent contract: reads AGENT_INPUTS + ROUTING_CONTEXT env vars, prints JSON to stdout
 workflows/              Temporal workflow definitions and activity dispatcher
 shared/                 AgentResult model, MinIO storage helper, Redis+MinIO cache
 cli.py                  Swarm pipeline CLI (submit, status, wizard)
 worker.py               Temporal worker process
+tests/                  Unit + end-to-end tests (stub-tool pipeline runs in normal CI)
 demo_data/              sample.log and sample.vcf for testing without real data
 ```
 
@@ -227,9 +234,34 @@ demo_data/              sample.log and sample.vcf for testing without real data
 git clone https://github.com/ranaalyan1/NGS-Agent.git
 cd NGS-Agent
 pip install -e ".[dev,llm]"
-pytest
-ruff check ngs_agent/
+pytest                          # full suite; heavy integration self-skips
+ruff check ngs_agent/ tests/ agents/
 mypy ngs_agent/
+```
+
+### Test suite
+
+| File | Covers |
+| --- | --- |
+| `tests/test_workflow_catalog.py` | Workflow catalogue, aliases, intent inference, ambiguity errors |
+| `tests/test_samplesheet.py` | Header aliases, TSV, validation errors, path resolution |
+| `tests/test_execution_backends.py` | Native/docker/apptainer/SLURM/PBS backends, image pins, selector ordering |
+| `tests/test_executor_dag.py` | DAG validation, parallel execution, failure/skip semantics, checkpoints |
+| `tests/test_bio_tools.py` | Command construction for every bioinformatics tool (strandness, splice sites, MAPQ filters, adapter confidence, output discovery) |
+| `tests/test_manifest.py` | Streaming SHA-256 provenance (incl. >512 MB files), JSONL output |
+| `tests/test_planner_and_environment.py` | Per-sample DAG planning, strandedness propagation, tool-prefix conflicts, platform warnings |
+| `tests/test_verifier.py` | Expected-artifact verification, error vs warning severities |
+| `tests/test_reporter.py` | HTML/MD/JSON reports, HTML escaping of all interpolated values |
+| `tests/test_orchestrator_e2e.py` | Full RNA-Seq pipeline with stub tool binaries: parallel DAG, provenance, verification, report, failure propagation |
+
+The orchestrator end-to-end test runs the entire pipeline (discovery → QC →
+trim → align → sort → index → quantify → aggregate → report) against shell-script
+tool doubles, so the pipeline path is verified on every CI run without containers.
+Container-based integration tests are marked `integration` and self-skip when
+Docker is unavailable; run them explicitly with:
+
+```bash
+pytest -m integration tests/
 ```
 
 ---

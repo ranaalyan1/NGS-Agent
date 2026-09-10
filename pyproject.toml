@@ -31,6 +31,10 @@ dependencies = [
   "PyYAML>=6.0.2",
   "typing-extensions>=4.12.2",
   "httpx>=0.28.1",
+  # Agentic execution core (planner/executor/backends/tools).
+  "pydantic>=2.10.6",
+  "typer>=0.12.5",
+  "platformdirs>=4.2.0",
 ]
 
 [project.optional-dependencies]
@@ -62,11 +66,20 @@ dev = [
   "pytest-cov>=6.0.0",
   "ruff>=0.9.9",
   "mypy>=1.15.0",
+  "types-PyYAML>=6.0",
   # The integration test imports boto3 during collection, even when the
   # functional test is skipped. Keep the documented `.[dev]` test command
   # self-contained; swarm users still get the same dependency from [swarm].
   "boto3>=1.37.0",
 ]
+
+[tool.mypy]
+python_version = "3.11"
+
+[[tool.mypy.overrides]]
+# Optional [llm] extra: absent in type-check/CI environments.
+module = "anthropic"
+ignore_missing_imports = true
 
 [project.urls]
 Homepage = "https://github.com/ranaalyan1/NGS-Agent"
@@ -76,6 +89,8 @@ Repository = "https://github.com/ranaalyan1/NGS-Agent"
 [project.scripts]
 ngsagent = "ngs_agent.cli:main"
 ngs = "ngs_agent.cli:main"
+# Agentic (v2) CLI: NL planning + backend-aware pipeline execution.
+ngs-agent = "ngs_agent.cli.app:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["ngs_agent"]
@@ -97,9 +112,43 @@ include = [
 line-length = 100
 target-version = "py311"
 
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "BLE"]
+# The planner must survive a malformed samplesheet discovered mid-planning,
+# so it uses a broad except that logs and continues.
+ignore = ["BLE001", "UP042"]
+
+[tool.ruff.lint.per-file-ignores]
+# Legacy (pre-agentic) modules are kept behaviour-identical; only safe
+# auto-fixes were applied to them, so remaining style findings are waived.
+"ngs_agent/__init__.py" = ["E501", "W293", "B007", "F841", "F401", "UP036", "UP028"]
+"ngs_agent/acmg.py" = ["E501"]
+"ngs_agent/analyzer.py" = ["E501"]
+"ngs_agent/cli/__init__.py" = ["E501", "F401"]
+"ngs_agent/config/__init__.py" = ["E501", "B007"]
+"ngs_agent/debate.py" = ["E501", "B007"]
+"ngs_agent/doctor.py" = ["E501", "F841", "UP036"]
+"ngs_agent/nibi.py" = ["E501", "F841"]
+"ngs_agent/qc.py" = ["E501"]
+"ngs_agent/reports.py" = ["E501"]
+"ngs_agent/tui.py" = ["E501", "B007", "F841"]
+"ngs_agent/watcher.py" = ["E501", "UP028", "UP036"]
+"ngs_agent/backends/*" = ["E501"]
+"tests/test_analyzer.py" = ["E501", "F841"]
+"tests/test_debate.py" = ["W293", "W291"]
+"tests/test_pipeline.py" = ["E501"]
+"tests/test_reports.py" = ["E501"]
+# Swarm agent containers: safe auto-fixes applied; deeper refactors deferred.
+# UP017 stays off: the containers run Python 3.10 (ubuntu:22.04) and
+# datetime.UTC is 3.11+; the timezone.utc spelling must be kept.
+"agents/*" = ["E501", "W293", "W291", "UP006", "F841", "B008", "UP035", "UP017"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
+# Integration tests are NOT excluded from normal runs: they self-skip when
+# docker or the required env vars (RUN_NGS_FUNCTIONAL, TEST_FASTQ_R1, ...)
+# are unavailable, so `pytest` always exercises everything possible.
 markers = [
     "integration: marks tests as integration (deselect with '-m \"not integration\"')"
 ]

@@ -5,11 +5,12 @@ import subprocess
 import sys
 import tempfile
 import zipfile
+
+# NOTE: containers run Python 3.10 (ubuntu:22.04); datetime.UTC is 3.11+.
 from datetime import datetime, timezone
 from pathlib import Path
 
 import boto3
-
 from base_agent import BaseAgent
 
 # ---------------------------------------------------------------------------
@@ -186,7 +187,7 @@ class QCAgent(BaseAgent):
         heuristic = self._heuristic_verdict(summary_text)
 
         api_key = os.environ.get("ANTHROPIC_API_KEY")
-        model = os.environ.get("ANTHROPIC_MODEL", "claude-3-5-sonnet-20241022")
+        model = os.environ.get("ANTHROPIC_MODEL", "claude-sonnet-4-5")
 
         if not api_key:
             _log("warn", "No ANTHROPIC_API_KEY set, falling back to heuristic")
@@ -230,12 +231,16 @@ class QCAgent(BaseAgent):
         try:
             from anthropic import Anthropic
             client = Anthropic(api_key=api_key)
-            msg = client.messages.create(
-                model=model,
-                max_tokens=600,
-                temperature=0,
-                messages=[{"role": "user", "content": prompt}],
-            )
+            kwargs = {
+                "model": model,
+                "max_tokens": 600,
+                "messages": [{"role": "user", "content": prompt}],
+            }
+            try:
+                msg = client.messages.create(**kwargs, temperature=0)
+            except TypeError:
+                # anthropic SDK >= 1.0 removed the temperature keyword.
+                msg = client.messages.create(**kwargs)
 
             # extract text from response blocks
             text = ""
