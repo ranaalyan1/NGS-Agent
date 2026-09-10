@@ -57,6 +57,12 @@ swarm = [
   "tenacity>=9.0.0",
 ]
 
+# Minimal deps for the local (Temporal-free) swarm runner. The engine itself
+# is stdlib-only; only the CLI's optional .env loading needs python-dotenv.
+swarm-local = [
+  "python-dotenv>=1.0.1",
+]
+
 dev = [
   "pytest>=8.3.5",
   "pytest-cov>=6.0.0",
@@ -86,6 +92,7 @@ include = [
   "demo_data/",
   "agents/",
   "workflows/",
+  "swarm/",
   "shared/",
   "tools/",
   "README.md",

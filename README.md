@@ -22,7 +22,7 @@ To use the `debate` command with an LLM:
 pip install "ngs-agent[llm]"
 ```
 
-To run the full Temporal-orchestrated swarm pipeline (RNA-Seq, WGS, WES end-to-end):
+To run the full swarm pipeline (RNA-Seq, WGS, WES end-to-end) — orchestrates locally by default, with Temporal optional:
 
 ```bash
 pip install "ngs-agent[swarm]"
@@ -159,21 +159,25 @@ Ollama talks to `http://localhost:11434` by default. Override the host and model
 
 ## Swarm Pipeline (full RNA-Seq / WGS / WES)
 
-NGS-Agent also ships a Temporal-orchestrated Docker swarm that runs complete genomics pipelines end to end. Each bioinformatics tool runs in its own container as an autonomous agent. Claude is embedded at decision points — QC verdict, trim parameter selection, alignment failure diagnosis, and biological interpretation — with deterministic heuristic fallbacks when no API key is set.
+NGS-Agent also ships a Docker swarm that runs complete genomics pipelines end to end. Each bioinformatics tool runs in its own container as an autonomous agent. Claude is embedded at decision points — QC verdict, trim parameter selection, alignment failure diagnosis, and biological interpretation — with deterministic heuristic fallbacks when no API key is set.
 
-**Requirements:** Docker Engine, Python 3.11+, Linux or macOS (WSL2 on Windows)
+The swarm runs in two modes:
 
-**Setup:**
+* **Local mode (default)** — the pipeline is orchestrated **in-process** by `cli.py`. No Temporal server, no Postgres, no Redis, and no `worker.py` process are required. Run records and the content-addressed cache live on local disk (`~/.ngsagent/`). This is the "lone researcher" mode: the one-line benefit works with just Docker + MinIO.
+* **Temporal mode (optional)** — for core facilities that already run Temporal and want durable workflow history, retries, and the web UI. Opt in with `--temporal` (or `NGS_MODE=temporal`) and run `worker.py` as before.
+
+**Requirements (local mode):** Docker Engine, Python 3.11+, Linux or macOS (WSL2 on Windows)
+
+**Setup (local mode — no Temporal):**
 
 ```bash
 cp .env.example .env
 pip install "ngs-agent[swarm]"
-docker compose up -d
+docker compose -f docker-compose.lite.yml up -d   # MinIO only
 bash scripts/build-agents.sh
-python worker.py
 ```
 
-**Submit a paired-end RNA-Seq run:**
+That's it — no `python worker.py` needed. Submit a paired-end RNA-Seq run:
 
 ```bash
 python cli.py submit \
@@ -189,7 +193,18 @@ python cli.py submit \
 **Check run status:**
 
 ```bash
-python cli.py status <run-id>
+python cli.py status <run-id>      # or `python cli.py status` to list runs
+```
+
+**Setup (Temporal mode — core facilities):**
+
+```bash
+cp .env.example .env
+pip install "ngs-agent[swarm]"
+docker compose up -d                # Temporal + Postgres + Redis + MinIO
+bash scripts/build-agents.sh
+python worker.py
+python cli.py submit --temporal --experiment RNA-Seq --organism human --ref-genome data/ref/grch38_idx --fastq data/fastq/R1.fastq.gz
 ```
 
 **RNA-Seq pipeline stages:**
@@ -213,9 +228,10 @@ ngs_agent/              pip-installable CLI (watch, analyze, debate, config)
 agents/                 Docker containers, one per pipeline step
   base/base_agent.py    Agent contract: reads AGENT_INPUTS + ROUTING_CONTEXT env vars, prints JSON to stdout
 workflows/              Temporal workflow definitions and activity dispatcher
+swarm/                  Temporal-free local engine: runner, engine, run store
 shared/                 AgentResult model, MinIO storage helper, Redis+MinIO cache
-cli.py                  Swarm pipeline CLI (submit, status, wizard)
-worker.py               Temporal worker process
+cli.py                  Swarm pipeline CLI (submit, status, wizard) — local-first, Temporal optional
+worker.py               Temporal worker process (only needed for --temporal mode)
 demo_data/              sample.log and sample.vcf for testing without real data
 ```
 

@@ -1,0 +1,38 @@
+# Minimal infrastructure for the LOCAL (Temporal-free) execution mode.
+#
+# The local engine runs the pipeline in-process, so there is no Temporal
+# server, no Postgres, and no Redis. The only external service still required
+# is MinIO, which the agent containers use to exchange artifacts
+# (FASTQ -> QC reports -> BAM -> counts -> report).
+#
+# Usage:
+#   docker compose -f docker-compose.lite.yml up -d
+#   bash scripts/build-agents.sh
+#   python cli.py submit ...      # runs locally, no worker needed
+services:
+  minio:
+    image: minio/minio
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+    volumes:
+      - minio-data:/data
+
+  create-buckets:
+    image: minio/mc
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      until (/usr/bin/mc alias set myminio http://minio:9000 minioadmin minioadmin) do echo '...waiting for minio...' && sleep 1; done;
+      /usr/bin/mc mb --ignore-existing myminio/ngs-cache;
+      /usr/bin/mc mb --ignore-existing myminio/ngs-artifacts;
+      exit 0;
+      "
+
+volumes:
+  minio-data:

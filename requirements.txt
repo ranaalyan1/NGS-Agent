@@ -1,9 +1,18 @@
-temporalio==1.6.0
-redis==5.0.1
-boto3==1.34.0
-pydantic==2.5.0
+# --- Core (local swarm mode: `python cli.py submit`) ---
 click==8.1.7
 python-dotenv==1.0.0
+
+# --- Optional: Temporal orchestration (`--temporal` / `NGS_MODE=temporal`) ---
+temporalio==1.6.0
+
+# --- Optional: shared Redis + MinIO cache (local FS cache used otherwise) ---
+redis==5.0.1
+boto3==1.34.0
+
+# --- Optional: agent-side LLM calls (heuristic fallbacks without it) ---
 anthropic==0.48.0
+
+# --- Dev/test ---
+pydantic==2.5.0
 pytest==8.3.3
 jinja2==3.1.4
