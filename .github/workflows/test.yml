@@ -110,4 +110,25 @@ jobs:
         TEST_HISAT2_INDEX_DIR: ${{ github.workspace }}/testdata/index
         TEST_GTF: ${{ github.workspace }}/testdata/genes.gtf
       run: |
-        pytest -m integration tests/ -v --tb=short
+        set +e
+        pytest -m integration tests/ -v --tb=long 2>&1 | tee /tmp/integration-pytest.log
+        rc=${PIPESTATUS[0]}
+        if [ "$rc" != "0" ]; then
+          {
+            echo "## Integration test failure"
+            echo '```'
+            tail -c 50000 /tmp/integration-pytest.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          docker logs minio > /tmp/minio.log 2>&1 || true
+        fi
+        exit "$rc"
+
+    - name: Upload integration diagnostics
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: integration-diagnostics
+        path: |
+          /tmp/integration-pytest.log
+          /tmp/minio.log
