@@ -108,13 +108,14 @@ class QCParser:
     @staticmethod
     def _parse_generic_summary(text: str) -> list[QCMetric]:
         metrics: list[QCMetric] = []
+        # (name, pattern, pass_fn, warn_fn, unit)
         rules = [
-            ("Mapping Rate", r"mapping\s+rate[:\s]+(\d+\.?\d*)%?", lambda v: v >= 90, lambda v: v >= 75),
-            ("Mean Coverage", r"mean\s+coverage[:\s]+(\d+\.?\d*)", lambda v: v >= 30, lambda v: v >= 15),
-            ("Duplication Rate", r"duplicat(?:ion|e)\s+rate[:\s]+(\d+\.?\d*)%?", lambda v: v <= 20, lambda v: v <= 40),
-            ("Q30 Fraction", r"Q30[:\s]+(\d+\.?\d*)%?", lambda v: v >= 85, lambda v: v >= 70),
+            ("Mapping Rate", r"mapping\s+rate[:\s]+(\d+\.?\d*)%?", lambda v: v >= 90, lambda v: v >= 75, "%"),
+            ("Mean Coverage", r"mean\s+coverage[:\s]+(\d+\.?\d*)", lambda v: v >= 30, lambda v: v >= 15, "x"),
+            ("Duplication Rate", r"duplicat(?:ion|e)\s+rate[:\s]+(\d+\.?\d*)%?", lambda v: v <= 20, lambda v: v <= 40, "%"),
+            ("Q30 Fraction", r"Q30[:\s]+(\d+\.?\d*)%?", lambda v: v >= 85, lambda v: v >= 70, "%"),
         ]
-        for name, pattern, pass_fn, warn_fn in rules:
+        for name, pattern, pass_fn, warn_fn, unit in rules:
             match = re.search(pattern, text, re.I)
             if not match:
                 continue
@@ -125,5 +126,5 @@ class QCParser:
                 status = "warn"
             else:
                 status = "fail"
-            metrics.append(QCMetric(name=name, value=f"{value:.1f}", status=status, source="QC Summary"))
+            metrics.append(QCMetric(name=name, value=f"{value:.1f}{unit}", status=status, source="QC Summary"))
         return metrics

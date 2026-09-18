@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import asyncio
+import os
 
 from dotenv import load_dotenv
 from temporalio.client import Client
@@ -12,7 +13,9 @@ load_dotenv()
 
 
 async def main() -> None:
-    client = await Client.connect("localhost:7233")
+    temporal_host = os.environ.get("TEMPORAL_HOST", "localhost:7233")
+    print(f"Connecting to Temporal at {temporal_host} ...")
+    client = await Client.connect(temporal_host)
     worker = Worker(
         client,
         task_queue="ngs-pipeline",

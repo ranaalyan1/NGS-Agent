@@ -34,7 +34,7 @@ class TestExtractStance:
     def test_explicit_vus(self):
         """VUS classification should be extracted."""
         text = "Remains a Variant of Uncertain Significance (VUS)."
-        assert _extract_stance(text) in ("Vus", "Uncertain")
+        assert _extract_stance(text) in ("VUS", "Uncertain")
 
     def test_negation_not_pathogenic_should_not_match_pathogenic(self):
         """BUG TEST: 'not likely pathogenic' should NOT be classified as 'Likely Pathogenic'.
@@ -95,7 +95,7 @@ class TestBuildConsensus:
         opinions = [
             PersonaOpinion("Pop Gen", "Pathogenic", "reasoning1"),
             PersonaOpinion("Clin Gen", "Benign", "reasoning2"),
-            PersonaOpinion("Func Gen", "Vus", "reasoning3"),
+            PersonaOpinion("Func Gen", "VUS", "reasoning3"),
         ]
         consensus = _build_consensus(opinions)
         assert "Mixed" in consensus or "no consensus" in consensus.lower()
@@ -103,9 +103,9 @@ class TestBuildConsensus:
     def test_all_vus_consensus(self):
         """All agree on VUS → remains VUS."""
         opinions = [
-            PersonaOpinion("Pop Gen", "Vus", "reasoning1"),
+            PersonaOpinion("Pop Gen", "VUS", "reasoning1"),
             PersonaOpinion("Clin Gen", "Uncertain", "reasoning2"),
-            PersonaOpinion("Func Gen", "Vus", "reasoning3"),
+            PersonaOpinion("Func Gen", "VUS", "reasoning3"),
         ]
         consensus = _build_consensus(opinions)
         assert "VUS" in consensus or "uncertain" in consensus.lower()

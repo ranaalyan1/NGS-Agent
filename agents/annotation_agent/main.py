@@ -1,3 +1,4 @@
+import gzip
 import os
 import subprocess
 import tempfile
@@ -28,9 +29,16 @@ class AnnotationAgent(BaseAgent):
             return vcf_path
         return out_vcf
 
+    def _open_vcf(self, vcf_path: str):
+        # GATK emits bgzipped variants.vcf.gz; snpEff is absent from the
+        # shipped image, so the parser must handle gzip itself.
+        if vcf_path.endswith(".gz"):
+            return gzip.open(vcf_path, "rt", encoding="utf-8")
+        return open(vcf_path, encoding="utf-8")
+
     def _parse_vcf(self, vcf_path: str) -> pd.DataFrame:
         rows = []
-        with open(vcf_path, encoding="utf-8") as handle:
+        with self._open_vcf(vcf_path) as handle:
             for line in handle:
                 if not line.strip() or line.startswith("#"):
                     continue

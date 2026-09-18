@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Any, Dict, List
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -17,7 +17,7 @@ class BaseMessage(BaseModel):
     run_id: str
     status: AgentStatus
     reasoning: str = ""
-    payload: Dict[str, Any] = Field(default_factory=dict)
-    next_agents: List[str] = Field(default_factory=list)
-    skip_agents: List[str] = Field(default_factory=list)
+    payload: dict[str, Any] = Field(default_factory=dict)
+    next_agents: list[str] = Field(default_factory=list)
+    skip_agents: list[str] = Field(default_factory=list)
     halt: bool = False

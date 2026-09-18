@@ -1,0 +1,16 @@
+##fileformat=VCFv4.2
+##fileDate=20260315
+##source=NGS-Agent-demo
+##reference=GRCh38
+##INFO=<ID=GENE,Number=1,Type=String,Description="Gene symbol">
+##INFO=<ID=CSQ,Number=.,Type=String,Description="Consequence">
+##INFO=<ID=CLNSIG,Number=.,Type=String,Description="ClinVar significance">
+##INFO=<ID=AF,Number=1,Type=Float,Description="Allele frequency">
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##FORMAT=<ID=DP,Number=1,Type=Integer,Description="Read depth">
+##FORMAT=<ID=AD,Number=R,Type=Integer,Description="Allelic depths">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	SAMPLE-001
+17	43094692	.	G	A	999	PASS	GENE=BRCA1;CSQ=missense_variant;CLNSIG=Pathogenic;AF=0.00002	GT:DP:AD	0/1:245:122,123
+17	43125487	.	T	C	450	PASS	GENE=BRCA1;CSQ=missense_variant;CLNSIG=Uncertain_significance;AF=0.0008	GT:DP:AD	0/1:180:95,85
+13	32338077	.	G	A	380	PASS	GENE=BRCA2;CSQ=missense_variant;CLNSIG=Uncertain_significance;AF=0.0012	GT:DP:AD	0/1:156:78,78
+17	41245466	.	A	G	200	PASS	GENE=TP53;CSQ=synonymous_variant;CLNSIG=Benign;AF=0.15	GT:DP:AD	0/1:310:155,155

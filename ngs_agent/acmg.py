@@ -144,8 +144,18 @@ class ACMGEvaluation:
 
 
 def compute_acmg_classification(criteria_codes: list[str]) -> ACMGEvaluation:
-    """Compute ACMG/AMP 5-tier classification from criteria codes."""
-    codes = [c.upper().strip() for c in criteria_codes if c.upper().strip() in ACMG_CRITERIA]
+    """Compute ACMG/AMP 5-tier classification from criteria codes.
+
+    Duplicate codes are de-duplicated first: one PM2 mentioned by three
+    personas is still a single PM2. Counting duplicates would inflate
+    classifications (e.g. ['PM2','PM2','PM2'] is NOT Likely Pathogenic).
+    """
+    seen: dict[str, None] = {}
+    for raw in criteria_codes:
+        code = raw.upper().strip()
+        if code in ACMG_CRITERIA and code not in seen:
+            seen[code] = None
+    codes = list(seen)
 
     pvs1 = codes.count("PVS1")
     ps = sum(1 for c in codes if c.startswith("PS"))

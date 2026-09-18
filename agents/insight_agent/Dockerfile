@@ -15,7 +15,14 @@ RUN apt-get update \
         r-cran-dplyr \
         r-cran-tibble \
         r-cran-httr \
+        libcurl4-openssl-dev \
+        libxml2-dev \
+        libssl-dev \
     && rm -rf /var/lib/apt/lists/*
+
+# Bioconductor packages used by go_analysis.R (not available via apt).
+RUN Rscript -e 'install.packages("BiocManager", repos="https://cloud.r-project.org")' \
+    && Rscript -e 'BiocManager::install(c("clusterProfiler", "org.Hs.eg.db"), update=FALSE, ask=FALSE)'
 
 RUN python3 -m pip install --no-cache-dir boto3 anthropic pydantic
 

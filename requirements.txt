@@ -1,4 +1,6 @@
-temporalio==1.6.0
+# Swarm pipeline host deps (cli.py + worker.py). Version floors match the
+# `swarm` extra in pyproject.toml — keep them in sync.
+temporalio>=1.8.0
 redis==5.0.1
 boto3==1.34.0
 pydantic==2.5.0

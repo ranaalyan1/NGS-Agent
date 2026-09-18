@@ -154,7 +154,9 @@ def root(
             'Natural-language mode: [bold]ngs-agent analyze "<your prompt>"[/bold]\n'
             "Structured mode: [bold]ngs-agent run rnaseq --samplesheet samples.csv[/bold]\n"
             "Diagnostics: [bold]ngs-agent doctor[/bold] | Raw command: "
-            "[bold]ngs-agent debug 'samtools --version'[/bold]"
+            "[bold]ngs-agent debug 'samtools --version'[/bold]\n\n"
+            "[dim]Just need log/VCF tools? Use the lightweight CLI instead:\n"
+            "`ngsagent watch`, `ngsagent analyze`, `ngsagent debate`, `ngsagent demo`[/dim]"
         )
     )
     raise typer.Exit(code=0)
@@ -272,7 +274,7 @@ def doctor() -> None:
             table.add_row(
                 check.name,
                 "Missing",
-                "Install via `mamba env create -f environment.yml` and re-run `ngs doctor`.",
+                "Install via `mamba env create -f environment.yml` and re-run `ngs-agent doctor`.",
             )
     console.print(table)
     console.print(f"[dim]Expected tool prefix: {report.expected_prefix}[/dim]")

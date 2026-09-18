@@ -43,13 +43,26 @@ class CoverageAgent(BaseAgent):
             mean_depth = self._mean_depth_from_csv(coverage_csv)
 
         if mean_depth is None:
-            mean_depth = 25.0
-            reasoning = (
-                "Coverage input not available, using mock depth estimate of 25x for gate evaluation"
-            )
-        else:
-            reasoning = f"Computed mean target depth at {mean_depth:.2f}x from coverage metrics"
+            # Data unavailable is NOT failure: report unknown and let the run
+            # continue instead of halting on a fabricated 25x depth.
+            return {
+                "agent": "coverage_agent",
+                "status": "warn",
+                "payload": {
+                    "mean_depth": None,
+                    "threshold": threshold,
+                    "passed": False,
+                    "coverage_unknown": True,
+                },
+                "reasoning": (
+                    "No coverage data available (no coverage CSV from BWA/annotation); "
+                    f"coverage gate skipped, threshold was {threshold:.1f}x. Unknown ≠ fail."
+                ),
+                "halt": False,
+                "halt_reason": "",
+            }
 
+        reasoning = f"Computed mean target depth at {mean_depth:.2f}x from coverage metrics"
         passed = mean_depth >= threshold
         halt = not passed
 
@@ -60,6 +73,7 @@ class CoverageAgent(BaseAgent):
                 "mean_depth": round(mean_depth, 3),
                 "threshold": threshold,
                 "passed": passed,
+                "coverage_unknown": False,
             },
             "reasoning": f"{reasoning}; threshold is {threshold:.1f}x",
             "halt": halt,

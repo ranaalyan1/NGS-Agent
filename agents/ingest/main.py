@@ -37,7 +37,8 @@ class IngestAgent(BaseAgent):
         When files are not available (e.g., in mock/test environments),
         provides clear warnings and safe default values.
         """
-        fastq_path = inputs.get("fastq_path")
+        # Accept both `fastq_path` (single submit) and `fastq` (batch CSV column).
+        fastq_path = inputs.get("fastq_path") or inputs.get("fastq")
         fastq_r1 = inputs.get("fastq_r1")
         fastq_r2 = inputs.get("fastq_r2")
         is_mock = False

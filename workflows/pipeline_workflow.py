@@ -1,15 +1,15 @@
 import asyncio
 from dataclasses import dataclass
 from datetime import timedelta
-from typing import Any, Dict
+from typing import Any
 
 from temporalio import workflow
 
 from shared.models import AgentResult
 from workflows.activities import (
     ai_decider_activity,
-    annotate_activity,
     align_activity,
+    annotate_activity,
     bwa_activity,
     count_activity,
     coverage_activity,
@@ -28,8 +28,8 @@ from workflows.activities import (
 class RunInput:
     run_id: str
     experiment_type: str
-    routing_context: Dict[str, Any]
-    initial_inputs: Dict[str, Any]
+    routing_context: dict[str, Any]
+    initial_inputs: dict[str, Any]
 
 
 @dataclass
@@ -37,11 +37,13 @@ class SampleRunInput:
     run_id: str
     sample_id: str
     experiment_type: str
-    routing_context: Dict[str, Any]
-    initial_inputs: Dict[str, Any]
+    routing_context: dict[str, Any]
+    initial_inputs: dict[str, Any]
 
 
-def _halted_response(run_id: str, agent_name: str, raw_result: Dict[str, Any]) -> Dict[str, Any] | None:
+def _halted_response(
+    run_id: str, agent_name: str, raw_result: dict[str, Any]
+) -> dict[str, Any] | None:
     result = AgentResult.from_dict(raw_result)
     if result.halt:
         return {
@@ -56,7 +58,7 @@ def _halted_response(run_id: str, agent_name: str, raw_result: Dict[str, Any]) -
 @workflow.defn
 class NGSSampleWorkflow:
     @workflow.run
-    async def run(self, input_data: SampleRunInput) -> Dict[str, Any]:
+    async def run(self, input_data: SampleRunInput) -> dict[str, Any]:
         is_dna = input_data.experiment_type in {"WGS", "WES"}
 
         ingest = await workflow.execute_activity(
@@ -85,8 +87,11 @@ class NGSSampleWorkflow:
 
         trim_was_run = False
         if ai_decision.get("payload", {}).get("trim", False):
+            # The trim agent needs the FASTQ paths, which live in the INGEST
+            # payload (raw_reads*), not in the QC payload — merge both.
             trim_request = {
                 "payload": {
+                    **ingest.get("payload", {}),
                     **qc.get("payload", {}),
                     "trim_params": ai_decision.get("payload", {}).get("trim_params", {}),
                 }
@@ -138,7 +143,9 @@ class NGSSampleWorkflow:
                 args=(
                     {
                         "payload": {
-                            "coverage_depth_csv": annotation.get("payload", {}).get("coverage_depth_csv")
+                            "coverage_depth_csv": annotation.get("payload", {}).get(
+                                "coverage_depth_csv"
+                            )
                             or bwa.get("payload", {}).get("artifacts", {}).get("coverage_depth_csv")
                         }
                     },
@@ -161,8 +168,12 @@ class NGSSampleWorkflow:
                             "insight": {},
                             "annotation": annotation,
                             "variants_csv": annotation.get("payload", {}).get("variants_csv"),
-                            "coverage_depth_png": annotation.get("payload", {}).get("coverage_depth_png"),
-                            "coverage_depth_csv": annotation.get("payload", {}).get("coverage_depth_csv"),
+                            "coverage_depth_png": annotation.get("payload", {}).get(
+                                "coverage_depth_png"
+                            ),
+                            "coverage_depth_csv": annotation.get("payload", {}).get(
+                                "coverage_depth_csv"
+                            ),
                             "coverage": coverage,
                         },
                         "artifacts_dir": input_data.routing_context.get("artifacts_dir"),
@@ -199,8 +210,12 @@ class NGSSampleWorkflow:
                 "bam_path": bwa.get("payload", {}).get("artifacts", {}).get("bam_path"),
                 "bam_index": bwa.get("payload", {}).get("artifacts", {}).get("bam_index"),
                 "flagstat": bwa.get("payload", {}).get("artifacts", {}).get("flagstat"),
-                "coverage_depth_csv": bwa.get("payload", {}).get("artifacts", {}).get("coverage_depth_csv"),
-                "coverage_depth_png": bwa.get("payload", {}).get("artifacts", {}).get("coverage_depth_png"),
+                "coverage_depth_csv": bwa.get("payload", {}).get("artifacts", {}).get(
+                    "coverage_depth_csv"
+                ),
+                "coverage_depth_png": bwa.get("payload", {}).get("artifacts", {}).get(
+                    "coverage_depth_png"
+                ),
                 "final_bam": gatk.get("payload", {}).get("final_bam"),
                 "variants_vcf": gatk.get("payload", {}).get("variants_vcf"),
                 "annotated_vcf": annotation.get("payload", {}).get("annotated_vcf"),
@@ -250,6 +265,7 @@ class NGSSampleWorkflow:
                 new_trim_params = ai_eval.get("new_trim_params", {})
                 trim_request = {
                     "payload": {
+                        **ingest.get("payload", {}),
                         **qc.get("payload", {}),
                         "trim_params": new_trim_params,
                     }
@@ -278,41 +294,40 @@ class NGSSampleWorkflow:
                 "ai_decision": ai_decision.get("payload", {}),
             }
 
-        count = await workflow.execute_activity(
-            count_activity,
-            args=(align, input_data.routing_context),
-            start_to_close_timeout=timedelta(minutes=30),
-        )
-        if halted := _halted_response(input_data.run_id, "count", count):
-            return halted
+        # Quantification is optional: `quick` runs without a GTF skip straight
+        # from alignment to the report (align-only mode).
+        skip_quant = bool(input_data.routing_context.get("skip_quantification"))
+        if skip_quant:
+            count = {
+                "agent": "count",
+                "status": "skipped",
+                "payload": {},
+                "reasoning": "Quantification skipped (no GTF provided; align-only run).",
+            }
+        else:
+            count = await workflow.execute_activity(
+                count_activity,
+                args=(align, input_data.routing_context),
+                start_to_close_timeout=timedelta(minutes=30),
+            )
+            if halted := _halted_response(input_data.run_id, "count", count):
+                return halted
 
-        de = await workflow.execute_activity(
-            de_activity,
-            args=(
-                {
-                    **count,
-                    "sample_sheet": input_data.routing_context.get("sample_sheet"),
-                },
-                input_data.routing_context,
-            ),
-            start_to_close_timeout=timedelta(minutes=25),
-        )
-        if halted := _halted_response(input_data.run_id, "de_agent", de):
-            return halted
-
-        insight = await workflow.execute_activity(
-            insight_activity,
-            args=(
-                {
-                    **de,
-                    "go_input": input_data.routing_context.get("go_input"),
-                },
-                input_data.routing_context,
-            ),
-            start_to_close_timeout=timedelta(minutes=15),
-        )
-        if halted := _halted_response(input_data.run_id, "insight_agent", insight):
-            return halted
+        # DE and GO enrichment are cohort-level analyses: they need a merged
+        # multi-sample count matrix, so they run ONCE in the parent batch
+        # workflow — never per-sample (a single column cannot be DE-tested).
+        de = {
+            "agent": "de",
+            "status": "skipped",
+            "payload": {},
+            "reasoning": "Per-sample DE skipped; cohort-level DE runs in the batch workflow.",
+        }
+        insight = {
+            "agent": "insight",
+            "status": "skipped",
+            "payload": {},
+            "reasoning": "Per-sample GO skipped; cohort-level insight runs in the batch workflow.",
+        }
 
         report = await workflow.execute_activity(
             report_builder_activity,
@@ -359,31 +374,30 @@ class NGSSampleWorkflow:
             "mapping_rate": align.get("payload", {}).get("mapping_rate"),
             "bam_path": align.get("payload", {}).get("bam_path"),
             "bam_index": align.get("payload", {}).get("bam_index"),
+            "quantification_skipped": skip_quant,
             "count": count,
             "count_matrix": count.get("payload", {}).get("count_matrix"),
             "count_summary": count.get("payload", {}).get("count_summary"),
-            "de_artifacts": de.get("payload", {}).get("artifacts", {}),
-            "insight_summary": insight.get("payload", {}).get("ai_summary"),
             "report_html": report.get("payload", {}).get("report_html"),
             "report_narrative": report_agent.get("payload", {}).get("narrative"),
         }
+
+        agents_ran = [
+            "ingest",
+            "qc",
+            "ai_decider",
+            "trim",
+            "align",
+            "count",
+            "report_agent",
+            "report_builder",
+        ]
 
         return {
             "sample_id": input_data.sample_id,
             "status": "complete",
             "trim_was_run": trim_was_run,
-            "agents": [
-                "ingest",
-                "qc",
-                "ai_decider",
-                "trim",
-                "align",
-                "count",
-                "de_agent",
-                "insight_agent",
-                "report_agent",
-                "report_builder",
-            ],
+            "agents": agents_ran,
             "outputs": outputs,
             "ai_decision": ai_decision.get("payload", {}),
         }
@@ -392,7 +406,7 @@ class NGSSampleWorkflow:
 @workflow.defn
 class NGSPipelineWorkflow:
     @workflow.run
-    async def run(self, input_data: RunInput) -> Dict[str, Any]:
+    async def run(self, input_data: RunInput) -> dict[str, Any]:
         is_dna = input_data.experiment_type in {"WGS", "WES"}
         samples = input_data.initial_inputs.get("samples")
 
@@ -435,32 +449,78 @@ class NGSPipelineWorkflow:
 
         sample_results = await asyncio.gather(*sample_futures)
 
-        de = {}
-        insight = {}
+        de: dict[str, Any] = {
+            "agent": "de",
+            "status": "skipped",
+            "payload": {},
+            "reasoning": "DE requires an RNA-Seq cohort; skipped.",
+        }
+        insight: dict[str, Any] = {
+            "agent": "insight",
+            "status": "skipped",
+            "payload": {},
+            "reasoning": "GO insight requires DE results; skipped.",
+        }
 
-        successful_rna_samples = [r for r in sample_results if r.get("status") == "complete" and not is_dna]
+        successful_rna_samples = [
+            r for r in sample_results if r.get("status") == "complete" and not is_dna
+        ]
 
         if not is_dna and successful_rna_samples:
-            counts = [r["outputs"].get("count") for r in successful_rna_samples if r.get("outputs", {}).get("count")]
-            de_input = {
-                "counts": counts,
-                "samples": samples,
-            }
-            de = await workflow.execute_activity(
-                de_activity,
-                args=(de_input, input_data.routing_context),
-                start_to_close_timeout=timedelta(minutes=25),
-            )
+            # DESeq2 needs ≥2 samples spanning ≥2 conditions — a single
+            # sample (or a single condition) cannot be DE-tested.
+            conditions = {str(s.get("condition", "unknown")) for s in samples}
+            quantified = [
+                r for r in successful_rna_samples
+                if r.get("outputs", {}).get("count_matrix")
+            ]
+            if len(quantified) >= 2 and len(conditions) >= 2:
+                counts = [
+                    {
+                        "sample_id": r["sample_id"],
+                        "count_matrix": r["outputs"]["count_matrix"],
+                    }
+                    for r in quantified
+                ]
+                de_input = {
+                    "counts": counts,
+                    "samples": [
+                        {
+                            "sample_id": s.get("sample_id"),
+                            "condition": s.get("condition", "unknown"),
+                        }
+                        for s in samples
+                    ],
+                }
+                de = await workflow.execute_activity(
+                    de_activity,
+                    args=(de_input, input_data.routing_context),
+                    start_to_close_timeout=timedelta(minutes=25),
+                )
 
-            insight_input = {
-                **de,
-                "go_input": input_data.routing_context.get("go_input"),
-            }
-            insight = await workflow.execute_activity(
-                insight_activity,
-                args=(insight_input, input_data.routing_context),
-                start_to_close_timeout=timedelta(minutes=15),
-            )
+                # GO enrichment consumes the DE results table (it carries the
+                # required `gene` column); an explicit go_input overrides it.
+                go_input = (
+                    input_data.routing_context.get("go_input")
+                    or de.get("payload", {}).get("artifacts", {}).get("deseq_results.csv")
+                )
+                insight_input = {
+                    **de,
+                    "go_input": go_input,
+                }
+                insight = await workflow.execute_activity(
+                    insight_activity,
+                    args=(insight_input, input_data.routing_context),
+                    start_to_close_timeout=timedelta(minutes=15),
+                )
+            else:
+                reason = (
+                    "DE skipped: need ≥2 quantified samples across ≥2 conditions "
+                    f"(got {len(quantified)} quantified, conditions={sorted(conditions)}). "
+                    "Single-sample runs stop at counting by design."
+                )
+                de["reasoning"] = reason
+                insight["reasoning"] = f"GO insight skipped because {reason[12:]}"
 
         report_payload = {
             "samples": sample_results,

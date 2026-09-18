@@ -1,10 +1,25 @@
 import hashlib
 import json
+import logging
 import os
-from typing import Any, Dict, Optional
+from typing import Any
 
 import boto3
 import redis
+
+logger = logging.getLogger(__name__)
+
+# Keys that differ on every submission but don't change the computation.
+# Hashing them would make identical re-runs always miss the cache.
+VOLATILE_HASH_KEYS = frozenset({"run_id", "sample_id"})
+
+
+def _strip_volatile(obj: Any) -> Any:
+    if isinstance(obj, dict):
+        return {k: _strip_volatile(v) for k, v in obj.items() if k not in VOLATILE_HASH_KEYS}
+    if isinstance(obj, list):
+        return [_strip_volatile(v) for v in obj]
+    return obj
 
 
 class CacheManager:
@@ -20,15 +35,24 @@ class CacheManager:
         )
         self.bucket = os.environ.get("CACHE_BUCKET", "ngs-cache")
 
-    def compute_hash(self, agent_name: str, inputs: Dict[str, Any]) -> str:
-        content = json.dumps({"agent": agent_name, "inputs": inputs}, sort_keys=True)
+    def compute_hash(self, agent_name: str, inputs: dict[str, Any]) -> str:
+        stable = _strip_volatile({"agent": agent_name, "inputs": inputs})
+        content = json.dumps(stable, sort_keys=True)
         return hashlib.blake2b(content.encode("utf-8")).hexdigest()[:16]
 
-    async def get(self, cache_key: str) -> Optional[Dict[str, Any]]:
+    async def get(self, cache_key: str) -> dict[str, Any] | None:
         redis_key = f"cache:{cache_key}"
-        data = self.redis.get(redis_key)
+        try:
+            data = self.redis.get(redis_key)
+        except Exception as exc:
+            # A stopped Redis must degrade to "cache miss", never fail the run.
+            logger.warning("Redis cache unavailable, treating as miss: %s", exc)
+            data = None
         if data:
-            return json.loads(data)
+            try:
+                return json.loads(data)
+            except Exception:
+                return None
 
         try:
             obj = self.s3.get_object(Bucket=self.bucket, Key=f"{cache_key}.json")
@@ -36,7 +60,13 @@ class CacheManager:
         except Exception:
             return None
 
-    async def set(self, cache_key: str, data: Dict[str, Any], ttl_days: int = 30) -> None:
+    async def set(self, cache_key: str, data: dict[str, Any], ttl_days: int = 30) -> None:
         redis_key = f"cache:{cache_key}"
-        self.redis.setex(redis_key, ttl_days * 24 * 3600, json.dumps(data))
-        self.s3.put_object(Bucket=self.bucket, Key=f"{cache_key}.json", Body=json.dumps(data))
+        try:
+            self.redis.setex(redis_key, ttl_days * 24 * 3600, json.dumps(data))
+        except Exception as exc:
+            logger.warning("Redis cache write failed, continuing uncached: %s", exc)
+        try:
+            self.s3.put_object(Bucket=self.bucket, Key=f"{cache_key}.json", Body=json.dumps(data))
+        except Exception as exc:
+            logger.warning("S3 cache write failed, continuing uncached: %s", exc)
