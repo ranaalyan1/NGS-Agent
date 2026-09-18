@@ -25,8 +25,9 @@ dist/
 
 # Logs and temporary files
 *.log
-# This small log is part of the documented demo command.
+# These small logs are part of the documented demo commands.
 !demo_data/sample.log
+!ngs_agent/demo_data/sample.log
 *.tmp
 *.swp
 
