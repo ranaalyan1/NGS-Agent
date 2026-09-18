@@ -17,7 +17,15 @@ RUN apt-get update \
         r-cran-tibble \
         r-cran-htmlwidgets \
         r-cran-plotly \
+        libcurl4-openssl-dev \
+        libxml2-dev \
+        libssl-dev \
     && rm -rf /var/lib/apt/lists/*
+
+# Bioconductor packages used by de_analysis.R (not available via apt).
+RUN Rscript -e 'install.packages("BiocManager", repos="https://cloud.r-project.org")' \
+    && Rscript -e 'BiocManager::install(c("DESeq2", "ComplexHeatmap", "EnhancedVolcano"), update=FALSE, ask=FALSE)' \
+    && Rscript -e 'install.packages(c("matrixStats", "circlize"), repos="https://cloud.r-project.org")'
 
 RUN python3 -m pip install --no-cache-dir boto3 pydantic
 

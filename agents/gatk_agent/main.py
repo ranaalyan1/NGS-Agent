@@ -19,7 +19,12 @@ class GATKAgent(BaseAgent):
         if not reference_fasta:
             raise RuntimeError("reference_fasta is required for GATK")
 
-        bam_path = inputs.get("payload", {}).get("bam_path") or inputs.get("bam_path")
+        payload = inputs.get("payload", {})
+        bam_path = (
+            payload.get("bam_path")
+            or payload.get("artifacts", {}).get("bam_path")  # BWA nests it under artifacts
+            or inputs.get("bam_path")
+        )
         if not bam_path:
             raise RuntimeError("BAM input not found for GATK")
 

@@ -58,8 +58,12 @@ class AIDeciderAgent(BaseAgent):
                 "source": "heuristic",
             }
 
+        # fastqc_data.txt module lines look like ">>Per base sequence quality\tfail"
+        # while summary.txt lines look like "FAIL\t<module>\t<file>" — accept both.
         fails = len(re.findall(r"^FAIL\t", fastqc_data, flags=re.MULTILINE))
         warns = len(re.findall(r"^WARN\t", fastqc_data, flags=re.MULTILINE))
+        fails += len(re.findall(r"^>>.+?\tfail\s*$", fastqc_data, flags=re.MULTILINE | re.IGNORECASE))
+        warns += len(re.findall(r"^>>.+?\twarn(?:ing)?\s*$", fastqc_data, flags=re.MULTILINE | re.IGNORECASE))
 
         trim = fails > 0 or warns >= 3
         params = dict(DEFAULT_TRIM_PARAMS)

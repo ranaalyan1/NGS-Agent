@@ -72,21 +72,36 @@ def _variant_prompt(variant: Variant) -> str:
     )
 
 
+class DebateBackendError(RuntimeError):
+    """Raised when the LLM backend fails so badly no debate is possible.
+
+    Failing loudly (instead of printing a fabricated "consensus") is a
+    safety requirement: a confident-looking report built from zero LLM
+    output could mislead clinical review.
+    """
+
+
 def debate_variant(variant: Variant, backend: LLMBackend) -> DebateResult:
     if isinstance(backend, NoBackend):
+        # NoBackend.complete raises a helpful "not configured" message.
         backend.complete("")
 
     opinions: list[PersonaOpinion] = []
     all_codes: list[str] = []
+    failures = 0
 
     for key, persona in PERSONAS.items():
         try:
             text = backend.complete(_variant_prompt(variant), system=persona["system"])
         except Exception as exc:
-            text = f"[LLM call failed: {exc}]"
+            failures += 1
+            text = (
+                f"[LLM call failed for {persona['name']}: {exc}]\n"
+                "No assessment was produced for this persona."
+            )
 
-        stance = _extract_stance(text)
-        codes = _extract_acmg_codes(text)
+        stance = "Uncertain" if text.startswith("[LLM call failed") else _extract_stance(text)
+        codes = [] if text.startswith("[LLM call failed") else _extract_acmg_codes(text)
         all_codes.extend(codes)
 
         opinions.append(
@@ -98,8 +113,24 @@ def debate_variant(variant: Variant, backend: LLMBackend) -> DebateResult:
             )
         )
 
+    if failures == len(PERSONAS):
+        # Every persona failed: there is no debate to report. Abort with a
+        # clear, actionable error instead of a fake consensus (exit non-zero).
+        first_error = opinions[0].reasoning.splitlines()[0] if opinions else "unknown error"
+        raise DebateBackendError(
+            "All LLM calls failed — no debate could be run, so no consensus is reported. "
+            f"{first_error} "
+            "Check your API key / backend (run `ngsagent doctor` and "
+            "`ngsagent config wizard`), then retry. No report was written."
+        )
+
     acmg_eval = compute_acmg_classification(all_codes)
     consensus = _build_consensus(opinions, acmg_eval)
+    if failures:
+        consensus += (
+            f" (Note: {failures} of {len(PERSONAS)} persona calls failed; "
+            "consensus is based on the remaining opinions.)"
+        )
     recommendation = _build_recommendation(consensus, variant, acmg_eval)
 
     return DebateResult(
@@ -132,7 +163,7 @@ def _extract_stance(text: str) -> str:
         if "benign" in val:
             return "Benign"
         if "vus" in val or "uncertain" in val:
-            return "Vus"
+            return "VUS"
 
     # 2. Mask negated phrases so they don't trigger positive classifications
     cleaned = re.sub(
@@ -165,7 +196,7 @@ def _extract_stance(text: str) -> str:
     if has_benign and not has_pathogenic:
         return "Benign"
     if has_vus:
-        return "Vus"
+        return "VUS"
 
     if "__NEGATED_PATHOGENIC__" in cleaned and has_benign:
         return "Likely Benign" if has_likely_benign else "Benign"

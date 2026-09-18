@@ -25,6 +25,53 @@ from ngs_agent.config.settings import DEFAULT_ANTHROPIC_MODEL  # noqa: E402
 
 DEFAULT_CONFIG["anthropic_model"] = DEFAULT_ANTHROPIC_MODEL
 
+# Every key `config set` accepts. Anything else is rejected with a
+# "did you mean …?" suggestion instead of being silently saved as dead config.
+VALID_CONFIG_KEYS: dict[str, str] = {
+    "llm": "active backend: none|anthropic|openrouter|groq|deepseek|gemini|openai|ollama|openai_compat",
+    "anthropic_model": "Anthropic model id",
+    "anthropic_api_key": "Anthropic API key (prefer ANTHROPIC_API_KEY env var)",
+    "openrouter_model": "OpenRouter model id",
+    "openrouter_api_key": "OpenRouter API key (prefer OPENROUTER_API_KEY env var)",
+    "groq_model": "Groq model id",
+    "groq_api_key": "Groq API key (prefer GROQ_API_KEY env var)",
+    "deepseek_model": "DeepSeek model id",
+    "deepseek_api_key": "DeepSeek API key (prefer DEEPSEEK_API_KEY env var)",
+    "gemini_model": "Gemini model id",
+    "gemini_api_key": "Gemini API key (prefer GEMINI_API_KEY env var)",
+    "openai_model": "OpenAI model id",
+    "openai_api_key": "OpenAI API key (prefer OPENAI_API_KEY env var)",
+    "ollama_model": "Ollama model name",
+    "ollama_host": "Ollama server URL",
+    "openai_compat_base_url": "OpenAI-compatible base URL",
+    "openai_compat_model": "OpenAI-compatible model id",
+    "openai_compat_api_key": "OpenAI-compatible API key (prefer OPENAI_COMPAT_API_KEY env var)",
+    "theme": "TUI theme: dark|light|colorblind|ansi|ansi-light|midnight",
+}
+
+VALID_LLM_BACKENDS = (
+    "none",
+    "anthropic",
+    "openrouter",
+    "groq",
+    "deepseek",
+    "gemini",
+    "openai",
+    "ollama",
+    "openai_compat",
+)
+
+# Keys whose values are secrets — never print them in full.
+SECRET_KEYS = frozenset({k for k in VALID_CONFIG_KEYS if k.endswith("_api_key")})
+
+
+def suggest_key(unknown: str) -> str | None:
+    """Return the closest valid config key to a typo, if close enough."""
+    import difflib
+
+    matches = difflib.get_close_matches(unknown, VALID_CONFIG_KEYS, n=1, cutoff=0.55)
+    return matches[0] if matches else None
+
 
 def ensure_config_dir() -> None:
     CONFIG_DIR.mkdir(parents=True, exist_ok=True)

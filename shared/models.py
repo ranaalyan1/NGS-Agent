@@ -1,17 +1,17 @@
 from dataclasses import dataclass
-from typing import Any, Dict
+from typing import Any
 
 
 @dataclass
 class AgentResult:
     status: str
-    payload: Dict[str, Any]
+    payload: dict[str, Any]
     reasoning: str
     halt: bool = False
     halt_reason: str = ""
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any] | None) -> "AgentResult":
+    def from_dict(cls, data: dict[str, Any] | None) -> "AgentResult":
         data = data or {}
         payload = data.get("payload") if isinstance(data.get("payload"), dict) else {}
         return cls(

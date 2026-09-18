@@ -33,21 +33,24 @@ pip install "ngs-agent[swarm]"
 ## Usage
 
 ```bash
+ngsagent demo                          # try everything on bundled demo data (works anywhere)
 ngsagent watch pipeline.log
-ngsagent watch --tail pipeline.log
-ngsagent analyze variants.vcf
 ngsagent analyze variants.vcf --qc multiqc_summary.txt
-ngsagent debate variants.vcf
 ngsagent debate variants.vcf --gene BRCA2
-ngsagent config wizard
+ngsagent doctor                          # check tools + LLM setup
+ngsagent examples                        # copy-paste recipes
 ```
 
-Try it immediately with the bundled demo files:
+Running bare `ngsagent` shows a quickstart panel (the interactive terminal UI
+is available via `ngsagent tui`).
 
-```bash
-ngsagent watch demo_data/sample.log
-ngsagent analyze demo_data/sample.vcf
-```
+> **Which CLI do I need?** This repo ships three entry points:
+>
+> | Command | Purpose |
+> |---|---|
+> | `ngsagent` | Lightweight log/VCF tools: `watch`, `analyze`, `debate`, `doctor`, `demo` (this README's focus). No Docker needed. |
+> | `ngs-agent` | Local agentic pipelines: `ngs-agent run rnaseq --samplesheet samples.csv`. |
+> | `python cli.py` | Temporal + Docker swarm for full RNA-Seq/WGS/WES runs (see [Swarm Pipeline](#swarm-pipeline-full-rna-seq--wgs--wes)). |
 
 ---
 
@@ -95,13 +98,25 @@ QC parsing extracts mapping rate, mean coverage, duplication rate, and Q30 fract
 
 ---
 
+### demo
+
+Runs `watch` + `analyze` on demo files bundled inside the installed package,
+so it works from any directory right after `pip install ngs-agent`:
+
+```bash
+ngsagent demo
+```
+
 ### debate
 
 Submits every VUS in a VCF to three independent LLM personas simultaneously. Each persona evaluates the variant from a different disciplinary angle, then the tool builds a consensus and recommendation.
 
 ```bash
-ngsagent debate <vcffile> [--gene <GENE_SYMBOL>]
+ngsagent debate <vcffile> [--gene <GENE_SYMBOL>] [--html debate.html]
 ```
+
+If all LLM calls fail, `debate` aborts with exit code 2 and writes no report —
+it never prints a fabricated "consensus" from failed calls.
 
 The three personas:
 
@@ -122,12 +137,16 @@ Manages `~/.ngsagent/config.yaml`.
 ```bash
 ngsagent config wizard
 ngsagent config show
+ngsagent config keys                        # list every valid key
 ngsagent config set llm anthropic
 ngsagent config set anthropic_model claude-sonnet-4-5
 ngsagent config set llm ollama
 ngsagent config set ollama_model llama3.2
 ngsagent config set ollama_host http://localhost:11434
 ```
+
+Unknown keys are rejected with a "did you mean …?" suggestion (typos are
+never silently saved), and API keys are masked in `config show`.
 
 ---
 
@@ -185,6 +204,18 @@ python cli.py submit \
   --fastq-r2 data/fastq/R2.fastq.gz \
   --paired
 ```
+
+**Or the one-liner** (single-end; omit `--gtf` for align-only):
+
+```bash
+python cli.py quick --fastq data/fastq/reads.fastq.gz \
+  --ref-genome data/ref/grch38_idx --gtf data/ref/genes.gtf
+```
+
+Notes: `--ref-genome` accepts a HISAT2 index basename (with `.ht2` siblings)
+or a FASTA path. Differential expression needs a batch with ≥2 samples
+across ≥2 conditions (`submit-batch`); single-sample runs stop at counting
+by design, and runs without `--gtf` are align-only (counting/DE skipped).
 
 **Check run status:**
 

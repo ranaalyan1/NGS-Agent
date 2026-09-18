@@ -21,7 +21,17 @@ out_dir <- args[3]
 
 dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
 
-counts <- read_csv(count_path, show_col_types = FALSE)
+# featureCounts writes TAB-separated output with '#' comment lines and
+# Geneid/Chr/Start/End/Strand/Length metadata columns; the merged matrix
+# from the DE agent is a clean Geneid + sample TSV. Handle both (and CSV).
+first_line <- readLines(count_path, n = 20)
+first_line <- first_line[!grepl("^\\s*(#|$)", first_line)][1]
+is_tsv <- !is.na(first_line) && grepl("\t", first_line, fixed = TRUE)
+if (is_tsv) {
+  counts <- read_tsv(count_path, comment = "#", show_col_types = FALSE)
+} else {
+  counts <- read_csv(count_path, comment = "#", show_col_types = FALSE)
+}
 samples <- read_csv(sample_sheet_path, show_col_types = FALSE)
 
 if (!"sample_id" %in% colnames(samples) || !"condition" %in% colnames(samples)) {
@@ -29,9 +39,14 @@ if (!"sample_id" %in% colnames(samples) || !"condition" %in% colnames(samples)) 
 }
 
 counts_df <- as.data.frame(counts)
+# Drop featureCounts metadata columns when present.
+meta_cols <- c("Chr", "Start", "End", "Strand", "Length")
+counts_df <- counts_df[, !(colnames(counts_df) %in% meta_cols), drop = FALSE]
 rownames(counts_df) <- counts_df[[1]]
 counts_df[[1]] <- NULL
 count_mat <- as.matrix(counts_df)
+mode(count_mat) <- "numeric"
+count_mat[is.na(count_mat)] <- 0
 
 sample_ids <- samples$sample_id
 common <- intersect(colnames(count_mat), sample_ids)
@@ -112,6 +127,9 @@ dev.off()
 
 warnings <- c()
 if (percentVar[1] < 50) warnings <- c(warnings, "PC1 variance below 50%")
+if (min(table(samples$condition)) < 2) {
+  warnings <- c(warnings, "No condition has replicates; dispersion estimates and p-values are unreliable")
+}
 
 summary <- list(
   n_genes_tested = nrow(res_df),

@@ -24,7 +24,9 @@ class CountAgent(BaseAgent):
 
     def execute(self, inputs, routing_ctx):
         run_id = routing_ctx.get("run_id", "unknown")
-        gtf = routing_ctx.get("gtf") or inputs.get("gtf")
+        # Prefer the staged `inputs` copy (bind-mounted container path) over
+        # the raw routing_ctx value (a worker-host path the container can't see).
+        gtf = inputs.get("gtf") or routing_ctx.get("gtf")
         if not gtf:
             raise RuntimeError("GTF path is required for featureCounts")
 

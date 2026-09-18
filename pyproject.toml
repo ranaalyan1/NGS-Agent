@@ -94,6 +94,12 @@ ngs-agent = "ngs_agent.cli.app:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["ngs_agent"]
+# Demo files power `ngsagent demo` from an installed wheel. Listed
+# explicitly because default exclude patterns drop *.log files.
+artifacts = [
+  "ngs_agent/demo_data/sample.vcf",
+  "ngs_agent/demo_data/sample.log",
+]
 
 [tool.hatch.build.targets.sdist]
 include = [

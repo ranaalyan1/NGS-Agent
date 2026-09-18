@@ -41,24 +41,51 @@ def signatures_dir() -> Path:
     return Path(__file__).parent / "signatures"
 
 
+def _load_signature_file(yaml_path: Path) -> Signature:
+    data = yaml.safe_load(yaml_path.read_text(encoding="utf-8")) or {}
+    missing = [k for k in ("id", "name", "explanation", "suggested_fix") if k not in data]
+    if missing:
+        raise ValueError(
+            f"Signature file {yaml_path} is missing required keys: {', '.join(missing)}"
+        )
+    sig = Signature(
+        id=data["id"],
+        name=data["name"],
+        severity=data.get("severity", "warning"),
+        patterns=data.get("patterns", []),
+        threshold=data.get("threshold"),
+        threshold_field=data.get("threshold_field"),
+        threshold_op=data.get("threshold_op"),
+        explanation=data["explanation"],
+        suggested_fix=data["suggested_fix"],
+    )
+    sig.compile()
+    return sig
+
+
 def load_signatures(path: Path | None = None) -> list[Signature]:
+    """Load failure signatures from a directory or a single YAML file.
+
+    Defaults to the built-in signatures directory. Raises a clear error
+    (instead of silently returning an empty list) when an explicitly
+    requested path yields no signatures.
+    """
+    if path is not None and path.is_file():
+        # Users reasonably point --signatures at one YAML file.
+        return [_load_signature_file(path)]
+
     root = path or signatures_dir()
     sigs: list[Signature] = []
-    for yaml_path in sorted(root.glob("*.yaml")):
-        data = yaml.safe_load(yaml_path.read_text(encoding="utf-8"))
-        sig = Signature(
-            id=data["id"],
-            name=data["name"],
-            severity=data.get("severity", "warning"),
-            patterns=data.get("patterns", []),
-            threshold=data.get("threshold"),
-            threshold_field=data.get("threshold_field"),
-            threshold_op=data.get("threshold_op"),
-            explanation=data["explanation"],
-            suggested_fix=data["suggested_fix"],
+    if root.is_dir():
+        for yaml_path in sorted(root.glob("*.yaml")):
+            sigs.append(_load_signature_file(yaml_path))
+        sigs.extend(_load_signature_file(p) for p in sorted(root.glob("*.yml")))
+    if path is not None and not sigs:
+        raise ValueError(
+            f"No signature files (*.yaml/yml) found in {path}. "
+            "Point --signatures at a directory containing signature YAML files "
+            "or at a single signature YAML file."
         )
-        sig.compile()
-        sigs.append(sig)
     return sigs
 
 

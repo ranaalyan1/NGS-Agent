@@ -3,11 +3,18 @@
 from __future__ import annotations
 
 import datetime
+import html as _html
 from pathlib import Path
 
 from ngs_agent.analyzer import Variant
 from ngs_agent.debate import DebateResult
 from ngs_agent.qc import QCMetric
+
+
+def _esc(value: object) -> str:
+    """HTML-escape VCF/QC/LLM-derived text so `<` in alleles or model output
+    cannot break (or inject markup into) a shared report."""
+    return _html.escape("" if value is None else str(value), quote=True)
 
 HTML_TEMPLATE = """<!DOCTYPE html>
 <html lang="en">
@@ -165,10 +172,10 @@ def generate_html_report(
             badge_class = f"badge-{q.status.lower()}"
             qc_cards_html += f"""
             <div class="card">
-              <div class="metric-title">{q.name}</div>
+              <div class="metric-title">{_esc(q.name)}</div>
               <div class="metric-value">
-                <span>{q.value}</span>
-                <span class="badge {badge_class}">{q.status}</span>
+                <span>{_esc(q.value)}</span>
+                <span class="badge {badge_class}">{_esc(q.status)}</span>
               </div>
             </div>
             """
@@ -191,12 +198,12 @@ def generate_html_report(
 
         variant_rows_html += f"""
         <tr>
-          <td><strong>{v.gene}</strong></td>
-          <td><code>{loc}</code></td>
-          <td>{v.consequence}</td>
-          <td>{v.clinvar}</td>
+          <td><strong>{_esc(v.gene)}</strong></td>
+          <td><code>{_esc(loc)}</code></td>
+          <td>{_esc(v.consequence)}</td>
+          <td>{_esc(v.clinvar)}</td>
           <td>{af_str}</td>
-          <td>{dv_str}</td>
+          <td>{_esc(dv_str)}</td>
           <td>{badge}</td>
         </tr>
         """
@@ -210,17 +217,17 @@ def generate_html_report(
             for op in d.opinions:
                 opinions_html += f"""
                 <div class="opinion-box">
-                  <strong>{op.persona}</strong> — <span class="badge badge-warn">{op.stance}</span>
-                  <p style="margin: 0.25rem 0 0 0; color: var(--text-muted); font-size: 0.9rem;">{op.reasoning}</p>
+                  <strong>{_esc(op.persona)}</strong> — <span class="badge badge-warn">{_esc(op.stance)}</span>
+                  <p style="margin: 0.25rem 0 0 0; color: var(--text-muted); font-size: 0.9rem;">{_esc(op.reasoning)}</p>
                 </div>
                 """
             debate_section_html += f"""
             <div class="debate-section">
-              <h3>{d.variant.gene} ({d.variant.chrom}:{d.variant.pos} {d.variant.ref}>{d.variant.alt})</h3>
+              <h3>{_esc(d.variant.gene)} ({_esc(d.variant.chrom)}:{_esc(d.variant.pos)} {_esc(d.variant.ref)}&gt;{_esc(d.variant.alt)})</h3>
               {opinions_html}
               <div style="margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid var(--border);">
-                <strong>Consensus:</strong> {d.consensus}<br>
-                <strong>Recommendation:</strong> {d.recommendation}
+                <strong>Consensus:</strong> {_esc(d.consensus)}<br>
+                <strong>Recommendation:</strong> {_esc(d.recommendation)}
               </div>
             </div>
             """

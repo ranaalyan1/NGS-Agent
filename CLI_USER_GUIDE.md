@@ -49,58 +49,63 @@ Commands:
 
 ---
 
-## 2. New `quick` Command – One‑Line RNA‑Seq
+## 2. `quick` Command – One‑Line RNA‑Seq
 
 ### Purpose
 
-Submit a **single‑sample RNA‑Seq** run with the absolute minimum of typing. The command picks sensible defaults:
+Submit a **single‑sample RNA‑Seq** run with minimal typing. You provide the
+data + reference; the command fills in the rest:
 
 | Parameter | Default |
 |-----------|---------|
 | Experiment type | `RNA‑Seq` |
 | Organism | `human` |
-| Reference genome | `hg38` (human) / `mm10` (mouse) |
 | Paired‑end | `False` (single‑end) |
-| GTF / reference‑FASTA | omitted (counting step is skipped) |
+| GTF | optional — omit for **align‑only** (counting/DE truly skipped) |
+
+> Single‑sample runs stop at counting by design: DESeq2 needs ≥2 samples
+> across ≥2 conditions, so use `submit‑batch` for differential expression.
 
 ### Syntax
 
 ```bash
-python cli.py quick --fastq <PATH_TO_FASTQ> [--organism <SPECIES>]
+python cli.py quick --fastq <FASTQ> --ref-genome <INDEX_OR_FASTA> [--gtf <GENES.GTF>] [--organism <SPECIES>]
 ```
 
 | Flag | Description | Required? |
 |------|-------------|-----------|
 | `--fastq` | Path to a **single‑end** FASTQ file | **Yes** |
-| `--organism` | Species: `human`, `mouse`, `rat`, `zebrafish`, `yeast`, `other`. Default: `human` | No |
+| `--ref-genome` | HISAT2 index basename (with `.ht2` siblings) or reference FASTA | **Yes** |
+| `--gtf` | Annotation GTF for counting (omit = align‑only run) | No |
+| `--organism` | `human`, `mouse`, `rat`, `zebrafish`, `yeast`, `other`, `mixed`. Default: `human` | No |
 
 ### Examples
 
 ```bash
-# Minimal – just the FASTQ file (human, hg38)
-python cli.py quick --fastq data.fastq
+# Full single-sample run with counting
+python cli.py quick --fastq data.fastq --ref-genome data/ref/grch38_idx --gtf data/ref/genes.gtf
 
-# Choose mouse (mm10 reference)
-python cli.py quick --fastq data.fastq --organism mouse
+# Align-only (no GTF available) — fast QC + alignment + report
+python cli.py quick --fastq data.fastq --ref-genome data/ref/grch38_idx
 
-# If you have a custom organism, it will fall back to hg38
-python cli.py quick --fastq data.fastq --organism other
+# Mouse data
+python cli.py quick --fastq data.fastq --ref-genome data/ref/mm10_idx --gtf data/ref/mm10.gtf --organism mouse
 ```
 
 ### What happens under the hood
 
-1. **Validate** that the FASTQ file exists.
-2. **Derive** the reference genome from the organism (`hg38` / `mm10`).
-3. **Connect** to the Temporal server (default `localhost:7233`).
-4. **Start** the `NGSPipelineWorkflow` with a generated `run‑id`.
-5. **Print** a monitoring URL, e.g.:
+1. **Validate** the FASTQ, the reference (file or index basename with `.ht2`/`.bwt` siblings), and the GTF if given.
+2. **Connect** to the Temporal server (`TEMPORAL_HOST`, default `localhost:7233`).
+3. **Start** the `NGSPipelineWorkflow` with a generated `run‑id`.
+4. **Print** a monitoring URL, e.g.:
 
 ```
-Quick run submitted: run-3f9a2c1d
-Monitor at http://localhost:8080/namespaces/default/workflows/ngs-run-3f9a2c1d
+Quick run submitted: quick-3f9a2c1d
+Monitor at http://localhost:8080/namespaces/default/workflows/ngs-quick-3f9a2c1d
 ```
 
-> **Note:** The Temporal server must be reachable. In a local development setup you typically have it running; otherwise you’ll get a “Connection refused” error – that’s expected in this sandbox.
+> **Note:** The Temporal server must be reachable. If it isn't, you'll get a
+> clear error telling you to run `docker compose up -d` or set `TEMPORAL_HOST`.
 
 ### When to use `quick` vs. `submit`
 
@@ -127,19 +132,22 @@ All of these commands share the same underlying Temporal workflow, so the monito
 
 ## 4. Full `submit` Command – When You Need More Control
 
-The original `submit` command remains unchanged for advanced use‑cases. Its help (run `python cli.py submit --help`) lists every option, but the most frequently used minimal subset is:
+The `submit` command is for advanced use‑cases. Its help (run `python cli.py submit --help`) lists every option, but a minimal example is:
 
 ```bash
 python cli.py submit \
     --fastq data.fastq \
     --organism human \
-    --ref-genome hg38 \
+    --ref-genome data/ref/grch38_idx \
+    --gtf data/ref/genes.gtf \
     --experiment RNA-Seq
 ```
 
 - **`--experiment`** chooses `RNA‑Seq`, `WGS`, or `WES`.
-- **`--organism`** and **`--ref-genome`** let you pick any supported species/index.
-- **`--gtf`**, **`--panel‑bed`**, **`--known‑sites`** are optional; they are only validated when you actually supply them.
+- **`--organism`** accepts `human`, `mouse`, `rat`, `zebrafish`, `yeast`, `other`, `mixed`.
+- **`--ref-genome`** accepts a HISAT2 index basename (validated via `.ht2` siblings) or a reference FASTA path.
+- **`--gtf`** is optional for RNA‑Seq: omit it for an align‑only run (counting/DE skipped, no crash).
+- **`--panel‑bed`**, **`--known‑sites`** are optional; validated only when supplied.
 
 Use `submit` when you need **full control** (e.g., DNA‑Seq with BQSR, custom GTF‑based gene counting, or multi‑panel experiments).
 
@@ -155,11 +163,12 @@ Run a batch analysis from a CSV sample sheet:
 python cli.py submit-batch \
     --sample-sheet samples.csv \
     --organism human \
-    --ref-genome hg38 \
+    --ref-genome data/ref/grch38_idx \
+    --gtf data/ref/genes.gtf \
     --paired
 ```
 
-The CSV must have columns: `sample_id`, `condition`, `replicate_group`, `species`, `fastq`, `fastq_r1`, `fastq_r2`. The guide’s `wizard` command can generate this file for you.
+The CSV must have columns: `sample_id`, `condition`, `replicate_group`, `species`, `fastq` (or `fastq_path`), `fastq_r1`, `fastq_r2`. The `wizard` command can generate this file for you. For differential expression, include ≥2 samples across ≥2 conditions (with replicates ideally).
 
 ### `wizard`
 
@@ -173,10 +182,10 @@ You’ll be prompted for:
 
 1. Analysis type (`RNA‑Seq`, `WGS`, `WES`)
 2. Paired‑end? (yes/no)
-3. Default organism (`hg38`, `mm10`, `mixed`)
+3. Default organism (`human`, `mouse`, `mixed`)
 4. Number of samples to configure
 5. Per‑sample details (ID, condition, replicate, species, FASTQ paths)
-6. Reference genome and GTF path
+6. Reference genome index basename and GTF path (blank GTF = align‑only)
 
 At the end, the wizard writes:
 
@@ -209,11 +218,13 @@ If you frequently use a remote Temporal service, add the export to your shell pr
 
 | Symptom | Likely cause | Fix |
 |---------|--------------|-----|
-| `RuntimeError: Failed client connect: Connection refused` | Temporal server not running or `TEMPORAL_HOST` wrong. | Start a local Temporal server, or set `TEMPORAL_HOST` to the correct host:port. |
-| `click.BadParameter: --fastq path does not exist: ...` | FASTQ file path typo or missing file. | Verify the path, create the file, or use an absolute path. |
-| `Unrecognized argument: --organism` | Typo or unsupported species. | Use one of: `human`, `mouse`, `rat`, `zebrafish`, `yeast`, `other`. |
+| `Error: Cannot reach Temporal at ...` | Temporal server not running or `TEMPORAL_HOST` wrong. | Run `docker compose up -d`, or set `TEMPORAL_HOST` to the correct host:port. All commands (`submit`, `status`, `quick`) honor it. |
+| `--fastq does not exist or is not a file: ...` | FASTQ file path typo or missing file. | Verify the path, create the file, or use an absolute path. |
+| `--ref-genome 'hg38' is not a file and no index files ...` | Bare preset name instead of a real path. | Pass the index basename (e.g. `data/ref/grch38_idx` with `.ht2` siblings) or a FASTA path. |
+| `Unrecognized argument: --organism` | Typo or unsupported species. | Use one of: `human`, `mouse`, `rat`, `zebrafish`, `yeast`, `other`, `mixed`. |
 | `ModuleNotFoundError: No module named 'click'` | Packages not installed. | Run `pip install --break-system-packages -r requirements.txt`. |
 | Want to run **paired‑end** with `quick`? | `quick` is single‑end only. | Use `submit` with `--fastq-r1` / `--fastq-r2` and `--paired`. |
+| `DE skipped: need ≥2 quantified samples ...` | Single‑sample or single‑condition run. | Expected: submit a batch with ≥2 conditions for DE. |
 
 ### Getting help for any command
 
@@ -234,12 +245,14 @@ python cli.py submit --help
 
 | Change | Reason |
 |--------|--------|
-| **Added `quick` command** (single‑line RNA‑Seq) | Removes the need to remember 8‑10 flags for a routine RNA‑Seq run. |
+| **`quick` requires a real `--ref-genome`** (file or index basename) | The old `hg38`/`mm10` preset strings were never mounted and crashed alignment. Validation now catches this before submit. |
+| **Align‑only mode is real** (omit `--gtf` in `quick`/`submit`/`submit-batch`) | Counting/DE are skipped by the workflow instead of crashing in the count agent. |
 | **Made `--gtf` optional in `submit`** | Researchers who don’t need counting can skip the GTF file entirely. |
 | **Simplified help text** | All option descriptions now explicitly mark which are required vs. optional. |
-| **Default organism & reference‑genome mapping** (`human → hg38`, `mouse → mm10`) | One fewer decision for the most common use‑case. |
+| **`wizard` uses valid organisms** (`human`/`mouse`/`mixed`) and prints a valid next command | The old `hg38`/`mm10` values were rejected by `submit-batch`. |
 | **`wizard` now writes `.env` + sample‑sheet automatically** | One‑step generation of the configuration needed for batch runs. |
-| **Removed mandatory `RNA‑Seq +‑gtf` check** | Prevents an unnecessary roadblock when you just want a quick alignment‑only run. |
+| **All commands honor `TEMPORAL_HOST`** (including `status`) with actionable errors | No more raw tracebacks on connection failure. |
+| **Batch CSV accepts `fastq` or `fastq_path`** | Single‑end batch rows no longer fall into mock mode. |
 
 ---
 
@@ -253,10 +266,10 @@ cd NGS-Agent && pip install --break-system-packages -r requirements.txt
 #    (or set TEMPORAL_HOST env var)
 
 # 3️⃣ Submit a quick RNA‑Seq run
-python cli.py quick --fastq /path/to/your_data.fastq
+python cli.py quick --fastq /path/to/your_data.fastq --ref-genome /path/to/grch38_idx --gtf /path/to/genes.gtf
 
 # 4️⃣ Monitor the run
-#    → Open the URL printed, e.g. http://localhost:8080/namespaces/default/workflows/ngs-run-...
+#    → Open the URL printed, e.g. http://localhost:8080/namespaces/default/workflows/ngs-quick-...
 ```
 
 That’s it! You now have a frictionless pathway from FASTQ file to pipeline monitoring in a single command. Happy sequencing!
