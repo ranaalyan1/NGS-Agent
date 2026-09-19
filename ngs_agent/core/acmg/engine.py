@@ -274,7 +274,17 @@ class AcmgEngine:
 
         effective_criteria_label = criteria_label or UNCERTAIN_TIER
         external_label = _reconcile_external(externals, conflicts)
-        concordance = _concordance(effective_criteria_label, external_label)
+        # Concordance compares an opinion we *formed* against an external one.
+        # With no applied criteria there is no opinion to compare — the external
+        # label is adopted, neither corroborated nor contradicted. Reporting
+        # "discordant" there would claim a disagreement the guard below
+        # explicitly declines to form, and would sit next to a final label taken
+        # from that very source, reading as though the engine contradicted itself.
+        concordance = (
+            _concordance(effective_criteria_label, external_label)
+            if applied
+            else "not_comparable"
+        )
 
         # Discordance is only a *conflict* when NGS-Agent actually formed an
         # independent opinion. With no applied criteria there is nothing to

@@ -604,6 +604,28 @@ class TestAuthoritativeExternalClassification:
         assert outcome.label == "benign"
         assert outcome.decision_basis == "authoritative_external_classification"
 
+    def test_an_adopted_classification_is_not_reported_as_discordant(
+        self, engine, brca1_nonsense):
+        """Adopting an external label is not disagreeing with it.
+
+        With no applied criteria the engine forms no independent opinion, so
+        there is nothing to compare. Reporting ``discordant`` there would claim a
+        contradiction the engine explicitly declined to form, and would sit next
+        to a final label taken from that very source — reading as though the
+        engine contradicted itself.
+        """
+        record = clinvar_evidence(brca1_nonsense, label="pathogenic")
+        outcome = engine.evaluate(
+            variant=brca1_nonsense, gene="BRCA1", usable_evidence=usable([record]),
+                all_evidence=[record]
+        )
+        assert outcome.label == "pathogenic"
+        assert outcome.decision_basis == "authoritative_external_classification"
+        assert not outcome.applied_criteria
+        assert outcome.concordance == "not_comparable"
+        # Adoption is not contradiction, so no blocking conflict is raised either.
+        assert not any(item.kind == "criteria_vs_external" for item in outcome.conflicts)
+
     def test_low_star_classification_is_not_authoritative(self, engine, brca1_nonsense):
         record = clinvar_evidence(
             brca1_nonsense,
