@@ -1,0 +1,462 @@
+{
+  "table_version": "gene-mechanism-0.1.0-curated-seed",
+  "generated_for": "NGS-Agent core engine — PVS1 mechanism gate",
+  "source": {
+    "kind": "curated_seed",
+    "description": "Hand-curated seed of gene-level disease mechanisms used ONLY to gate PVS1. This is NOT an authoritative source and must not be represented as one.",
+    "intended_replacement": "ClinGen Gene-Disease Validity curations (https://clinicalgenome.org/about/gene-disease-validity/) plus the applicable ClinGen VCEP / Criteria Specification Registry entries (https://cspec.genome.network/).",
+    "curation_status": "seed_unverified",
+    "review_required_before_production": true,
+    "reference_style": "General mechanism references only. No ClinGen classification scores, dates, or SOP versions are asserted here, because none were independently verified during seeding."
+  },
+  "conventions": {
+    "mechanism_values": [
+      "loss_of_function",
+      "gain_of_function",
+      "dominant_negative",
+      "mixed",
+      "unknown"
+    ],
+    "pvs1_rule": "PVS1 is mechanism-applicable only when mechanism == 'loss_of_function' AND pvs1_applicable == true. Every other value blocks PVS1 and the engine records an explicit rejection with the reason."
+  },
+  "genes": [
+    {
+      "symbol": "BRCA1",
+      "entrez_id": "672",
+      "mechanism": "loss_of_function",
+      "inheritance": "autosomal dominant (tumour predisposition)",
+      "disease": "Hereditary breast and/or ovarian cancer syndrome",
+      "pvs1_applicable": true,
+      "curation_status": "seed_unverified",
+      "reference": "MIM 113705; haploinsufficiency/tumour-suppressor loss of function is the established mechanism.",
+      "notes": "ClinGen Hereditary Breast, Ovarian and Pancreatic Cancer VCEP publishes gene-specific specifications that modify several criteria; those modifications are NOT encoded in this seed."
+    },
+    {
+      "symbol": "BRCA2",
+      "entrez_id": "675",
+      "mechanism": "loss_of_function",
+      "inheritance": "autosomal dominant (tumour predisposition)",
+      "disease": "Hereditary breast and/or ovarian cancer syndrome",
+      "pvs1_applicable": true,
+      "curation_status": "seed_unverified",
+      "reference": "MIM 600185; tumour-suppressor loss of function.",
+      "notes": "See the BRCA1 note regarding VCEP specifications."
+    },
+    {
+      "symbol": "PALB2",
+      "entrez_id": "79726",
+      "mechanism": "loss_of_function",
+      "inheritance": "autosomal dominant (tumour predisposition)",
+      "disease": "Hereditary breast cancer predisposition",
+      "pvs1_applicable": true,
+      "curation_status": "seed_unverified",
+      "reference": "MIM 610355; tumour-suppressor loss of function."
+    },
+    {
+      "symbol": "PTEN",
+      "entrez_id": "5728",
+      "mechanism": "loss_of_function",
+      "inheritance": "autosomal dominant (tumour predisposition)",
+      "disease": "PTEN hamartoma tumour syndrome",
+      "pvs1_applicable": true,
+      "curation_status": "seed_unverified",
+      "reference": "MIM 601728; tumour-suppressor loss of function."
+    },
+    {
+      "symbol": "APC",
+      "entrez_id": "324",
+      "mechanism": "loss_of_function",
+      "inheritance": "autosomal dominant",
+      "disease": "Familial adenomatous polyposis",
+      "pvs1_applicable": true,
+      "curation_status": "seed_unverified",
+      "reference": "MIM 611731; tumour-suppressor loss of function.",
+      "notes": "ClinGen APC VCEP specifications add PVS1 decision-tree modifications not encoded here."
+    },
+    {
+      "symbol": "STK11",
+      "entrez_id": "6794",
+      "mechanism": "loss_of_function",
+      "inheritance": "autosomal dominant",
+      "disease": "Peutz-Jeghers syndrome",
+      "pvs1_applicable": true,
+      "curation_status": "seed_unverified",
+      "reference": "MIM 175200; tumour-suppressor loss of function."
+    },
+    {
+      "symbol": "SMAD4",
+      "entrez_id": "4089",
+      "mechanism": "mixed",
+      "inheritance": "autosomal dominant",
+      "disease": "Juvenile polyposis syndrome / hereditary haemorrhagic telangiectasia",
+      "pvs1_applicable": false,
+      "curation_status": "seed_unverified",
+      "reference": "MIM 600993.",
+      "notes": "Reported disease variants include both loss-of-function and specific missense alleles; mechanism is treated as mixed so PVS1 is withheld pending gene-specific specification."
+    },
+    {
+      "symbol": "BMPR1A",
+      "entrez_id": "657",
+      "mechanism": "loss_of_function",
+      "inheritance": "autosomal dominant",
+      "disease": "Juvenile polyposis syndrome",
+      "pvs1_applicable": true,
+      "curation_status": "seed_unverified",
+      "reference": "MIM 174900; haploinsufficiency."
+    },
+    {
+      "symbol": "CDH1",
+      "entrez_id": "1000",
+      "mechanism": "loss_of_function",
+      "inheritance": "autosomal dominant",
+      "disease": "Hereditary diffuse gastric cancer",
+      "pvs1_applicable": true,
+      "curation_status": "seed_unverified",
+      "reference": "MIM 192090; tumour-suppressor loss of function."
+    },
+    {
+      "symbol": "MLH1",
+      "entrez_id": "4292",
+      "mechanism": "loss_of_function",
+      "inheritance": "autosomal dominant",
+      "disease": "Lynch syndrome",
+      "pvs1_applicable": true,
+      "curation_status": "seed_unverified",
+      "reference": "MIM 120436; mismatch-repair loss of function."
+    },
+    {
+      "symbol": "MSH2",
+      "entrez_id": "4436",
+      "mechanism": "loss_of_function",
+      "inheritance": "autosomal dominant",
+      "disease": "Lynch syndrome",
+      "pvs1_applicable": true,
+      "curation_status": "seed_unverified",
+      "reference": "MIM 609309; mismatch-repair loss of function."
+    },
+    {
+      "symbol": "MSH6",
+      "entrez_id": "2956",
+      "mechanism": "loss_of_function",
+      "inheritance": "autosomal dominant",
+      "disease": "Lynch syndrome",
+      "pvs1_applicable": true,
+      "curation_status": "seed_unverified",
+      "reference": "MIM 600678; mismatch-repair loss of function."
+    },
+    {
+      "symbol": "PMS2",
+      "entrez_id": "5395",
+      "mechanism": "loss_of_function",
+      "inheritance": "autosomal dominant",
+      "disease": "Lynch syndrome",
+      "pvs1_applicable": true,
+      "curation_status": "seed_unverified",
+      "reference": "MIM 600259; mismatch-repair loss of function.",
+      "notes": "PMS2 has pseudogene interference (PMS2CL); coordinate-level evidence may be unreliable without a pseudogene-aware alignment. Treat with extra caution."
+    },
+    {
+      "symbol": "EPCAM",
+      "entrez_id": "4070",
+      "mechanism": "loss_of_function",
+      "inheritance": "autosomal dominant",
+      "disease": "Lynch syndrome (via MSH2 promoter deletion)",
+      "pvs1_applicable": false,
+      "curation_status": "seed_unverified",
+      "reference": "MIM 185535.",
+      "notes": "Pathogenic mechanism is 3' deletion causing epigenetic MSH2 silencing; the standard PVS1 null-variant logic does not transfer. Withheld deliberately."
+    },
+    {
+      "symbol": "ATM",
+      "entrez_id": "472",
+      "mechanism": "loss_of_function",
+      "inheritance": "autosomal recessive (ataxia-telangiectasia); dominant cancer risk",
+      "disease": "Ataxia-telangiectasia; hereditary cancer predisposition",
+      "pvs1_applicable": true,
+      "curation_status": "seed_unverified",
+      "reference": "MIM 607585.",
+      "notes": "ClinGen HBOP ATM specifications downgrade or forbid several criteria for cancer risk. Those modifications are NOT encoded here; a gene-specific rule set is required before ATM classifications are trusted."
+    },
+    {
+      "symbol": "CHEK2",
+      "entrez_id": "11200",
+      "mechanism": "loss_of_function",
+      "inheritance": "autosomal dominant (moderate-penetrance cancer risk)",
+      "disease": "Hereditary cancer predisposition",
+      "pvs1_applicable": true,
+      "curation_status": "seed_unverified",
+      "reference": "MIM 604373.",
+      "notes": "Moderate penetrance; founder alleles (e.g. c.1100delC) require frequency calibration that this seed does not provide."
+    },
+    {
+      "symbol": "VHL",
+      "entrez_id": "7428",
+      "mechanism": "loss_of_function",
+      "inheritance": "autosomal dominant",
+      "disease": "von Hippel-Lindau disease",
+      "pvs1_applicable": true,
+      "curation_status": "seed_unverified",
+      "reference": "MIM 608537; tumour-suppressor loss of function."
+    },
+    {
+      "symbol": "NF1",
+      "entrez_id": "4763",
+      "mechanism": "loss_of_function",
+      "inheritance": "autosomal dominant",
+      "disease": "Neurofibromatosis type 1",
+      "pvs1_applicable": true,
+      "curation_status": "seed_unverified",
+      "reference": "MIM 613113; tumour-suppressor loss of function."
+    },
+    {
+      "symbol": "RB1",
+      "entrez_id": "5925",
+      "mechanism": "loss_of_function",
+      "inheritance": "autosomal dominant",
+      "disease": "Retinoblastoma",
+      "pvs1_applicable": true,
+      "curation_status": "seed_unverified",
+      "reference": "MIM 614041; tumour-suppressor loss of function.",
+      "notes": "Low-penetrance alleles exist and require specific handling not encoded here."
+    },
+    {
+      "symbol": "TSC1",
+      "entrez_id": "7248",
+      "mechanism": "loss_of_function",
+      "inheritance": "autosomal dominant",
+      "disease": "Tuberous sclerosis complex",
+      "pvs1_applicable": true,
+      "curation_status": "seed_unverified",
+      "reference": "MIM 605284.",
+      "notes": "ClinGen TSC VCEP publishes specifications not encoded here."
+    },
+    {
+      "symbol": "TSC2",
+      "entrez_id": "7249",
+      "mechanism": "loss_of_function",
+      "inheritance": "autosomal dominant",
+      "disease": "Tuberous sclerosis complex",
+      "pvs1_applicable": true,
+      "curation_status": "seed_unverified",
+      "reference": "MIM 606725."
+    },
+    {
+      "symbol": "LDLR",
+      "entrez_id": "3949",
+      "mechanism": "loss_of_function",
+      "inheritance": "autosomal dominant",
+      "disease": "Familial hypercholesterolaemia",
+      "pvs1_applicable": true,
+      "curation_status": "seed_unverified",
+      "reference": "MIM 603776; receptor loss of function.",
+      "notes": "FH phenotype definitions and BS1/BA1 frequency thresholds are disease-specific; the generic thresholds in this engine are not calibrated for FH."
+    },
+    {
+      "symbol": "MYBPC3",
+      "entrez_id": "4607",
+      "mechanism": "loss_of_function",
+      "inheritance": "autosomal dominant",
+      "disease": "Hypertrophic cardiomyopathy",
+      "pvs1_applicable": true,
+      "curation_status": "seed_unverified",
+      "reference": "MIM 600958; haploinsufficiency.",
+      "notes": "Truncating-variant burden and late-onset penetrance make BS2 handling gene-specific; not encoded here."
+    },
+    {
+      "symbol": "PKD1",
+      "entrez_id": "5310",
+      "mechanism": "loss_of_function",
+      "inheritance": "autosomal dominant",
+      "disease": "Autosomal dominant polycystic kidney disease",
+      "pvs1_applicable": false,
+      "curation_status": "seed_unverified",
+      "reference": "MIM 601313.",
+      "notes": "PKD1 lies in a segmental-duplication region with six pseudogenes; without a pseudogene-aware pipeline, coordinate-level evidence is not trustworthy. PVS1 withheld until that is solved."
+    },
+    {
+      "symbol": "PKD2",
+      "entrez_id": "5311",
+      "mechanism": "loss_of_function",
+      "inheritance": "autosomal dominant",
+      "disease": "Autosomal dominant polycystic kidney disease",
+      "pvs1_applicable": true,
+      "curation_status": "seed_unverified",
+      "reference": "MIM 602713."
+    },
+    {
+      "symbol": "CFTR",
+      "entrez_id": "1080",
+      "mechanism": "loss_of_function",
+      "inheritance": "autosomal recessive",
+      "disease": "Cystic fibrosis",
+      "pvs1_applicable": true,
+      "curation_status": "seed_unverified",
+      "reference": "MIM 602421.",
+      "notes": "CFTR2 provides variant-specific functional/clinical data that overrides generic rules; PM2 and BS1 thresholds are disease-specific."
+    },
+    {
+      "symbol": "DMD",
+      "entrez_id": "1756",
+      "mechanism": "loss_of_function",
+      "inheritance": "X-linked recessive",
+      "disease": "Duchenne/Becker muscular dystrophy",
+      "pvs1_applicable": true,
+      "curation_status": "seed_unverified",
+      "reference": "MIM 310200.",
+      "notes": "Duchenne versus Becker depends on reading-frame preservation, which is a transcript-model question this seed cannot answer."
+    },
+    {
+      "symbol": "GLA",
+      "entrez_id": "2717",
+      "mechanism": "loss_of_function",
+      "inheritance": "X-linked",
+      "disease": "Fabry disease",
+      "pvs1_applicable": true,
+      "curation_status": "seed_unverified",
+      "reference": "MIM 301500.",
+      "notes": "Late-onset alleles and benign p.Asn215Ser-like variants require specific handling."
+    },
+    {
+      "symbol": "GBA1",
+      "entrez_id": "2629",
+      "mechanism": "loss_of_function",
+      "inheritance": "autosomal recessive",
+      "disease": "Gaucher disease; Parkinson disease risk",
+      "pvs1_applicable": true,
+      "curation_status": "seed_unverified",
+      "reference": "MIM 606463.",
+      "notes": "GBA1/GBAP1 pseudogene recombination makes short-read coordinate evidence unreliable in parts of the gene."
+    },
+    {
+      "symbol": "SERPINC1",
+      "entrez_id": "462",
+      "mechanism": "loss_of_function",
+      "inheritance": "autosomal dominant",
+      "disease": "Antithrombin deficiency",
+      "pvs1_applicable": true,
+      "curation_status": "seed_unverified",
+      "reference": "MIM 613122."
+    },
+    {
+      "symbol": "TP53",
+      "entrez_id": "7157",
+      "mechanism": "mixed",
+      "inheritance": "autosomal dominant",
+      "disease": "Li-Fraumeni syndrome",
+      "pvs1_applicable": false,
+      "curation_status": "seed_unverified",
+      "reference": "MIM 191170.",
+      "notes": "Pathogenic TP53 variants act predominantly through dominant-negative and gain-of-function effects on specific DNA-binding residues; truncating variants are not uniformly pathogenic. PVS1 is withheld by design. Use the ClinGen TP53 VCEP specification instead."
+    },
+    {
+      "symbol": "RET",
+      "entrez_id": "5979",
+      "mechanism": "gain_of_function",
+      "inheritance": "autosomal dominant",
+      "disease": "Multiple endocrine neoplasia type 2",
+      "pvs1_applicable": false,
+      "curation_status": "seed_unverified",
+      "reference": "MIM 171400.",
+      "notes": "MEN2 is caused by specific activating missense variants. A truncating RET allele is not evidence of MEN2 and PVS1 must never fire here."
+    },
+    {
+      "symbol": "COL3A1",
+      "entrez_id": "1281",
+      "mechanism": "dominant_negative",
+      "inheritance": "autosomal dominant",
+      "disease": "Vascular Ehlers-Danlos syndrome",
+      "pvs1_applicable": false,
+      "curation_status": "seed_unverified",
+      "reference": "MIM 130050.",
+      "notes": "Glycine substitutions in the triple-helical domain act dominant-negatively; haploinsufficiency is generally milder. PVS1 withheld."
+    },
+    {
+      "symbol": "COL1A1",
+      "entrez_id": "1277",
+      "mechanism": "mixed",
+      "inheritance": "autosomal dominant",
+      "disease": "Osteogenesis imperfecta / Ehlers-Danlos syndrome",
+      "pvs1_applicable": false,
+      "curation_status": "seed_unverified",
+      "reference": "MIM 120150.",
+      "notes": "Haploinsufficiency causes mild OI; structural (dominant-negative) variants cause severe disease. Mechanism depends on variant class, so PVS1 is withheld."
+    },
+    {
+      "symbol": "FBN1",
+      "entrez_id": "2200",
+      "mechanism": "mixed",
+      "inheritance": "autosomal dominant",
+      "disease": "Marfan syndrome",
+      "pvs1_applicable": false,
+      "curation_status": "seed_unverified",
+      "reference": "MIM 154700.",
+      "notes": "Both haploinsufficiency and dominant-negative mechanisms are reported; ClinGen FBN1 specifications are required. PVS1 withheld."
+    },
+    {
+      "symbol": "SCN5A",
+      "entrez_id": "6331",
+      "mechanism": "mixed",
+      "inheritance": "autosomal dominant",
+      "disease": "Brugada syndrome / long QT syndrome type 3 / cardiac conduction disease",
+      "pvs1_applicable": false,
+      "curation_status": "seed_unverified",
+      "reference": "MIM 600163.",
+      "notes": "Loss of function causes Brugada/conduction disease; gain of function causes LQT3. The same null allele cannot be interpreted without a phenotype, so PVS1 is withheld."
+    },
+    {
+      "symbol": "KCNQ1",
+      "entrez_id": "3784",
+      "mechanism": "mixed",
+      "inheritance": "autosomal dominant / recessive",
+      "disease": "Long QT syndrome type 1 / Jervell and Lange-Nielsen syndrome",
+      "pvs1_applicable": false,
+      "curation_status": "seed_unverified",
+      "reference": "MIM 607542.",
+      "notes": "Dominant-negative versus haploinsufficient behaviour differs by variant class. PVS1 withheld."
+    },
+    {
+      "symbol": "RYR1",
+      "entrez_id": "6261",
+      "mechanism": "mixed",
+      "inheritance": "autosomal dominant / recessive",
+      "disease": "Malignant hyperthermia susceptibility; congenital myopathies",
+      "pvs1_applicable": false,
+      "curation_status": "seed_unverified",
+      "reference": "MIM 180901.",
+      "notes": "Malignant hyperthermia alleles are gain-of-function; recessive myopathy alleles are loss-of-function. PVS1 withheld."
+    },
+    {
+      "symbol": "HBB",
+      "entrez_id": "3043",
+      "mechanism": "mixed",
+      "inheritance": "autosomal recessive",
+      "disease": "Beta-thalassaemia / sickle cell disease",
+      "pvs1_applicable": false,
+      "curation_status": "seed_unverified",
+      "reference": "MIM 141900.",
+      "notes": "Beta-thalassaemia alleles are loss-of-function, but the commonest pathogenic allele (HbS) is a specific missense with a gain-of-function/polymerisation mechanism, and frequency thresholds are population-specific. PVS1 withheld."
+    },
+    {
+      "symbol": "LMNA",
+      "entrez_id": "4000",
+      "mechanism": "mixed",
+      "inheritance": "autosomal dominant / recessive",
+      "disease": "Laminopathies (cardiomyopathy, muscular dystrophy, progeria)",
+      "pvs1_applicable": false,
+      "curation_status": "seed_unverified",
+      "reference": "MIM 150330.",
+      "notes": "Dominant-negative mechanisms predominate for several phenotypes. PVS1 withheld."
+    },
+    {
+      "symbol": "TTN",
+      "entrez_id": "7273",
+      "mechanism": "loss_of_function",
+      "inheritance": "autosomal dominant / recessive",
+      "disease": "Dilated cardiomyopathy; tibial muscular dystrophy",
+      "pvs1_applicable": false,
+      "curation_status": "seed_unverified",
+      "reference": "MIM 188840.",
+      "notes": "Truncating variants are common in the general population and their interpretation is strongly exon- and isoform-dependent (meta-exon model). PVS1 must not fire without that model."
+    }
+  ]
+}

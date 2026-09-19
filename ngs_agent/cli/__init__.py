@@ -15,6 +15,7 @@ from ngs_agent.analyzer import parse_vcf, render_report, scan_qc
 from ngs_agent.backends.base import NoBackend
 from ngs_agent.backends.factory import get_backend
 from ngs_agent.config import CONFIG_PATH, load_config, run_wizard, save_config
+from ngs_agent.core.cli import register_review_commands
 from ngs_agent.debate import debate_variant
 from ngs_agent.doctor import print_diagnostics, run_diagnostics
 from ngs_agent.reports import generate_html_report
@@ -27,7 +28,17 @@ console = Console(force_terminal=True, legacy_windows=False)
 @click.version_option("0.2.0", "--version", "-V")
 @click.pass_context
 def main(ctx: click.Context) -> None:
-    """NGS-Agent: Autonomous bioinformatics CLI, log watcher, and variant interpreter."""
+    """NGS-Agent: auditable NGS quality control and evidence-backed variant review.
+
+    The signed classification path is `review` / `replay` / `sign-off`: it is
+    deterministic, runs offline against recorded or locally supplied evidence,
+    and never consults a language model.
+
+    `consult`, `analyze`, `watch`, `doctor` and `plan` are convenience commands.
+    Anything a model writes there is narrative, not evidence.
+
+    Research use only. Every classification requires human review and sign-off.
+    """
     if ctx.invoked_subcommand is None:
         from ngs_agent.tui import run_tui
         run_tui()
@@ -89,12 +100,20 @@ def analyze(vcffile: Path, qc: Path | None, html: Path | None) -> None:
         console.print(f"[green]HTML report exported to:[/green] [bold]{html}[/bold]")
 
 
-@main.command()
+@main.command("consult")
 @click.argument("vcffile", type=click.Path(exists=True, path_type=Path))
-@click.option("--gene", default=None, help="Debate a specific gene (default: all VUS).")
-@click.option("--html", type=click.Path(path_type=Path), default=None, help="Export HTML debate report.")
-def debate(vcffile: Path, gene: str | None, html: Path | None) -> None:
-    """Run a 3-persona LLM debate on VUS variants with ACMG criteria."""
+@click.option("--gene", default=None, help="Restrict to one gene (default: every VUS in the file).")
+@click.option("--html", type=click.Path(path_type=Path), default=None, help="Export an HTML report.")
+def consult(vcffile: Path, gene: str | None, html: Path | None) -> None:
+    """Ask three LLM personas to discuss VUS variants. NARRATIVE ONLY.
+
+    This command produces no classification, no ACMG criteria, and no confidence
+    score. If a model emits tier language or a criterion code, it is stripped
+    from the output and reported as a boundary violation.
+
+    For an evidence-backed classification use `ngsagent review`, which derives
+    criteria only from structured evidence records and abstains when it has none.
+    """
     cfg = load_config()
     backend = get_backend(cfg)
 
@@ -102,10 +121,12 @@ def debate(vcffile: Path, gene: str | None, html: Path | None) -> None:
         console.print(
             Panel(
                 "[bold red]No LLM backend configured.[/bold red]\n\n"
-                "The `debate` command requires an LLM. `watch` and `analyze` work without one.\n\n"
+                "The `consult` command requires an LLM.\n\n"
+                "[bold]The signed classification path does not:[/bold] `watch`, `analyze` and "
+                "`review` all work with no model configured at all.\n\n"
                 "Run: [bold]ngsagent config wizard[/bold]\n"
                 "Or set: GEMINI_API_KEY / ANTHROPIC_API_KEY / OPENAI_API_KEY",
-                title="LLM Required",
+                title="LLM required (for narrative only)",
                 border_style="red",
             )
         )
@@ -116,30 +137,81 @@ def debate(vcffile: Path, gene: str | None, html: Path | None) -> None:
         variants = [v for v in variants if v.gene.upper() == gene.upper()]
 
     if not variants:
-        console.print("[yellow]No VUS variants to debate.[/yellow]")
+        console.print("[yellow]No VUS variants to consult on.[/yellow]")
         return
+
+    console.print(
+        Panel(
+            "Model-generated narrative. [bold]Not a classification, not evidence,[/bold] and not "
+            "an input to any ACMG/AMP determination.\n"
+            "For an evidence-backed result use [bold]ngsagent review[/bold].",
+            title="Research use only",
+            border_style="yellow",
+        )
+    )
 
     results = []
     for variant in variants:
-        console.print(Panel(f"[bold]{variant.gene}[/bold] {variant.chrom}:{variant.pos} {variant.ref}>{variant.alt}", style="magenta"))
+        console.print(
+            Panel(
+                f"[bold]{variant.gene}[/bold] {variant.chrom}:{variant.pos} {variant.ref}>{variant.alt}",
+                style="magenta",
+            )
+        )
         try:
             result = debate_variant(variant, backend)
-            results.append(result)
         except RuntimeError as exc:
             console.print(f"[red]{exc}[/red]")
             sys.exit(1)
+        results.append(result)
 
-        for op in result.opinions:
-            acmg_str = f" [cyan]({' '.join(op.acmg_criteria)})[/cyan]" if op.acmg_criteria else ""
-            console.print(f"\n[bold]{op.persona}[/bold] — [yellow]{op.stance}[/yellow]{acmg_str}")
-            console.print(op.reasoning)
-        console.print(f"\n[bold]Consensus:[/bold] {result.consensus}")
-        console.print(f"[bold]ACMG Evaluation:[/bold] {result.acmg_evaluation.classification} ({result.acmg_evaluation.explanation})")
-        console.print(f"[bold]Recommendation:[/bold] {result.recommendation}\n")
+        for opinion in result.opinions:
+            console.print(f"\n[bold]{opinion.persona}[/bold]")
+            console.print(opinion.reasoning or "[dim](no narrative produced)[/dim]")
+            if opinion.redactions:
+                console.print(
+                    f"[yellow]removed by guardrail:[/yellow] {', '.join(opinion.redactions)}"
+                )
+        for error in result.errors:
+            console.print(f"[red]persona error:[/red] {error}")
+
+        console.print("\n[bold]What a reviewer should check:[/bold]")
+        for item in result.summary.evidence_a_reviewer_should_check:
+            console.print(f"  - {item}")
+        if result.boundary_violations:
+            console.print(
+                f"\n[bold yellow]Boundary violations ({len(result.boundary_violations)}):[/bold yellow]"
+            )
+            for item in result.boundary_violations:
+                console.print(f"  [yellow]-[/yellow] {item}")
+        console.print(f"\n[dim]{result.disclaimer}[/dim]\n")
 
     if html:
         generate_html_report(variants, debates=results, output_path=html)
-        console.print(f"[green]Debate report exported to:[/green] [bold]{html}[/bold]")
+        console.print(f"[green]Consultation report exported to:[/green] [bold]{html}[/bold]")
+
+
+#: Deprecated alias. Kept so existing scripts fail with an explanation rather
+#: than a "no such command" error, and so the rename is discoverable.
+@main.command("debate", hidden=True, deprecated=True)
+@click.argument("vcffile", type=click.Path(exists=True, path_type=Path))
+@click.option("--gene", default=None)
+@click.option("--html", type=click.Path(path_type=Path), default=None)
+def debate(vcffile: Path, gene: str | None, html: Path | None) -> None:
+    """Renamed to `consult`. The command no longer produces ACMG criteria."""
+    console.print(
+        Panel(
+            "`debate` has been renamed to [bold]consult[/bold], and it no longer emits ACMG "
+            "criteria or a classification. Model output could not be tied to an evidence record, "
+            "so it is now narrative only.\n\n"
+            "For an evidence-backed classification use [bold]ngsagent review[/bold].\n\n"
+            "Re-running as `consult`...",
+            title="Command renamed",
+            border_style="yellow",
+        )
+    )
+    ctx = click.get_current_context()
+    ctx.invoke(consult, vcffile=vcffile, gene=gene, html=html)
 
 
 @main.command()
@@ -206,6 +278,12 @@ def config_set(key: str, value: str) -> None:
             cfg[key] = value
     save_config(cfg)
     console.print(f"[green]Set[/green] {key} = {value}")
+
+
+# The signed classification path. Registered last so it owns the top-level
+# names a reviewer is expected to reach for: review, replay, sign-off, audit,
+# normalize.
+register_review_commands(main)
 
 
 if __name__ == "__main__":

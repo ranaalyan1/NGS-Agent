@@ -1,0 +1,75 @@
+{
+  "recording_version": "clinvar-recordings-1.0.0",
+  "description": "Real recorded NCBI E-utilities responses, used for deterministic offline tests and for the bundled demo. These are verbatim HTTP response bodies, not hand-written examples.",
+  "source": {
+    "service": "NCBI E-utilities (ClinVar)",
+    "base_url": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils",
+    "documentation": "https://www.ncbi.nlm.nih.gov/clinvar/docs/programmatic_access/",
+    "license": "ClinVar is a public archive of NLM/NCBI; data are distributed without restriction on use. NCBI requests that ClinVar be cited.",
+    "citation": "Landrum MJ, et al. ClinVar: improving access to variant interpretations and supporting evidence. Nucleic Acids Res. 2018;46(D1):D1062-D1067."
+  },
+  "recorded_at": "2026-09-18",
+  "recorded_by": "NGS-Agent architecture bootstrap (manual retrieval through a documentation proxy; the sandbox has no direct egress to eutils)",
+  "clinvar_release": "recorded-2026-09-18",
+  "integrity_note": "Response bodies are stored as returned, with ONE disclosed reduction: ClinVar populates 'protein_change' with one entry per transcript of the record (58 comma-separated values for these two records, e.g. 'R1443*, R340*, R1396*, ...'). The fixture keeps only the MANE Select (NM_007294.4) entry. Every other field, including all coordinates, SPDI strings, accession versions, review statuses, classification descriptions, last_evaluated dates, allele_freq_set entries, molecular_consequence_list values, and supporting_submissions lists, is unaltered. This reduction is recorded here rather than left implicit because a fixture that silently differs from the live response is a fixture that can hide a parsing bug.",
+  "retrieval_note": "Retrieved on 2026-09-18 through a documentation proxy. The retrieval host had no direct egress to eutils.ncbi.nlm.nih.gov, so the response bodies were obtained via a page-fetch of the documented E-utilities URLs and saved unmodified apart from the reduction above.",
+  "recordings": [
+    {
+      "file": "esearch-chr17-43082434-grch38.json",
+      "path": "esearch.fcgi",
+      "status": 200,
+      "params": {
+        "db": "clinvar",
+        "retmode": "json",
+        "retmax": "50",
+        "term": "17[chr] AND 43082434:43082434[chrpos38]"
+      },
+      "purpose": "Locus lookup for GRCh38 chr17:43082434. Returns two variation ids because ClinVar holds two different alleles at this position."
+    },
+    {
+      "file": "esummary-17676-17675.json",
+      "path": "esummary.fcgi",
+      "status": 200,
+      "params": {
+        "db": "clinvar",
+        "id": "17676,17675",
+        "retmode": "json"
+      },
+      "purpose": "Document summaries for both alleles at chr17:43082434. VCV000017676 (c.4327C>G, p.Arg1443Gly) is Benign by expert panel; VCV000017675 (c.4327C>T, p.Arg1443Ter) is Pathogenic by expert panel. Same position, same dbSNP id, opposite classifications: the fixture that proves NGS-Agent matches on allele identity rather than on locus."
+    }
+  ],
+  "alleles_covered": [
+    {
+      "genome_build": "GRCh38",
+      "chromosome": "17",
+      "position": 43082434,
+      "reference": "G",
+      "alternate": "A",
+      "clinvar": "VCV000017675.110",
+      "hgvs": "NM_007294.4(BRCA1):c.4327C>T (p.Arg1443Ter)",
+      "classification": "Pathogenic",
+      "review_status": "reviewed by expert panel"
+    },
+    {
+      "genome_build": "GRCh38",
+      "chromosome": "17",
+      "position": 43082434,
+      "reference": "G",
+      "alternate": "C",
+      "clinvar": "VCV000017676.77",
+      "hgvs": "NM_007294.4(BRCA1):c.4327C>G (p.Arg1443Gly)",
+      "classification": "Benign",
+      "review_status": "reviewed by expert panel"
+    },
+    {
+      "genome_build": "GRCh38",
+      "chromosome": "17",
+      "position": 43082434,
+      "reference": "G",
+      "alternate": "T",
+      "clinvar": null,
+      "classification": null,
+      "note": "No ClinVar record for this allele. Used to exercise the 'locus has records but this allele does not' path, which must produce an explicit unavailable record and an abstention, never a benign call."
+    }
+  ]
+}

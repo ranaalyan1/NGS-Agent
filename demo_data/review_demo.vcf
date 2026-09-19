@@ -1,0 +1,26 @@
+##fileformat=VCFv4.2
+##fileDate=20260918
+##source=NGS-Agent-vertical-slice-demo
+##reference=GRCh38
+##INFO=<ID=GENE,Number=1,Type=String,Description="Gene symbol">
+##INFO=<ID=CSQ,Number=.,Type=String,Description="Consequence annotations (VEP format)">
+##contig=<ID=17,length=83257441,assembly=GRCh38>
+##ngsagent.demo.note=Four VCF records describing THREE distinct alleles at GRCh38 chr17:43082434 (BRCA1 c.4327).
+##ngsagent.demo.note=The multiallelic record is listed FIRST so that normalization splits it and the later
+##ngsagent.demo.note=biallelic records are the ones collapsed as duplicates. This exercises split-then-dedupe
+##ngsagent.demo.note=in the direction a real caller produces (a single multiallelic site) rather than the
+##ngsagent.demo.note=reverse.
+##ngsagent.demo.allele=G>A  c.4327C>T p.Arg1443Ter  ClinVar VCV000017675.110  Pathogenic   reviewed by expert panel
+##ngsagent.demo.allele=G>C  c.4327C>G p.Arg1443Gly  ClinVar VCV000017676.77   Benign       reviewed by expert panel
+##ngsagent.demo.allele=G>T  c.4327C>A p.Arg1443Arg  SYNONYMOUS, no ClinVar record -> must abstain (see below)
+##ngsagent.demo.warning=G>A and G>C share a position AND a dbSNP id (rs41293455) but carry OPPOSITE expert-panel
+##ngsagent.demo.warning=classifications. Matching ClinVar on coordinates instead of on canonical SPDI would turn a
+##ngsagent.demo.warning=benign missense allele into a pathogenic nonsense call. This file is the golden test for that.
+##ngsagent.demo.note=The G>T allele is synonymous (CGA>AGA, p.Arg1443Arg). A naive interpreter would call it benign.
+##ngsagent.demo.note=NGS-Agent abstains instead: BP7 requires evidence that splicing is unaffected, and no splice
+##ngsagent.demo.note=predictor is configured. "Synonymous" is not the same as "no effect".
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO
+17	43082434	rs41293455	G	A,C	999	PASS	GENE=BRCA1;CSQ=A|stop_gained|HIGH|BRCA1|ENSG00000012048,C|missense_variant|MODERATE|BRCA1|ENSG00000012048
+17	43082434	.	G	A	999	PASS	GENE=BRCA1;CSQ=A|stop_gained|HIGH|BRCA1|ENSG00000012048
+17	43082434	.	G	C	999	PASS	GENE=BRCA1;CSQ=C|missense_variant|MODERATE|BRCA1|ENSG00000012048
+17	43082434	.	G	T	999	PASS	GENE=BRCA1;CSQ=T|synonymous_variant|LOW|BRCA1|ENSG00000012048
