@@ -215,12 +215,14 @@ class EvidenceRecord(BaseModel):
         if self.status in NON_INFORMATIVE_STATUSES:
             if self.observed_value:
                 raise EvidenceValidationError(
-                    f"{self.source.name}: a record with status={self.status.value} must not carry an "
+                    f"{self.source.name}: a record with status={self.status.value} must not carry "
+                    f"an "
                     "observed_value; missing data may never be encoded as a value."
                 )
             if self.strength_hint:
                 raise EvidenceValidationError(
-                    f"{self.source.name}: a record with status={self.status.value} must not carry a "
+                    f"{self.source.name}: a record with status={self.status.value} must not carry "
+                    f"a "
                     "strength_hint."
                 )
             if self.applicability is ApplicabilityStatus.APPLIES:

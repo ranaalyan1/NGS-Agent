@@ -450,7 +450,8 @@ class ReviewPipeline:
                     "validation_status": "not_checked",
                     "note": (
                         resolution.note
-                        or "No gene reference table is configured, so the symbol could not be validated."
+                        or "No gene reference table is configured, so the symbol "
+                        "could not be validated."
                     ),
                 }
             )
@@ -571,7 +572,8 @@ class ReviewPipeline:
         for error in errors:
             limitations.append(f"Pipeline error: {error}")
         for finding in report.findings:
-            limitations.append(f"evidence_validation[{finding.severity.value}:{finding.code}]: {finding.message}")
+            limitations.append(
+                f"evidence_validation[{finding.severity.value}:{finding.code}]: {finding.message}")
         if gene.note:
             limitations.append(f"gene[{gene.validation_status}]: {gene.note}")
 
@@ -679,7 +681,8 @@ def _dedupe(values: Sequence[str]) -> list[str]:
     return unique
 
 
-def _with_limitations(outcome: ClassificationOutcome, limitations: Sequence[str]) -> ClassificationOutcome:
+def _with_limitations(
+    outcome: ClassificationOutcome, limitations: Sequence[str]) -> ClassificationOutcome:
     """Return a copy of ``outcome`` with additional run-level limitations."""
     merged: list[str] = list(outcome.limitations)
     for item in limitations:

@@ -93,7 +93,10 @@ class HttpxTransport:
                     "httpx is required for network evidence retrieval. Install with "
                     '`pip install "ngs-agent[llm]"` or supply an offline evidence pack.'
                 ) from exc
-            self._client = httpx.Client(timeout=self.timeout_seconds, headers=self.headers, follow_redirects=True)
+            self._client = (
+                httpx.Client(timeout=self.timeout_seconds, headers=self.headers,
+                    follow_redirects=True)
+            )
         return self._client
 
     def get(self, url: str, *, params: dict[str, str] | None = None) -> HttpResponse:
@@ -143,7 +146,8 @@ class RecordedTransport:
                 self._responses[url] = value
             else:
                 status, body = value
-                self._responses[url] = HttpResponse(status_code=status, body=body, url=url, elapsed_ms=0)
+                self._responses[url] = HttpResponse(
+                    status_code=status, body=body, url=url, elapsed_ms=0)
         self.calls: list[str] = []
 
     def get(self, url: str, *, params: dict[str, str] | None = None) -> HttpResponse:

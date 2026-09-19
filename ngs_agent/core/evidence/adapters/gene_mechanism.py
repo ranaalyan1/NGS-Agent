@@ -43,7 +43,9 @@ from ngs_agent.core.normalization import NormalizedVariant
 
 ADAPTER_VERSION = "gene-mechanism-adapter-1.0.0"
 
-DEFAULT_TABLE_PATH = Path(__file__).resolve().parents[2] / "data" / "gene_disease_mechanisms.v1.json"
+DEFAULT_TABLE_PATH = (
+    Path(__file__).resolve().parents[2] / "data" / "gene_disease_mechanisms.v1.json"
+)
 
 #: Mechanisms for which PVS1 ("null variant in a gene where LoF is a known
 #: disease mechanism") is mechanism-applicable.
@@ -103,7 +105,10 @@ class GeneMechanismAdapter(BaseEvidenceAdapter):
             adapter_version=ADAPTER_VERSION,
             data_types=(EvidenceDataType.GENE_DISEASE_MECHANISM,),
             endpoint=str(self.table.path) if self.table.path else None,
-            license="Apache-2.0 (bundled curation seed); replace with ClinGen G2P data in production",
+            license=(
+                "Apache-2.0 (bundled curation seed); replace with ClinGen G2P data in "
+                "production"
+            ),
             requires_network=False,
             hosted_by="local",
             notes=(

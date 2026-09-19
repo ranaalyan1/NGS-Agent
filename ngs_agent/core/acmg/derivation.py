@@ -322,7 +322,11 @@ def _derive_pvs1(context: DerivationContext) -> CriterionEvaluation:
     null_terms = sorted(term for term in terms if term in NULL_CONSEQUENCE_TERMS)
     if not null_terms:
         non_null = sorted(term for term in terms if term in NON_NULL_TRUNCATING_TERMS)
-        detail = f" (includes non-null truncating/protein-altering terms: {non_null})" if non_null else ""
+        detail = (
+            f" (includes non-null truncating/protein-altering terms: {non_null})"
+            if non_null
+            else ""
+        )
         return _evaluation(
             context,
             code,
@@ -365,7 +369,8 @@ def _derive_pvs1(context: DerivationContext) -> CriterionEvaluation:
             context,
             code,
             EvaluationState.INDETERMINATE,
-            f"Null allele ({', '.join(null_terms)}) in a loss-of-function gene, but transcript/exon "
+            f"Null allele ({', '.join(null_terms)}) in a loss-of-function gene, but "
+            f"transcript/exon "
             f"context is unavailable ({detail}), so the PVS1 decision tree cannot be executed. "
             "NGS-Agent does not downgrade PVS1 in the absence of evidence, because a downgrade "
             "requires positive evidence of NMD escape or last-exon location.",
@@ -624,7 +629,8 @@ def _derive_reputable_source(context: DerivationContext, code: str) -> Criterion
             code,
             EvaluationState.REJECTED,
             f"Source review status provides {stars} assertion level(s); {code} requires at least "
-            f"{context.config.pp5_bp6_minimum_stars} and a reputable, criteria-providing submitter.",
+            f"{context.config.pp5_bp6_minimum_stars} and a reputable, criteria-providing "
+            f"submitter.",
             evidence=[record],
             limitations=tuple(limitations),
         )
@@ -792,7 +798,9 @@ def classify_from_rules(
 
     for label in ("pathogenic", "likely_pathogenic", "benign", "likely_benign"):
         for rule in rule_set.rules_producing(label):  # type: ignore[arg-type]
-            relevant = pathogenic_counts if rule.direction is Direction.PATHOGENIC else benign_counts
+            relevant = (
+                pathogenic_counts if rule.direction is Direction.PATHOGENIC else benign_counts
+            )
             if rule.matches(relevant):
                 return label, rule, counts
     return None, None, counts

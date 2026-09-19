@@ -157,7 +157,9 @@ class ClinVarAdapter(BaseEvidenceAdapter):
         self._tool = tool
         self._email = email
         # NCBI asks for <= 3 requests/second without an API key and <= 10 with.
-        self._min_interval = min_request_interval if api_key is None else timedelta(milliseconds=110)
+        self._min_interval = (
+            min_request_interval if api_key is None else timedelta(milliseconds=110)
+        )
         self._last_request_at = last_request_at if last_request_at is not None else []
         self._requires_network = requires_network
 
@@ -311,7 +313,8 @@ class ClinVarAdapter(BaseEvidenceAdapter):
             index: _identity_match_strength(variant, doc) for index, doc in enumerate(documents)
         }
         exact = [doc for index, doc in enumerate(documents) if strengths[index] == "exact"]
-        locus_only = [doc for index, doc in enumerate(documents) if strengths[index] == "locus_only"]
+        locus_only = [doc for index, doc in enumerate(
+            documents) if strengths[index] == "locus_only"]
         # An exact SPDI match outranks any number of locus-only matches: the
         # locus-only records are, by construction, records we cannot prove are
         # about this allele.
@@ -612,7 +615,10 @@ class ClinVarAdapter(BaseEvidenceAdapter):
                         data_type=EvidenceDataType.ALLELE_FREQUENCY,
                         retrieved_at=retrieved_at,
                         retrieval=retrieval,
-                        reason=f"allele frequency {raw_value!r} from {source_name} is not a usable decimal: {exc}",
+                        reason=(
+                            f"allele frequency {raw_value!r} from {source_name} is not a usable "
+                            f"decimal: {exc}"
+                        ),
                     )
                 )
                 continue

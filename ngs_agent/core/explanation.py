@@ -273,7 +273,8 @@ def explain_classification(
         prompt_hash=metadata["prompt_hash"],
         text=text,
         cited_evidence_ids=tuple(
-            citation for citation in _EVIDENCE_ID_PATTERN.findall(text or "") if citation in known_ids
+            citation for citation in _EVIDENCE_ID_PATTERN.findall(text or "") if citation
+                in known_ids
         ),
         unsupported_citations=unsupported,
         boundary_violations=violations,

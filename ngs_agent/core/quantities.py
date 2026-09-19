@@ -44,21 +44,36 @@ class ExactRatio(BaseModel):
         return str(self.value.normalize())
 
     def __lt__(self, other: ExactRatio) -> bool:
-        return Fraction(self.numerator, self.denominator) < Fraction(other.numerator, other.denominator)
+        return (
+            Fraction(self.numerator, self.denominator) < Fraction(other.numerator,
+                other.denominator)
+        )
 
     def __le__(self, other: ExactRatio) -> bool:
-        return Fraction(self.numerator, self.denominator) <= Fraction(other.numerator, other.denominator)
+        return (
+            Fraction(self.numerator, self.denominator) <= Fraction(other.numerator,
+                other.denominator)
+        )
 
     def __gt__(self, other: ExactRatio) -> bool:
-        return Fraction(self.numerator, self.denominator) > Fraction(other.numerator, other.denominator)
+        return (
+            Fraction(self.numerator, self.denominator) > Fraction(other.numerator,
+                other.denominator)
+        )
 
     def __ge__(self, other: ExactRatio) -> bool:
-        return Fraction(self.numerator, self.denominator) >= Fraction(other.numerator, other.denominator)
+        return (
+            Fraction(self.numerator, self.denominator) >= Fraction(other.numerator,
+                other.denominator)
+        )
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, ExactRatio):
             return NotImplemented
-        return Fraction(self.numerator, self.denominator) == Fraction(other.numerator, other.denominator)
+        return (
+            Fraction(self.numerator, self.denominator) == Fraction(other.numerator,
+                other.denominator)
+        )
 
     def __hash__(self) -> int:
         return hash(Fraction(self.numerator, self.denominator))

@@ -266,7 +266,8 @@ class TestEngineAbstention:
             variant=brca1_unrecorded,
             gene="BRCA1",
             usable_evidence=(),
-            all_evidence=[missing_evidence(brca1_unrecorded, EvidenceDataType.CLINICAL_SIGNIFICANCE)],
+            all_evidence=[missing_evidence(brca1_unrecorded,
+                EvidenceDataType.CLINICAL_SIGNIFICANCE)],
         )
         assert outcome.label not in {"benign", "likely_benign"}
         assert outcome.abstained is True
@@ -373,20 +374,23 @@ class TestPvs1MechanismGate:
             mechanism_evidence(brca1_nonsense, mechanism="gain_of_function", applicable=False),
         ]
         outcome = engine.evaluate(
-            variant=brca1_nonsense, gene="BRCA1", usable_evidence=usable(records), all_evidence=records
+            variant=brca1_nonsense, gene="BRCA1", usable_evidence=usable(records),
+                all_evidence=records
         )
         rejected = {item.code: item for item in outcome.rejected_criteria}
         assert "PVS1" in rejected
         assert "mechanism" in rejected["PVS1"].reason.lower()
 
-    def test_null_in_lof_gene_without_transcript_context_is_indeterminate(self, engine, brca1_nonsense):
+    def test_null_in_lof_gene_without_transcript_context_is_indeterminate(
+        self, engine, brca1_nonsense):
         """No downgrade in the absence of evidence: that needs positive evidence."""
         records = [
             consequence_evidence(brca1_nonsense, "stop_gained"),
             mechanism_evidence(brca1_nonsense),
         ]
         outcome = engine.evaluate(
-            variant=brca1_nonsense, gene="BRCA1", usable_evidence=usable(records), all_evidence=records
+            variant=brca1_nonsense, gene="BRCA1", usable_evidence=usable(records),
+                all_evidence=records
         )
         states = {item.code for item in outcome.indeterminate_criteria}
         assert "PVS1" in states
@@ -400,7 +404,8 @@ class TestPvs1MechanismGate:
             nmd_evidence(brca1_nonsense),
         ]
         outcome = engine.evaluate(
-            variant=brca1_nonsense, gene="BRCA1", usable_evidence=usable(records), all_evidence=records
+            variant=brca1_nonsense, gene="BRCA1", usable_evidence=usable(records),
+                all_evidence=records
         )
         pvs1 = next(item for item in outcome.applied_criteria if item.code == "PVS1")
         assert pvs1.strength is Strength.VERY_STRONG
@@ -466,7 +471,8 @@ class TestFrequencyCriteria:
         assert pm2.guideline_strength is Strength.MODERATE
         assert pm2.modifier is not None
 
-    def test_pm2_rarity_threshold_is_disclosed_as_an_implementation_default(self, engine, brca1_missense_locus):
+    def test_pm2_rarity_threshold_is_disclosed_as_an_implementation_default(
+        self, engine, brca1_missense_locus):
         record = frequency_evidence(brca1_missense_locus, numerator=2, denominator=100000)
         outcome = engine.evaluate(
             variant=brca1_missense_locus,
@@ -540,7 +546,8 @@ class TestConflicts:
             frequency_evidence(brca1_nonsense, numerator=6, denominator=100),
         ]
         outcome = engine.evaluate(
-            variant=brca1_nonsense, gene="BRCA1", usable_evidence=usable(records), all_evidence=records
+            variant=brca1_nonsense, gene="BRCA1", usable_evidence=usable(records),
+                all_evidence=records
         )
         assert outcome.abstained is True
         assert outcome.decision_state == "conflict"
@@ -557,7 +564,8 @@ class TestConflicts:
             label="benign",
             accession="VCV000000002",
             source=EvidenceSource(
-                name="other-authority", version="2026-01", adapter_version="1.0.0", hosted_by="vendor"
+                name="other-authority", version="2026-01", adapter_version="1.0.0",
+                    hosted_by="vendor"
             ),
         )
         assert first.evidence_id != second.evidence_id
@@ -572,10 +580,12 @@ class TestConflicts:
 
 
 class TestAuthoritativeExternalClassification:
-    def test_expert_panel_pathogenic_is_adopted_when_no_criteria_apply(self, engine, brca1_nonsense):
+    def test_expert_panel_pathogenic_is_adopted_when_no_criteria_apply(
+        self, engine, brca1_nonsense):
         record = clinvar_evidence(brca1_nonsense, label="pathogenic")
         outcome = engine.evaluate(
-            variant=brca1_nonsense, gene="BRCA1", usable_evidence=usable([record]), all_evidence=[record]
+            variant=brca1_nonsense, gene="BRCA1", usable_evidence=usable([record]),
+                all_evidence=[record]
         )
         assert outcome.label == "pathogenic"
         assert outcome.decision_basis == "authoritative_external_classification"
@@ -603,13 +613,15 @@ class TestAuthoritativeExternalClassification:
             authoritative=False,
         )
         outcome = engine.evaluate(
-            variant=brca1_nonsense, gene="BRCA1", usable_evidence=usable([record]), all_evidence=[record]
+            variant=brca1_nonsense, gene="BRCA1", usable_evidence=usable([record]),
+                all_evidence=[record]
         )
         assert outcome.decision_basis != "authoritative_external_classification"
         assert outcome.label == "uncertain_significance"
         assert outcome.abstained is True
 
-    def test_contradicting_external_and_criteria_is_a_blocking_conflict(self, engine, brca1_nonsense):
+    def test_contradicting_external_and_criteria_is_a_blocking_conflict(
+        self, engine, brca1_nonsense):
         records = [
             consequence_evidence(brca1_nonsense, "stop_gained"),
             mechanism_evidence(brca1_nonsense),
@@ -617,7 +629,8 @@ class TestAuthoritativeExternalClassification:
             clinvar_evidence(brca1_nonsense, label="benign"),
         ]
         outcome = engine.evaluate(
-            variant=brca1_nonsense, gene="BRCA1", usable_evidence=usable(records), all_evidence=records
+            variant=brca1_nonsense, gene="BRCA1", usable_evidence=usable(records),
+                all_evidence=records
         )
         assert outcome.label == "uncertain_significance"
         assert outcome.abstained is True
@@ -629,11 +642,13 @@ class TestAuthoritativeExternalClassification:
 
 
 class TestNonDerivableCriteria:
-    def test_criteria_without_a_configured_source_are_reported_not_invented(self, engine, brca1_nonsense):
+    def test_criteria_without_a_configured_source_are_reported_not_invented(
+        self, engine, brca1_nonsense):
         """PS2/PS3/PP1 need de-novo, assay and segregation data we do not have."""
         records = [consequence_evidence(brca1_nonsense, "stop_gained")]
         outcome = engine.evaluate(
-            variant=brca1_nonsense, gene="BRCA1", usable_evidence=usable(records), all_evidence=records
+            variant=brca1_nonsense, gene="BRCA1", usable_evidence=usable(records),
+                all_evidence=records
         )
         evaluated = {
             item.code
@@ -656,7 +671,8 @@ class TestNonDerivableCriteria:
             frequency_evidence(brca1_nonsense, numerator=2, denominator=100000),
         ]
         outcome = engine.evaluate(
-            variant=brca1_nonsense, gene="BRCA1", usable_evidence=usable(records), all_evidence=records
+            variant=brca1_nonsense, gene="BRCA1", usable_evidence=usable(records),
+                all_evidence=records
         )
         all_codes = [
             item.code
@@ -676,7 +692,8 @@ class TestNonDerivableCriteria:
             stars=1, authoritative=False,
         )
         outcome = svi_engine.evaluate(
-            variant=brca1_nonsense, gene="BRCA1", usable_evidence=usable([record]), all_evidence=[record]
+            variant=brca1_nonsense, gene="BRCA1", usable_evidence=usable([record]),
+                all_evidence=[record]
         )
         states = {item.code for item in outcome.not_evaluated_criteria}
         assert "PP5" in states
@@ -686,7 +703,8 @@ class TestNonDerivableCriteria:
         """An expert-panel classification is recorded as external, not as PP5."""
         record = clinvar_evidence(brca1_nonsense, label="pathogenic")
         outcome = engine.evaluate(
-            variant=brca1_nonsense, gene="BRCA1", usable_evidence=usable([record]), all_evidence=[record]
+            variant=brca1_nonsense, gene="BRCA1", usable_evidence=usable([record]),
+                all_evidence=[record]
         )
         assert not any(item.code == "PP5" for item in outcome.applied_criteria)
         rejected = {item.code: item for item in outcome.rejected_criteria}
@@ -703,7 +721,8 @@ class TestProvenanceOnEveryCriterion:
             frequency_evidence(brca1_nonsense, numerator=2, denominator=100000),
         ]
         outcome = engine.evaluate(
-            variant=brca1_nonsense, gene="BRCA1", usable_evidence=usable(records), all_evidence=records
+            variant=brca1_nonsense, gene="BRCA1", usable_evidence=usable(records),
+                all_evidence=records
         )
         assert outcome.applied_criteria
         for item in outcome.applied_criteria:
@@ -720,7 +739,8 @@ class TestProvenanceOnEveryCriterion:
         ]
         known = {record.evidence_id for record in records}
         outcome = engine.evaluate(
-            variant=brca1_nonsense, gene="BRCA1", usable_evidence=usable(records), all_evidence=records
+            variant=brca1_nonsense, gene="BRCA1", usable_evidence=usable(records),
+                all_evidence=records
         )
         for item in outcome.applied_criteria:
             assert set(item.evidence_ids) <= known
@@ -734,7 +754,8 @@ class TestProvenanceOnEveryCriterion:
         )
         hinted = record.model_copy(update={"strength_hint": "stand_alone"})
         outcome = engine.evaluate(
-            variant=brca1_nonsense, gene="BRCA1", usable_evidence=usable([hinted]), all_evidence=[hinted]
+            variant=brca1_nonsense, gene="BRCA1", usable_evidence=usable([hinted]),
+                all_evidence=[hinted]
         )
         assert not any(item.strength is Strength.STAND_ALONE for item in outcome.applied_criteria)
 
@@ -748,16 +769,19 @@ class TestEnginePurity:
             frequency_evidence(brca1_nonsense, numerator=2, denominator=100000),
         ]
         kwargs = dict(
-            variant=brca1_nonsense, gene="BRCA1", usable_evidence=usable(records), all_evidence=records
+            variant=brca1_nonsense, gene="BRCA1", usable_evidence=usable(records),
+                all_evidence=records
         )
         first = engine.evaluate(**kwargs)
         second = engine.evaluate(**kwargs)
         assert first.model_dump_json() == second.model_dump_json()
 
     def test_engine_instances_agree(self, brca1_nonsense):
-        records = [consequence_evidence(brca1_nonsense, "stop_gained"), mechanism_evidence(brca1_nonsense)]
+        records = [consequence_evidence(
+            brca1_nonsense, "stop_gained"), mechanism_evidence(brca1_nonsense)]
         kwargs = dict(
-            variant=brca1_nonsense, gene="BRCA1", usable_evidence=usable(records), all_evidence=records
+            variant=brca1_nonsense, gene="BRCA1", usable_evidence=usable(records),
+                all_evidence=records
         )
         assert AcmgEngine().evaluate(**kwargs).model_dump_json() == AcmgEngine().evaluate(
             **kwargs

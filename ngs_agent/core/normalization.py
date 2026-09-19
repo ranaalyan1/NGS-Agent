@@ -106,9 +106,11 @@ class NormalizationReport(BaseModel):
     complete: bool = True
     warnings: list[NormalizationWarning] = Field(default_factory=list)
 
-    def with_warning(self, code: str, message: str, *, severity: str = "warning") -> NormalizationReport:
+    def with_warning(
+        self, code: str, message: str, *, severity: str = "warning") -> NormalizationReport:
         """Return a copy with an added warning (and ``complete`` cleared if fatal)."""
-        warnings = [*self.warnings, NormalizationWarning(code=code, message=message, severity=severity)]
+        warnings = [*self.warnings, NormalizationWarning(
+            code=code, message=message, severity=severity)]
         return self.model_copy(
             update={"warnings": warnings, "complete": self.complete and severity != "abstain"}
         )
@@ -189,7 +191,8 @@ def _validate_allele(allele: str, *, what: str) -> str:
         )
     invalid = sorted({base for base in upper if base not in _VALID_BASES})
     if invalid:
-        raise NormalizationError(f"{what} allele {allele!r} contains non-IUPAC-ACGTN bases: {invalid}")
+        raise NormalizationError(
+            f"{what} allele {allele!r} contains non-IUPAC-ACGTN bases: {invalid}")
     return upper
 
 

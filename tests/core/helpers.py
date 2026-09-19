@@ -82,7 +82,8 @@ def make_evidence(
         retrieved_at=retrieved_at,
         genome_build=variant.genome_build,
         queried_variant_identity=variant.identity,
-        observed_variant_identity=variant.identity if verification is VerificationStatus.VERIFIED else None,
+        observed_variant_identity=variant.identity if verification
+            is VerificationStatus.VERIFIED else None,
         transcript=transcript,
         accession=accession,
         gene=gene,
@@ -237,3 +238,36 @@ def evaluation_for(outcome, code: str):
             if item.code == code:
                 return item
     raise AssertionError(f"criterion {code} was not evaluated at all")
+
+
+def first_difference(left, right, path: str = "$") -> str | None:
+    """Return the JSON-path of the first structural difference, or None.
+
+    Determinism tests compare whole contracts. When they fail, a dict-vs-dict
+    repr is undiagnosable — pytest truncates it long before the differing key.
+    Naming the exact path turns "the contract moved" into "provenance.x moved",
+    which is the difference between a five-minute fix and an afternoon.
+    """
+    if type(left) is not type(right):
+        return f"{path}: type {type(left).__name__} != {type(right).__name__}"
+    if isinstance(left, dict):
+        for key in sorted(set(left) | set(right)):
+            if key not in left:
+                return f"{path}.{key}: missing on left"
+            if key not in right:
+                return f"{path}.{key}: missing on right"
+            found = first_difference(left[key], right[key], f"{path}.{key}")
+            if found:
+                return found
+        return None
+    if isinstance(left, (list, tuple)):
+        if len(left) != len(right):
+            return f"{path}: length {len(left)} != {len(right)}"
+        for index, (a, b) in enumerate(zip(left, right, strict=True)):
+            found = first_difference(a, b, f"{path}[{index}]")
+            if found:
+                return found
+        return None
+    if left != right:
+        return f"{path}: {left!r} != {right!r}"
+    return None

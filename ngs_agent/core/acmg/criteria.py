@@ -156,7 +156,8 @@ CRITERIA: dict[str, CriterionSpec] = {
             allowed_strengths=(Strength.VERY_STRONG, Strength.STRONG, Strength.MODERATE),
             citation=f"{RICHARDS_2015} Strength modifiers: {ABOU_TAYOUN_2018}",
             notes=(
-                "Requires all three of: a null-variant consequence, an established loss-of-function "
+                "Requires all three of: a null-variant consequence, an established "
+                "loss-of-function "
                 "disease mechanism for the gene, and transcript/exon context sufficient to run the "
                 "PVS1 decision tree. NGS-Agent never infers PVS1 from a consequence alone."
             ),
@@ -180,7 +181,10 @@ CRITERIA: dict[str, CriterionSpec] = {
             "De novo (both maternity and paternity confirmed) in a patient with the disease and "
             "no family history.",
             evidence_types=(EvidenceDataType.DE_NOVO,),
-            not_derivable_reason="De novo status is a family/trio observation; no source configured.",
+            not_derivable_reason=(
+                "De novo status is a family/trio observation; no source "
+                "configured."
+            ),
         ),
         _spec(
             "PS3",
@@ -211,7 +215,10 @@ CRITERIA: dict[str, CriterionSpec] = {
             "Located in a mutational hot spot and/or critical and well-established functional "
             "domain (e.g. active site of an enzyme) without benign variation.",
             evidence_types=(EvidenceDataType.MUTATIONAL_HOTSPOT,),
-            not_derivable_reason="No domain/hotspot source configured (e.g. ClinGen domain definitions).",
+            not_derivable_reason=(
+                "No domain/hotspot source configured (e.g. ClinGen domain "
+                "definitions)."
+            ),
         ),
         _spec(
             "PM2",
@@ -259,7 +266,10 @@ CRITERIA: dict[str, CriterionSpec] = {
             Strength.MODERATE,
             "Assumed de novo, but without confirmation of paternity and maternity.",
             evidence_types=(EvidenceDataType.DE_NOVO,),
-            not_derivable_reason="De novo status is a family/trio observation; no source configured.",
+            not_derivable_reason=(
+                "De novo status is a family/trio observation; no source "
+                "configured."
+            ),
         ),
         # -- Pathogenic: supporting ----------------------------------------
         _spec(
@@ -278,7 +288,10 @@ CRITERIA: dict[str, CriterionSpec] = {
             "Missense variant in a gene that has a low rate of benign missense variation and in "
             "which missense variants are a common mechanism of disease.",
             evidence_types=(EvidenceDataType.SEQUENCE_CONSTRAINT,),
-            not_derivable_reason="Requires gene-level missense constraint plus mechanism; no source configured.",
+            not_derivable_reason=(
+                "Requires gene-level missense constraint plus mechanism; no source "
+                "configured."
+            ),
         ),
         _spec(
             "PP3",
@@ -301,7 +314,10 @@ CRITERIA: dict[str, CriterionSpec] = {
             Strength.SUPPORTING,
             "Patient's phenotype or family history is highly specific for a disease with a single "
             "genetic etiology.",
-            not_derivable_reason="Requires phenotype input (HPO terms); out of scope for the variant pipeline.",
+            not_derivable_reason=(
+                "Requires phenotype input (HPO terms); out of scope for the variant "
+                "pipeline."
+            ),
         ),
         _spec(
             "PP5",
@@ -354,7 +370,10 @@ CRITERIA: dict[str, CriterionSpec] = {
             "Observed in a healthy adult individual for a recessive (homozygous), dominant "
             "(heterozygous), or X-linked (hemizygous) disorder, with full penetrance expected at "
             "an early age.",
-            not_derivable_reason="Requires observational cohort data with phenotype and age; no source configured.",
+            not_derivable_reason=(
+                "Requires observational cohort data with phenotype and age; no source "
+                "configured."
+            ),
         ),
         _spec(
             "BS3",
@@ -363,7 +382,10 @@ CRITERIA: dict[str, CriterionSpec] = {
             "Well-established in vitro or in vivo functional studies show no damaging effect on "
             "protein function or splicing.",
             evidence_types=(EvidenceDataType.FUNCTIONAL_ASSAY,),
-            not_derivable_reason="Requires a curated functional-assay database with validation status.",
+            not_derivable_reason=(
+                "Requires a curated functional-assay database with validation "
+                "status."
+            ),
         ),
         _spec(
             "BS4",
@@ -394,7 +416,8 @@ CRITERIA: dict[str, CriterionSpec] = {
             Direction.BENIGN,
             Strength.SUPPORTING,
             "Observed in trans with a pathogenic variant for a fully penetrant dominant "
-            "gene/disorder, or observed in cis with a pathogenic variant in any inheritance pattern.",
+            "gene/disorder, or observed in cis with a pathogenic variant in any inheritance "
+            "pattern.",
             not_derivable_reason="Requires phasing relative to a second classified variant.",
         ),
         _spec(
@@ -436,7 +459,10 @@ CRITERIA: dict[str, CriterionSpec] = {
             evidence_types=(EvidenceDataType.CLINICAL_SIGNIFICANCE,),
             derivable=True,
             citation=f"{RICHARDS_2015} Deprecation: {CLINGEN_SVI}",
-            notes="See PP5. Deprecated by ClinGen SVI; derived only under the acmg-amp-2015 rule set.",
+            notes=(
+                "See PP5. Deprecated by ClinGen SVI; derived only under the acmg-amp-2015 rule "
+                "set."
+            ),
         ),
         _spec(
             "BP7",

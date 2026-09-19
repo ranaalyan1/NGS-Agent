@@ -293,7 +293,8 @@ class VariantReviewResult(BaseModel):
                 "identity and a signed_at timestamp."
             )
         if not self.review.is_signed and self.review.signed_at is not None:
-            raise ContractError("A review timestamp without a terminal review status is meaningless.")
+            raise ContractError(
+                "A review timestamp without a terminal review status is meaningless.")
         if (
             self.review.decision
             and self.review.decision != self.classification.label

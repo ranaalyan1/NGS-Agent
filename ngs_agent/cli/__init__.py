@@ -186,9 +186,23 @@ def consult(vcffile: Path, gene: str | None, html: Path | None) -> None:
                 console.print(f"  [yellow]-[/yellow] {item}")
         console.print(f"\n[dim]{result.disclaimer}[/dim]\n")
 
+    # A consultation in which every model call failed produced nothing. Exiting
+    # 0 and writing an HTML file would present that failure as a successful run
+    # -- the original bug behind this command. See BUGS_FOUND.md B1.
+    if all(not result.opinions for result in results):
+        console.print(
+            "[bold red]Every model call failed; no narrative was produced.[/bold red]\n"
+            "Refusing to export an empty consultation report as though it succeeded."
+        )
+        sys.exit(1)
+
     if html:
         generate_html_report(variants, debates=results, output_path=html)
         console.print(f"[green]Consultation report exported to:[/green] [bold]{html}[/bold]")
+        if any(result.errors for result in results):
+            console.print(
+                "[yellow]Note: some model calls failed, so this report is partial.[/yellow]"
+            )
 
 
 #: Deprecated alias. Kept so existing scripts fail with an explanation rather

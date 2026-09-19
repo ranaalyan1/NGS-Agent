@@ -29,7 +29,8 @@ class FakeReference:
     """
 
     def __init__(self, sequences: dict[str, str]) -> None:
-        self.sequences = {normalize_chromosome(key): value.upper() for key, value in sequences.items()}
+        self.sequences = {normalize_chromosome(
+            key): value.upper() for key, value in sequences.items()}
         self.calls: list[tuple[str, int, int]] = []
 
     def fetch(self, chromosome: str, start: int, end: int) -> str | None:
@@ -97,7 +98,8 @@ class TestStableIdentity:
             genome_build="GRCh38", chromosome="17", position=43082434, reference="G", alternate="A"
         )
         second = normalize_variant(
-            genome_build="GRCh38", chromosome="chr17", position=43082434, reference="g", alternate="a"
+            genome_build="GRCh38", chromosome="chr17", position=43082434, reference="g",
+                alternate="a"
         )
         assert first.identity == second.identity
         assert first.variant_id == second.variant_id
@@ -144,7 +146,8 @@ class TestStableIdentity:
 class TestTrimmingAndLeftAlignment:
     def test_padded_snv_trims_to_minimal_representation(self):
         variant = normalize_variant(
-            genome_build="GRCh38", chromosome="17", position=43082433, reference="AG", alternate="AA"
+            genome_build="GRCh38", chromosome="17", position=43082433, reference="AG",
+                alternate="AA"
         )
         assert (variant.position, variant.reference, variant.alternate) == (43082434, "G", "A")
         assert variant.variant_type is VariantType.SNV
@@ -269,7 +272,10 @@ class TestMultiallelicSplitting:
         assert [item.alternates for item in split] == [("A",)]
 
     def test_normalize_raw_marks_split_and_allele_index(self):
-        raw = RawVariant(chromosome="17", position=43082434, reference="G", alternates=("A", "C", "T"))
+        raw = (
+            RawVariant(chromosome="17", position=43082434, reference="G", alternates=("A", "C",
+                "T"))
+        )
         results = normalize_raw(raw, genome_build="GRCh38")
         assert [item.alternate for item in results] == ["A", "C", "T"]
         assert all(item.normalization.multiallelic_split for item in results)
@@ -315,7 +321,8 @@ class TestAmbiguousInput:
     def test_invalid_bases_are_rejected(self, allele):
         with pytest.raises(NormalizationError):
             normalize_variant(
-                genome_build="GRCh38", chromosome="17", position=100, reference="G", alternate=allele
+                genome_build="GRCh38", chromosome="17", position=100, reference="G",
+                    alternate=allele
             )
 
     def test_zero_position_is_rejected(self):

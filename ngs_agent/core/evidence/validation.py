@@ -76,11 +76,15 @@ class ValidationReport:
 
     @property
     def errors(self) -> list[ValidationFinding]:
-        return [finding for finding in self.findings if finding.severity is ValidationSeverity.ERROR]
+        return (
+            [finding for finding in self.findings if finding.severity is ValidationSeverity.ERROR]
+        )
 
     @property
     def warnings(self) -> list[ValidationFinding]:
-        return [finding for finding in self.findings if finding.severity is ValidationSeverity.WARNING]
+        return (
+            [finding for finding in self.findings if finding.severity is ValidationSeverity.WARNING]
+        )
 
     @property
     def ok(self) -> bool:

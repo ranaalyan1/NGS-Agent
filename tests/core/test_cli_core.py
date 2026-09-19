@@ -17,6 +17,7 @@ from click.testing import CliRunner
 
 from ngs_agent.cli import main
 from ngs_agent.core.cli import REVIEW_COMMANDS
+from tests.core.helpers import first_difference
 
 DEMO_VCF = "demo_data/review_demo.vcf"
 
@@ -128,7 +129,8 @@ class TestReviewCommand:
         )
         result = runner.invoke(
             main,
-            ["review", str(vcf), "--genome-build", "GRCh38", "--audit-dir", str(tmp_path / "a"), "--quiet"],
+            ["review", str(vcf), "--genome-build", "GRCh38", "--audit-dir", str(tmp_path / "a"),
+                "--quiet"],
         )
         assert result.exit_code == EXIT_OK, result.output
 
@@ -348,7 +350,9 @@ class TestReplayCommand:
         review(runner, audit_dir)
         target = audit_ids(runner, audit_dir)[0]
         def records():
-            return stdout_json(runner.invoke(main, ["audit", "--audit-dir", str(audit_dir), "--json"]))
+            return (
+                stdout_json(runner.invoke(main, ["audit", "--audit-dir", str(audit_dir), "--json"]))
+            )
 
         before = len(records())
         runner.invoke(main, ["replay", target, "--audit-dir", str(audit_dir)])
@@ -535,4 +539,6 @@ class TestDeterminismThroughTheCli:
                 item.pop("result_id", None)
             return payload
 
-        assert run_once(tmp_path / "one") == run_once(tmp_path / "two")
+        first, second = run_once(tmp_path / "one"), run_once(tmp_path / "two")
+        difference = first_difference(first, second)
+        assert difference is None, f"two runs over identical input diverged at {difference}"

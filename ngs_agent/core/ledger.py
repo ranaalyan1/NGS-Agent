@@ -161,7 +161,8 @@ class JsonlLedger(EvidenceLedger):
                         records.append(EvidenceRecord.model_validate_json(line))
                     except (ValidationError, EvidenceValidationError) as exc:
                         raise AuditError(
-                            f"{self.path}:{line_number}: ledger entry failed schema validation: {exc}"
+                            f"{self.path}:{line_number}: ledger entry failed schema validation: "
+                            f"{exc}"
                         ) from exc
         self._cache = records
         return records
@@ -227,6 +228,9 @@ def import_ledger_snapshot(
         except (ValidationError, EvidenceValidationError) as exc:
             message = f"snapshot entry {index} failed schema validation: {exc}"
             if retrieved_at_default is not None:
-                message += f" (default retrieved_at {retrieved_at_default.isoformat()} was offered but not applied)"
+                message += (
+                    f" (default retrieved_at {retrieved_at_default.isoformat()} "
+                    "was offered but not applied)"
+                )
             raise AuditError(message) from exc
     return records

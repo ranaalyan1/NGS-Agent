@@ -11,6 +11,7 @@ import json
 from pathlib import Path
 
 import pytest
+from pydantic import ValidationError
 
 from ngs_agent.core.audit import (
     AuditLog,
@@ -292,7 +293,9 @@ class TestLedger:
         for record in reviewed.reviews[0].result.evidence:
             ledger.append([record])
         assert ledger.for_variant(variant)
-        assert all(record.queried_variant_identity == variant.identity for record in ledger.for_variant(variant))
+        assert all(
+            record.queried_variant_identity == variant.identity for record
+                in ledger.for_variant(variant))
 
     def test_jsonl_ledger_persists_and_reloads(self, tmp_path, reviewed):
         path = tmp_path / "ledger" / "evidence.jsonl"
@@ -333,7 +336,9 @@ class TestSignOff:
 
     def test_approval_produces_a_signed_contract(self, reviewed):
         result = reviewed.reviews[0].result
-        signed = sign_off(result, ReviewDecision(reviewer="dr.who", action="approve"), now=FIXED_NOW)
+        signed = (
+            sign_off(result, ReviewDecision(reviewer="dr.who", action="approve"), now=FIXED_NOW)
+        )
         assert signed.review.status == "approved"
         assert signed.review.is_signed is True
         assert signed.review.signed_at == FIXED_NOW
@@ -341,7 +346,9 @@ class TestSignOff:
 
     def test_sign_off_returns_a_new_contract_and_leaves_the_original_alone(self, reviewed):
         result = reviewed.reviews[0].result
-        signed = sign_off(result, ReviewDecision(reviewer="dr.who", action="approve"), now=FIXED_NOW)
+        signed = (
+            sign_off(result, ReviewDecision(reviewer="dr.who", action="approve"), now=FIXED_NOW)
+        )
         assert signed is not result
         assert result.review.status == "pending"
         # The classification is never rewritten by a human action.
@@ -400,14 +407,18 @@ class TestSignOff:
 
     def test_request_review_is_not_a_sign_off(self, reviewed):
         result = reviewed.reviews[0].result
-        signed = sign_off(result, ReviewDecision(reviewer="dr.who", action="request_review"), now=FIXED_NOW)
+        signed = (
+            sign_off(result, ReviewDecision(reviewer="dr.who", action="request_review"),
+                now=FIXED_NOW)
+        )
         assert signed.review.status == "review_requested"
         assert signed.review.is_signed is False
         with pytest.raises(ReviewRequiredError):
             require_signed(signed)
 
     def test_reviewer_identity_is_mandatory(self):
-        with pytest.raises(Exception):
+        # A blank reviewer must fail model validation, not merely be tolerated.
+        with pytest.raises(ValidationError):
             ReviewDecision(reviewer="", action="approve")
 
     def test_reviewer_decision_must_be_one_of_the_five_tiers(self):
@@ -428,7 +439,8 @@ class TestSignOff:
         with pytest.raises(ReviewRequiredError, match="not permitted"):
             sign_off(
                 result,
-                ReviewDecision(reviewer="dr.who", action="approve", reviewer_role="bioinformatician"),
+                ReviewDecision(reviewer="dr.who", action="approve",
+                    reviewer_role="bioinformatician"),
                 enforce_role=True,
             )
 
@@ -519,7 +531,8 @@ class TestAuditRecordIsSelfContained:
         record = log.read_all()[0]
         assert replay_decision(record, audit_log=log).reproduced is True
 
-    def test_the_build_review_helper_matches_the_pipeline_output(self, pipeline, reviewed, tmp_path):
+    def test_the_build_review_helper_matches_the_pipeline_output(
+        self, pipeline, reviewed, tmp_path):
         """``build_review_audit_record`` is the documented construction path."""
         review = reviewed.reviews[0]
         result = review.result

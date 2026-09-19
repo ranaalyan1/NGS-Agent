@@ -80,7 +80,8 @@ class TestModelIsFencedOutOfTheSignedPath:
         annotated, _ = explain_classification(
             pathogenic_result, backend, provider="test", model="test-model", now=FIXED_NOW
         )
-        assert annotated.classification.label == pathogenic_result.classification.label == "pathogenic"
+        assert annotated.classification.label == pathogenic_result.classification.label
+        assert annotated.classification.label == "pathogenic"
         assert annotated.classification == pathogenic_result.classification
 
     def test_a_model_cannot_change_an_abstention(self, abstained_result):
@@ -89,7 +90,10 @@ class TestModelIsFencedOutOfTheSignedPath:
             abstained_result, backend, provider="test", model="test-model", now=FIXED_NOW
         )
         assert annotated.classification.abstained is True
-        assert annotated.classification.decision_state == abstained_result.classification.decision_state
+        assert (
+            annotated.classification.decision_state
+            == abstained_result.classification.decision_state
+        )
 
     def test_a_model_cannot_add_a_criterion(self, pathogenic_result):
         backend = ScriptedBackend("PVS1, PS1, PM3 and PP4 all apply here.")
@@ -102,13 +106,15 @@ class TestModelIsFencedOutOfTheSignedPath:
     def test_the_original_contract_is_never_mutated(self, pathogenic_result):
         before = pathogenic_result.model_dump_json()
         explain_classification(
-            pathogenic_result, ScriptedBackend("narrative"), provider="test", model="m", now=FIXED_NOW
+            pathogenic_result, ScriptedBackend("narrative"), provider="test", model="m",
+                now=FIXED_NOW
         )
         assert pathogenic_result.model_dump_json() == before
 
     def test_explanation_lives_in_its_own_block(self, pathogenic_result):
         annotated, block = explain_classification(
-            pathogenic_result, ScriptedBackend("narrative"), provider="prov", model="mod", now=FIXED_NOW
+            pathogenic_result, ScriptedBackend("narrative"), provider="prov", model="mod",
+                now=FIXED_NOW
         )
         assert annotated.explanation is block
         assert annotated.explanation.present is True
@@ -120,7 +126,8 @@ class TestModelIsFencedOutOfTheSignedPath:
 class TestModelSeesOnlyLedgerFacts:
     def test_the_prompt_is_the_serialized_ledger_subset(self, pathogenic_result):
         backend = ScriptedBackend("ok")
-        explain_classification(pathogenic_result, backend, provider="test", model="m", now=FIXED_NOW)
+        explain_classification(
+            pathogenic_result, backend, provider="test", model="m", now=FIXED_NOW)
         assert len(backend.prompts) == 1
         assert backend.system_prompts == [SYSTEM_PROMPT]
         facts = build_explanation_input(pathogenic_result)
@@ -161,8 +168,11 @@ class TestBoundaryViolationsAreDetected:
     def test_an_applied_criterion_mentioned_is_clean(self, pathogenic_result):
         applied = {item.code for item in pathogenic_result.applied_criteria}
         known = {record.evidence_id for record in pathogenic_result.evidence}
-        text = "The engine applied " + ", ".join(sorted(applied)) if applied else "no criteria applied"
-        violations, unsupported = audit_explanation(text, applied_codes=applied, known_evidence_ids=known)
+        text = (
+            "The engine applied " + ", ".join(sorted(applied)) if applied else "no criteria applied"
+        )
+        violations, unsupported = audit_explanation(
+            text, applied_codes=applied, known_evidence_ids=known)
         assert violations == ()
         assert unsupported == ()
 
@@ -205,7 +215,8 @@ class TestBoundaryViolationsAreDetected:
     def test_a_real_evidence_id_is_not_flagged(self):
         known = {"ev.v1.REALRECORD00"}
         violations, unsupported = audit_explanation(
-            "Per ev.v1.REALRECORD00 the variant is rare.", applied_codes=set(), known_evidence_ids=known
+            "Per ev.v1.REALRECORD00 the variant is rare.", applied_codes=set(),
+                known_evidence_ids=known
         )
         assert unsupported == ()
         assert violations == ()
@@ -279,7 +290,8 @@ class TestReplaceability:
 
     def test_model_metadata_declares_it_contributed_nothing(self, pathogenic_result):
         _, block = explain_classification(
-            pathogenic_result, ScriptedBackend("narrative"), provider="test", model="m", now=FIXED_NOW
+            pathogenic_result, ScriptedBackend("narrative"), provider="test", model="m",
+                now=FIXED_NOW
         )
         metadata = explanation_model_metadata(block)
         assert metadata is not None

@@ -18,7 +18,9 @@ from __future__ import annotations
 from dataclasses import fields
 
 import pytest
+from click.testing import CliRunner
 
+import ngs_agent.cli as cli_module
 from ngs_agent.analyzer import Variant
 from ngs_agent.backends.base import NoBackend
 from ngs_agent.debate import (
@@ -286,3 +288,48 @@ class TestReportIntegration:
         html = generate_html_report([variant], debates=[result], output_path=path)
         assert "Removed by guardrail" in html
         assert "Boundary violations detected" in html
+
+
+class TestConsultCommandWhenEveryModelCallFails:
+    """BUGS_FOUND.md B1: failed model calls must not be reported as success.
+
+    The consultation produces no classification, so a failed run cannot inflate a
+    tier any more. What it *could* still do is exit 0 and write an HTML report
+    containing nothing but error messages, which reads as "the models reviewed
+    this and had no concerns". That is the residual half of B1.
+    """
+
+    def test_exit_is_nonzero_and_no_report_is_written(self, tmp_path, monkeypatch):
+        class DeadBackend:
+            def complete(self, prompt: str, *, system: str | None = None) -> str:
+                raise RuntimeError("upstream unavailable")
+
+        monkeypatch.setattr(cli_module, "get_backend", lambda cfg: DeadBackend())
+        report = tmp_path / "consultation.html"
+        result = CliRunner().invoke(
+            cli_module.main,
+            ["consult", "demo_data/sample.vcf", "--html", str(report)],
+        )
+        assert result.exit_code == 1, result.output
+        assert "Every model call failed" in result.output
+        assert not report.exists(), "an empty consultation must not be exported as a report"
+
+    def test_a_partial_failure_still_reports_and_says_it_is_partial(self, tmp_path, monkeypatch):
+        calls = {"n": 0}
+
+        class HalfDeadBackend:
+            def complete(self, prompt: str, *, system: str | None = None) -> str:
+                calls["n"] += 1
+                if calls["n"] % 3 == 1:
+                    raise RuntimeError("one persona unavailable")
+                return "The transcript context should be confirmed by the reviewer."
+
+        monkeypatch.setattr(cli_module, "get_backend", lambda cfg: HalfDeadBackend())
+        report = tmp_path / "consultation.html"
+        result = CliRunner().invoke(
+            cli_module.main,
+            ["consult", "demo_data/sample.vcf", "--html", str(report)],
+        )
+        assert result.exit_code == 0, result.output
+        assert report.exists()
+        assert "this report is partial" in result.output

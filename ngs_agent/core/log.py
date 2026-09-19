@@ -50,7 +50,8 @@ class StructuredFormatter(logging.Formatter):
         }
         context = getattr(record, "context", None)
         if isinstance(context, Mapping):
-            payload.update({key: value for key, value in context.items() if key not in _BLOCKED_FIELDS})
+            payload.update(
+                {key: value for key, value in context.items() if key not in _BLOCKED_FIELDS})
         if record.exc_info:
             payload["exception"] = self.formatException(record.exc_info)
         return json.dumps(payload, sort_keys=True, default=str)

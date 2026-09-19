@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-from html import escape as html_escape
-
 import datetime
+from html import escape as html_escape
 from pathlib import Path
 
 from ngs_agent.analyzer import Variant

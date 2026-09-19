@@ -32,7 +32,8 @@ from ngs_agent.core.normalization import RawVariant
 class VcfParseError(CoreError, ValueError):
     """A VCF file could not be parsed. Carries the offending line number."""
 
-    def __init__(self, message: str, *, path: Path | None = None, line_number: int | None = None) -> None:
+    def __init__(
+        self, message: str, *, path: Path | None = None, line_number: int | None = None) -> None:
         location = f"{path}:{line_number}" if path and line_number else str(path or "<unknown>")
         super().__init__(f"{location}: {message}")
         self.path = path
@@ -155,11 +156,13 @@ def read_vcf(path: Path | str, *, max_records: int | None = None) -> VcfDocument
                     path=resolved,
                     line_number=line_number,
                 )
-            chrom, pos_text, record_id, ref, alt_field = parts[0], parts[1], parts[2], parts[3], parts[4]
+            chrom, pos_text, record_id, ref, alt_field = parts[:5]
             try:
                 position = int(pos_text)
             except ValueError as exc:
-                raise VcfParseError(f"POS {pos_text!r} is not an integer", path=resolved, line_number=line_number) from exc
+                raise VcfParseError(
+                    f"POS {pos_text!r} is not an integer", path=resolved,
+                        line_number=line_number) from exc
             alternates = tuple(allele for allele in alt_field.split(",") if allele)
             if not alternates:
                 raise VcfParseError("ALT field is empty", path=resolved, line_number=line_number)

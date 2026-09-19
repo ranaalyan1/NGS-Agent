@@ -250,14 +250,17 @@ class AcmgEngine:
         has_pathogenic = any(item.direction is Direction.PATHOGENIC for item in applied)
         has_benign = any(item.direction is Direction.BENIGN for item in applied)
         if has_pathogenic and has_benign:
+            pathogenic_codes = [
+                item.code for item in applied if item.direction is Direction.PATHOGENIC
+            ]
+            benign_codes = [item.code for item in applied if item.direction is Direction.BENIGN]
             conflicts.append(
                 ConflictRecord(
                     kind="criteria_vs_criteria",
                     severity="blocking",
                     description=(
                         "Pathogenic and benign criteria were both applied: "
-                        f"{[item.code for item in applied if item.direction is Direction.PATHOGENIC]} "
-                        f"versus {[item.code for item in applied if item.direction is Direction.BENIGN]}. "
+                        f"{pathogenic_codes} versus {benign_codes}. "
                         "ACMG/AMP treats contradictory evidence as uncertain significance; "
                         "NGS-Agent additionally abstains and escalates."
                     ),
@@ -413,7 +416,9 @@ class AcmgEngine:
         if not usable_evidence and self.policy.abstain_when_no_usable_evidence:
             return UNCERTAIN_TIER, "insufficient_evidence", "no_usable_evidence", True
 
-        independent = bool(applied) and criteria_label is not None and criteria_label != UNCERTAIN_TIER
+        independent = (
+            bool(applied) and criteria_label is not None and criteria_label != UNCERTAIN_TIER
+        )
         nothing_applied = not applied
 
         if nothing_applied and external_label:
@@ -542,7 +547,8 @@ def _coverage(records: Sequence[EvidenceRecord]) -> list[EvidenceCoverage]:
         if not matching:
             coverage.append(
                 EvidenceCoverage(
-                    data_type=data_type.value, status="not_queried", detail="No adapter queried this class."
+                    data_type=data_type.value, status="not_queried",
+                        detail="No adapter queried this class."
                 )
             )
             continue

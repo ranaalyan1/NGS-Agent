@@ -76,7 +76,8 @@ class OfflineEvidencePackAdapter(BaseEvidenceAdapter):
             name=self._pack_name,
             version=self._pack_version,
             adapter_version=ADAPTER_VERSION,
-            data_types=tuple(sorted({record.data_type for record in self._records or []}, key=lambda item: item.value))
+            data_types=tuple(sorted({record.data_type for record in self._records or []},
+                key=lambda item: item.value))
             or (EvidenceDataType.CLINICAL_SIGNIFICANCE,),
             endpoint=str(self.path),
             license="declared by the pack producer",
@@ -99,7 +100,8 @@ class OfflineEvidencePackAdapter(BaseEvidenceAdapter):
         if self.path.is_dir():
             files = sorted(self.path.glob("*.json"))
             if not files:
-                raise EvidencePackError(f"evidence pack directory contains no .json files: {self.path}")
+                raise EvidencePackError(
+                    f"evidence pack directory contains no .json files: {self.path}")
             records: list[EvidenceRecord] = []
             for file_path in files:
                 records.extend(self._load_file(file_path))
@@ -145,7 +147,8 @@ class OfflineEvidencePackAdapter(BaseEvidenceAdapter):
             except EvidencePackError:
                 raise
             except (ValidationError, EvidenceValidationError) as exc:
-                raise EvidencePackError(f"{file_path}: record {index} failed schema validation: {exc}") from exc
+                raise EvidencePackError(
+                    f"{file_path}: record {index} failed schema validation: {exc}") from exc
             records.append(record)
         return records
 
@@ -177,9 +180,11 @@ class OfflineEvidencePackAdapter(BaseEvidenceAdapter):
                         response_sha256=self._pack_sha256,
                     ),
                     reason=(
-                        f"Evidence pack {self._pack_name} ({self._pack_version}) contains no record "
+                        f"Evidence pack {self._pack_name} ({self._pack_version}) contains no "
+                        f"record "
                         f"for {variant.identity}. A pack is a snapshot of specific variants, not a "
-                        "database; absence here means only that the pack does not cover this variant."
+                        "database; absence here means only that the pack does not cover this "
+                        "variant."
                     ),
                 )
             ]
@@ -215,7 +220,8 @@ class SnapshotEvidenceAdapter(BaseEvidenceAdapter):
             name="audit_snapshot",
             version=self._snapshot_id,
             adapter_version=ADAPTER_VERSION,
-            data_types=tuple(sorted({record.data_type for record in self._records}, key=lambda item: item.value))
+            data_types=tuple(sorted({record.data_type for record in self._records},
+                key=lambda item: item.value))
             or (EvidenceDataType.CLINICAL_SIGNIFICANCE,),
             requires_network=False,
             hosted_by="local",
@@ -231,7 +237,11 @@ class SnapshotEvidenceAdapter(BaseEvidenceAdapter):
         from ngs_agent.core.evidence.models import utc_now
 
         retrieved_at = self._clock() if self._clock is not None else utc_now()
-        matched = [record for record in self._records if record.queried_variant_identity == variant.identity]
+        matched = [
+            record
+            for record in self._records
+            if record.queried_variant_identity == variant.identity
+        ]
         if not matched:
             return [
                 EvidenceRecord(

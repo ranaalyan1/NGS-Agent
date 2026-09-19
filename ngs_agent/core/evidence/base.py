@@ -145,7 +145,8 @@ class BaseEvidenceAdapter(abc.ABC):
             ]
         if not records:
             raise AdapterCapabilityError(
-                f"{self.declaration.name} returned no records for {variant.identity}. Adapters must "
+                f"{self.declaration.name} returned no records for {variant.identity}. Adapters "
+                f"must "
                 "return an explicit unavailable/failed record so that 'nothing found' is "
                 "distinguishable from 'never asked'."
             )

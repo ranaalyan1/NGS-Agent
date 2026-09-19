@@ -123,7 +123,8 @@ class TestMissingDataIsNeverAValue:
 
 class TestUnverifiedEvidenceCannotSupportACriterion:
     def test_applies_requires_verified(self, brca1_nonsense):
-        with pytest.raises(EvidenceValidationError, match="applicability=applies requires verification"):
+        with pytest.raises(
+            EvidenceValidationError, match="applicability=applies requires verification"):
             EvidenceRecord(
                 source=TEST_SOURCE,
                 data_type=EvidenceDataType.MOLECULAR_CONSEQUENCE,
@@ -207,7 +208,8 @@ class TestContentAddressedIdentity:
         )
         assert first.evidence_id != second.evidence_id
 
-    def test_evidence_about_a_different_variant_is_a_different_record(self, brca1_nonsense, brca1_missense_locus):
+    def test_evidence_about_a_different_variant_is_a_different_record(
+        self, brca1_nonsense, brca1_missense_locus):
         first = make_evidence(
             variant=brca1_nonsense, data_type=EvidenceDataType.MOLECULAR_CONSEQUENCE,
             observed_value={"consequences": ["stop_gained"]},

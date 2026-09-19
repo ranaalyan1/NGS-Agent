@@ -81,8 +81,10 @@ class TestSchemaVersioning:
     def test_a_stale_schema_version_is_refused(self, brca1_nonsense):
         """Handing a consumer a contract it cannot interpret is worse than failing."""
         with pytest.raises(ContractError, match="schema_version"):
-            build_result(brca1_nonsense).model_copy(update={"schema_version": "0.9.0"}).model_validate(
-                {**json.loads(build_result(brca1_nonsense).model_dump_json()), "schema_version": "0.9.0"}
+            build_result(
+                brca1_nonsense).model_copy(update={"schema_version": "0.9.0"}).model_validate(
+                {**json.loads(build_result(brca1_nonsense).model_dump_json()),
+                    "schema_version": "0.9.0"}
             )
 
     def test_contract_round_trips_through_json(self, brca1_nonsense):
@@ -196,7 +198,8 @@ class TestNoEvidenceRecordNoCriterion:
         from ngs_agent.core.acmg.engine import AcmgEngine
 
         engine_outcome = AcmgEngine().evaluate(
-            variant=brca1_nonsense, gene="BRCA1", usable_evidence=tuple(records), all_evidence=records
+            variant=brca1_nonsense, gene="BRCA1", usable_evidence=tuple(records),
+                all_evidence=records
         )
         result = build_result(brca1_nonsense, outcome=engine_outcome, evidence=tuple(records))
         known = {record.evidence_id for record in result.evidence}
@@ -379,7 +382,8 @@ class TestExplanationIsOutsideTheSignedPath:
         )
         assert result.explanation.boundary_violations
         assert result.explanation.unsupported_citations
-        assert "not evidence" in result.explanation.disclaimer.lower() or result.explanation.disclaimer
+        assert "not evidence" in result.explanation.disclaimer.lower(
+            ) or result.explanation.disclaimer
 
 
 class TestProvenance:

@@ -170,6 +170,11 @@ is written into the sample sheet's `species` column.
 ## B. pip CLI (`ngsagent`)
 
 ### 🔴 B1. Failed LLM calls still produce a confident, exit-0 debate report
+**Resolved.** The command is now `consult`, it emits no consensus and no classification, and
+a missing backend exits 1. If *every* model call fails the command exits 1 and refuses to
+write a report; a partial failure still exports but says so on stdout.
+Covered by `TestConsultCommandWhenEveryModelCallFails`.
+
 `debate_variant` (`ngs_agent/debate.py`) catches **all** backend exceptions
 and inserts `"[LLM call failed: …]"` as each persona's reasoning; the stances
 default to "Uncertain", and the run ends with
@@ -184,6 +189,11 @@ The CLI's `except RuntimeError` handler in `debate` is dead code as a result.
 A failed backend should abort (non-zero exit) rather than fabricate consensus.
 
 ### 🟠 B2. ACMG engine inflates classifications by counting duplicate criteria
+**Resolved.** `ngs_agent/acmg.py` has been deleted. Criteria are now derived only from
+structured evidence records by `ngs_agent/core/acmg/`, and `count_strengths()` counts a
+*set* of codes, so one PM2 contributes at most one count regardless of how many times it
+is mentioned. The snippet below no longer exists and is kept only as the historical record.
+
 Codes emitted by all three personas are concatenated without de-duplication,
 so one repeated criterion satisfies multi-criterion rules:
 ```python
@@ -194,6 +204,10 @@ ACMG counting must use the *set* of criteria; one PM2 is one PM2 regardless
 of how many personas mention it.
 
 ### 🟡 B3. VUS stance rendered as "Vus"
+**Resolved by removal.** `debate`/`consult` no longer extracts a stance at all: model
+output is narrative only and cannot carry a tier. `_extract_stance` is gone, and
+`tests/test_debate.py` now asserts that no field exists in which a stance could be carried.
+
 `_extract_stance` returns the literal string `"Vus"` in two branches
 (`ngs_agent/debate.py`), which is printed in the terminal and HTML badge. It
 should be `"VUS"`. `tests/test_debate.py` currently asserts the typo
@@ -233,6 +247,9 @@ the built wheel contains zero `demo_data` files (they're in the sdist only).
 ## C. Developer experience / CI
 
 ### 🟠 C1. CI lint is red on `main`
+**Resolved.** `ruff check ngs_agent/ tests/ agents/` passes clean, including the new
+`ngs_agent/core/**` and `tests/core/**`, which carry no E501 waiver.
+
 `ruff check ngs_agent/ agents/` (the exact Test workflow step) reports
 **140 errors** with current ruff (13 unused imports, 18 blind `except`,
 8 `subprocess.run` without `check`, etc.), and the separate Pylint workflow

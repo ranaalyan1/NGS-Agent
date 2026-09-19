@@ -175,7 +175,8 @@ def normalize_chromosome(raw: str) -> str:
             return str(number)
         if number in (23, 24):
             return _CHROMOSOME_ALIASES[str(number)]
-        raise GenomeBuildError(f"Chromosome {raw!r} is outside the primary assembly (1-22, X, Y, MT).")
+        raise GenomeBuildError(
+            f"Chromosome {raw!r} is outside the primary assembly (1-22, X, Y, MT).")
     # Non-primary contig: return as-is so the caller can record it and refuse.
     return text
 

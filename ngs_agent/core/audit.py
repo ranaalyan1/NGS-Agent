@@ -378,7 +378,8 @@ def variant_from_audit(record: AuditRecord) -> NormalizedVariant:
             }
         )
     except ValidationError as exc:
-        raise AuditError(f"audit record {record.audit_id} has an unreadable normalization block: {exc}") from exc
+        raise AuditError(
+            f"audit record {record.audit_id} has an unreadable normalization block: {exc}") from exc
     return NormalizedVariant(
         genome_build=GenomeBuild(variant_block["genome_build"]),
         chromosome=variant_block["chromosome"],
@@ -607,7 +608,8 @@ def _provenance_from_audit(record: AuditRecord) -> Any:
     }
     allowed.setdefault("engine_version", record.engine_version or ENGINE_VERSION)
     allowed.setdefault("normalization_version", record.normalization_version)
-    allowed.setdefault("contract_schema_version", record.result_snapshot.get("schema_version", "1.0.0"))
+    allowed.setdefault(
+        "contract_schema_version", record.result_snapshot.get("schema_version", "1.0.0"))
     allowed.setdefault("rule_set", record.rule_set)
     allowed.setdefault("rule_set_version", record.rule_set_version)
     allowed.setdefault("generated_at", record.created_at.isoformat())

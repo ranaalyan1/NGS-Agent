@@ -66,7 +66,8 @@ def adapter_named(registry: EvidenceRegistry, name: str):
     for adapter in registry.adapters:
         if adapter.declaration.name == name:
             return adapter
-    raise AssertionError(f"adapter {name!r} not built; got {[a.declaration.name for a in registry.adapters]}")
+    raise AssertionError(
+        f"adapter {name!r} not built; got {[a.declaration.name for a in registry.adapters]}")
 
 
 def recorded_clinvar(registry: EvidenceRegistry) -> ClinVarAdapter:
@@ -117,7 +118,8 @@ class TestRecordedClinvar:
         adapter = recorded_clinvar(recorded_registry)
         records = adapter.fetch(brca1_nonsense, gene="BRCA1")
         significance = [
-            record for record in records if record.data_type is EvidenceDataType.CLINICAL_SIGNIFICANCE
+            record for record in records if record.data_type
+                is EvidenceDataType.CLINICAL_SIGNIFICANCE
         ]
         assert significance
         record = significance[0]
@@ -128,7 +130,8 @@ class TestRecordedClinvar:
         assert record.verification is VerificationStatus.VERIFIED
         assert record.usable_as_evidence is True
 
-    def test_benign_allele_at_the_same_locus_is_found(self, recorded_registry, brca1_missense_locus):
+    def test_benign_allele_at_the_same_locus_is_found(
+        self, recorded_registry, brca1_missense_locus):
         adapter = recorded_clinvar(recorded_registry)
         records = adapter.fetch(brca1_missense_locus, gene="BRCA1")
         significance = [
@@ -168,7 +171,8 @@ class TestRecordedClinvar:
         adapter = recorded_clinvar(recorded_registry)
         records = adapter.fetch(brca1_unrecorded, gene="BRCA1")
         significance = [
-            record for record in records if record.data_type is EvidenceDataType.CLINICAL_SIGNIFICANCE
+            record for record in records if record.data_type
+                is EvidenceDataType.CLINICAL_SIGNIFICANCE
         ]
         assert significance, "an adapter must always return a record, even for a gap"
         for record in significance:
@@ -189,11 +193,13 @@ class TestRecordedClinvar:
         assert records
         assert all(record.status is not EvidenceStatus.PRESENT for record in records)
 
-    def test_molecular_consequence_comes_from_the_recording(self, recorded_registry, brca1_nonsense):
+    def test_molecular_consequence_comes_from_the_recording(
+        self, recorded_registry, brca1_nonsense):
         adapter = recorded_clinvar(recorded_registry)
         records = adapter.fetch(brca1_nonsense, gene="BRCA1")
         consequences = [
-            record for record in records if record.data_type is EvidenceDataType.MOLECULAR_CONSEQUENCE
+            record for record in records if record.data_type
+                is EvidenceDataType.MOLECULAR_CONSEQUENCE
         ]
         assert consequences
         terms = consequences[0].observed_value["consequences"]
@@ -280,7 +286,8 @@ class TestIdentityMatchStrength:
 
     def test_a_different_position_is_never_a_match(self, brca1_nonsense):
         assert (
-            _identity_match_strength(brca1_nonsense, clinvar_document(None, start=1, stop=1)) == "none"
+            _identity_match_strength(brca1_nonsense, clinvar_document(None, start=1, stop=1))
+                == "none"
         )
 
     def test_locus_only_is_not_usable_as_evidence(self, brca1_nonsense):
@@ -309,7 +316,8 @@ class TestClinVarAdapterRequiresAVersion:
 
     def test_recorded_adapter_does_not_declare_a_live_endpoint(self, recorded_registry):
         adapter = recorded_clinvar(recorded_registry)
-        assert "recorded_fixture" in adapter.declaration.hosted_by or adapter.declaration.requires_network is False
+        declaration = adapter.declaration
+        assert "recorded_fixture" in declaration.hosted_by or declaration.requires_network is False
 
 
 class TestTransportAndCacheKeys:
@@ -325,7 +333,9 @@ class TestTransportAndCacheKeys:
                 "email": "someone@example.org",
             },
         )
-        without_key = canonical_url(f"{EUTILS_BASE_URL}/esearch.fcgi", {"db": "clinvar", "term": "17[chr]"})
+        without_key = (
+            canonical_url(f"{EUTILS_BASE_URL}/esearch.fcgi", {"db": "clinvar", "term": "17[chr]"})
+        )
         assert with_key == without_key
         assert "SECRET" not in with_key
         assert "someone@example.org" not in with_key
@@ -340,20 +350,28 @@ class TestTransportAndCacheKeys:
         assert first == second
 
     def test_canonical_url_keeps_semantic_parameters(self):
-        first = canonical_url(f"{EUTILS_BASE_URL}/esearch.fcgi", {"db": "clinvar", "term": "17[chr]"})
-        second = canonical_url(f"{EUTILS_BASE_URL}/esearch.fcgi", {"db": "clinvar", "term": "18[chr]"})
+        first = (
+            canonical_url(f"{EUTILS_BASE_URL}/esearch.fcgi", {"db": "clinvar", "term": "17[chr]"})
+        )
+        second = (
+            canonical_url(f"{EUTILS_BASE_URL}/esearch.fcgi", {"db": "clinvar", "term": "18[chr]"})
+        )
         assert first != second
 
     def test_api_key_is_never_part_of_a_cache_key(self):
         """Two deployments, one with a key and one without, must share a cache entry."""
-        keyed = canonical_url(f"{EUTILS_BASE_URL}/esummary.fcgi", {"db": "clinvar", "id": "17675", "api_key": "K"})
+        keyed = (
+            canonical_url(f"{EUTILS_BASE_URL}/esummary.fcgi", {"db": "clinvar", "id": "17675",
+                "api_key": "K"})
+        )
         plain = canonical_url(f"{EUTILS_BASE_URL}/esummary.fcgi", {"db": "clinvar", "id": "17675"})
         assert keyed == plain
 
     def test_cache_is_opt_in(self):
         assert EvidenceRegistry(EvidenceConfiguration(adapters=("gene_mechanism",))).cache is None
         registry = EvidenceRegistry(
-            EvidenceConfiguration(adapters=("gene_mechanism",), cache_dir=Path("/tmp/ngs-cache-test"))
+            EvidenceConfiguration(adapters=("gene_mechanism",),
+                cache_dir=Path("/tmp/ngs-cache-test"))
         )
         assert registry.cache is not None
 
@@ -418,7 +436,8 @@ class TestRegistryAirGap:
     def test_air_gapped_deployment_can_still_run(self):
         """Local-only configuration builds cleanly and needs no egress."""
         registry = EvidenceRegistry(
-            EvidenceConfiguration(adapters=("gene_mechanism", "recorded_clinvar"), allow_network=False)
+            EvidenceConfiguration(adapters=("gene_mechanism", "recorded_clinvar"),
+                allow_network=False)
         )
         assert len(registry.adapters) == 2
         declarations = registry.declarations()
@@ -434,7 +453,8 @@ class TestRegistryAirGap:
     def test_network_adapter_builds_when_explicitly_allowed(self):
         registry = EvidenceRegistry(
             EvidenceConfiguration(
-                adapters=("clinvar",), allow_network=True, clinvar_source_version="eutils-live:2026-09-18"
+                adapters=("clinvar",), allow_network=True,
+                    clinvar_source_version="eutils-live:2026-09-18"
             )
         )
         declaration = registry.declarations()[0]
@@ -548,7 +568,9 @@ class TestValidationGate:
             data_type=EvidenceDataType.CLINICAL_SIGNIFICANCE,
             observed_value={"classification_label": "benign"},
         )
-        relabelled = foreign.model_copy(update={"queried_variant_identity": brca1_nonsense.identity})
+        relabelled = (
+            foreign.model_copy(update={"queried_variant_identity": brca1_nonsense.identity})
+        )
         report = validate_evidence([relabelled], brca1_nonsense)
         assert report.accepted
         assert report.accepted[0].usable_as_evidence is False
@@ -590,7 +612,8 @@ class TestValidationGate:
 
     def test_summarize_gaps_explains_every_non_usable_record(self, brca1_nonsense):
         records = [
-            missing_evidence(brca1_nonsense, EvidenceDataType.ALLELE_FREQUENCY, source_name="gnomAD"),
+            missing_evidence(brca1_nonsense, EvidenceDataType.ALLELE_FREQUENCY,
+                source_name="gnomAD"),
             consequence_evidence(brca1_nonsense, "stop_gained"),
         ]
         gaps = summarize_gaps(records)

@@ -59,14 +59,16 @@ def _assert_hashable_type(value: Any, path: str) -> None:
     if isinstance(value, Mapping):
         for key, item in value.items():
             if not isinstance(key, str):
-                raise NonCanonicalValueError(f"{path}: mapping keys must be strings, got {type(key)}")
+                raise NonCanonicalValueError(
+                    f"{path}: mapping keys must be strings, got {type(key)}")
             _assert_hashable_type(item, path=f"{path}.{key}")
         return
     if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
         for index, item in enumerate(value):
             _assert_hashable_type(item, path=f"{path}[{index}]")
         return
-    raise NonCanonicalValueError(f"{path}: unsupported type {type(value).__name__} in canonical hash")
+    raise NonCanonicalValueError(
+        f"{path}: unsupported type {type(value).__name__} in canonical hash")
 
 
 def canonical_json_sha256(value: Any) -> str:

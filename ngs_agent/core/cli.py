@@ -230,7 +230,8 @@ def _render_review(review: VariantReview) -> None:
 
     if result.external_classifications:
         external = Table(
-            title="Authoritative external classifications", show_header=True, header_style="bold magenta"
+            title="Authoritative external classifications", show_header=True,
+                header_style="bold magenta"
         )
         external.add_column("Source")
         external.add_column("Classification")
@@ -272,13 +273,17 @@ def _render_review(review: VariantReview) -> None:
 
     if result.normalization.warnings:
         for warning in result.normalization.warnings:
-            console.print(f"[yellow]normalization[{warning['severity']}][/yellow] {warning['message']}")
+            console.print(
+                f"[yellow]normalization[{warning['severity']}][/yellow] {warning['message']}")
 
     if result.explanation.present:
         console.print(
             Panel(
                 result.explanation.text or "",
-                title=f"LLM explanation ({result.explanation.provider}/{result.explanation.model or 'unknown'})",
+                title=(
+                    f"LLM explanation "
+                    f"({result.explanation.provider}/{result.explanation.model or 'unknown'})"
+                ),
                 border_style="magenta",
             )
         )
@@ -336,7 +341,8 @@ def normalize_command(
                 rows.append(
                     {
                         "line": raw.line_number,
-                        "input": f"{raw.chromosome}:{raw.position} {raw.reference}>{','.join(raw.alternates)}",
+                        "input": f"{raw.chromosome}:{raw.position} "
+                        f"{raw.reference}>{','.join(raw.alternates)}",
                         "normalized": f"{variant.chromosome}:{variant.position} "
                         f"{variant.reference}>{variant.alternate}",
                         "variant_id": variant.variant_id,
@@ -393,7 +399,8 @@ def normalize_command(
         )
     for row in rows:
         for warning in row["warnings"]:
-            console.print(f"[yellow]line {row['line']} [{warning['severity']}][/yellow] {warning['message']}")
+            console.print(
+                f"[yellow]line {row['line']} [{warning['severity']}][/yellow] {warning['message']}")
 
 
 @click.command("review")
@@ -418,7 +425,8 @@ def normalize_command(
 )
 @click.option("--offline-pack", type=click.Path(exists=True, path_type=Path), default=None)
 @click.option("--recordings-dir", type=click.Path(exists=True, path_type=Path), default=None)
-@click.option("--clinvar-release", default=None, help="Explicit ClinVar release stamp for live retrieval.")
+@click.option(
+    "--clinvar-release", default=None, help="Explicit ClinVar release stamp for live retrieval.")
 @click.option("--reference", type=click.Path(exists=True, path_type=Path), default=None,
               help="Indexed FASTA for indel left-alignment.")
 @click.option("--rule-set", default=None, type=click.Choice(sorted(RULE_SETS)), show_default=False,
@@ -432,7 +440,9 @@ def normalize_command(
 @click.option("--json", "json_out", type=click.Path(path_type=Path), default=None,
               help="Write the versioned JSON contract(s) to this path (array of results).")
 @click.option("--quiet", is_flag=True, help="Suppress the human-readable rendering.")
-@click.option("--explain", is_flag=True, help="Attach an optional LLM narrative (never affects the classification).")
+@click.option(
+    "--explain", is_flag=True,
+        help="Attach an optional LLM narrative (never affects the classification).")
 @click.option("--ncbi-api-key-env", default="NCBI_API_KEY", show_default=True,
               help="Environment variable holding an NCBI API key.")
 def review_command(
@@ -471,7 +481,8 @@ def review_command(
             Panel(
                 f"Evidence source: [bold]bundled recordings[/bold] ({directory})\n"
                 f"Recording version: {manifest.recording_version}\n"
-                f"ClinVar release: {manifest.clinvar_release}   recorded_at: {manifest.recorded_at}\n"
+                f"ClinVar release: {manifest.clinvar_release}   recorded_at: "
+                f"{manifest.recorded_at}\n"
                 f"Covered alleles: {len(manifest.alleles_covered)}\n\n"
                 "[yellow]These recordings cover a handful of loci only. Variants outside them will "
                 "abstain with 'no record for this variant' — that is the correct behaviour, not a "
@@ -564,7 +575,8 @@ def review_command(
         console.print(
             Panel(
                 f"run_id {summary['run_id']}\n"
-                f"variants {summary['variants']}   abstention_rate {summary['abstention_rate']:.2f}   "
+                f"variants {summary['variants']}   abstention_rate "
+                f"{summary['abstention_rate']:.2f}   "
                 f"conflicts {summary['conflicts']}\n"
                 f"labels {json.dumps(summary['labels'], sort_keys=True)}\n"
                 f"decision_states {json.dumps(summary['decision_states'], sort_keys=True)}\n"
@@ -577,7 +589,8 @@ def review_command(
         )
 
     if json_out is not None:
-        _write_json([json.loads(review.result.model_dump_json()) for review in run.reviews], json_out)
+        _write_json(
+            [json.loads(review.result.model_dump_json()) for review in run.reviews], json_out)
     elif quiet:
         _write_json([json.loads(review.result.model_dump_json()) for review in run.reviews], None)
 
@@ -610,8 +623,10 @@ def replay_command(audit_id: str, audit_dir: Path, json_out: Path | None, strict
         Panel(
             f"[bold]{record.audit_id}[/bold]\n"
             f"action {record.action}   created_at {record.created_at.isoformat()}\n"
-            f"variant {record.variant_identity} ({record.genome_build})   gene {record.gene or '-'}\n"
-            f"engine {record.engine_version}   rule_set {record.rule_set} v{record.rule_set_version}\n"
+            f"variant {record.variant_identity} ({record.genome_build})   gene "
+            f"{record.gene or '-'}\n"
+            f"engine {record.engine_version}   rule_set {record.rule_set} "
+            f"v{record.rule_set_version}\n"
             f"databases {json.dumps(record.database_versions, sort_keys=True)}\n"
             f"input_hashes {json.dumps(record.input_hashes, sort_keys=True)}\n"
             f"evidence records in snapshot: {len(record.evidence_snapshot)}",
@@ -741,7 +756,8 @@ def sign_off_command(
         Panel(
             f"audit_id {audit_record.audit_id}\n"
             f"action {audit_record.action}\n"
-            f"reviewer {audit_record.reviewer} ({audit_record.reviewer_role or 'role not stated'})\n"
+            f"reviewer {audit_record.reviewer} "
+            f"({audit_record.reviewer_role or 'role not stated'})\n"
             f"engine label {audit_record.classification_before}\n"
             f"reviewer decision {audit_record.classification_after}\n"
             f"override_reason {audit_record.override_reason or '-'}\n"
