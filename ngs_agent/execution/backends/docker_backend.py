@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import shutil
 
 from rich.console import Console
@@ -39,6 +40,9 @@ class DockerBackend(ExecutionBackend):
                 f"'image' to the command metadata, or extend BIOCONTAINER_IMAGES."
             )
         wrapped: list[str] = [self._docker_binary, "run", "--rm"]
+        network = os.environ.get("DOCKER_NETWORK", "ngs-net")
+        if network:
+            wrapped.extend(["--network", network])
         if spec.cwd:
             wrapped.extend(["-v", f"{spec.cwd}:{spec.cwd}", "-w", spec.cwd])
         for root in collect_bind_roots(spec):

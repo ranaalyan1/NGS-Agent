@@ -420,7 +420,7 @@ class PlannerAgent:
                 PlanStep(
                     name="aggregate-qc",
                     description="Aggregate all QC and pipeline outputs with MultiQC.",
-                    command_preview="multiqc results/ -o results/multiqc",
+                    command_preview="multiqc --flat results/ -o results/multiqc",
                     safety_level=SafetyLevel.WRITE,
                     estimated_duration_minutes=5,
                     estimated_cost_label="low",
@@ -542,7 +542,7 @@ class PlannerAgent:
                 PlanStep(
                     name="aggregate-qc",
                     description="Aggregate QC outputs with MultiQC.",
-                    command_preview="multiqc results/ -o results/multiqc",
+                    command_preview="multiqc --flat results/ -o results/multiqc",
                     safety_level=SafetyLevel.WRITE,
                     estimated_duration_minutes=3,
                     estimated_cost_label="low",

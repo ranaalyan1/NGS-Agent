@@ -1137,6 +1137,7 @@ class MultiQCTool(BioinformaticsTool[MultiQCInput, MultiQCOutput]):
         payload.output_dir.mkdir(parents=True, exist_ok=True)
         command = [
             "multiqc",
+            "--flat",
             "-o",
             str(payload.output_dir),
             *[str(path) for path in payload.input_paths],

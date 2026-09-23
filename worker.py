@@ -16,10 +16,18 @@ async def main() -> None:
     temporal_host = os.environ.get("TEMPORAL_HOST", "localhost:7233")
     print(f"Connecting to Temporal at {temporal_host} ...")
     client = await Client.connect(temporal_host)
+    from temporalio.worker.workflow_sandbox import SandboxedWorkflowRunner, SandboxRestrictions
+
+    restrictions = SandboxRestrictions.default.with_passthrough_modules(
+        "boto3", "botocore", "s3transfer", "urllib3", "shared", "http"
+    )
+    runner = SandboxedWorkflowRunner(restrictions=restrictions)
+
     worker = Worker(
         client,
         task_queue="ngs-pipeline",
         workflows=[NGSPipelineWorkflow, NGSSampleWorkflow],
+        workflow_runner=runner,
         activities=[
             activities.ingest_activity,
             activities.qc_activity,

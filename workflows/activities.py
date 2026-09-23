@@ -262,6 +262,8 @@ async def run_agent_container(
         cpus = os.environ.get("HIGH_AGENT_CPUS", cpus)
         memory = os.environ.get("HIGH_AGENT_MEMORY", "6g")
 
+    docker_network = os.environ.get("DOCKER_NETWORK", "ngs-net")
+
     cmd = [
         "docker",
         "run",
@@ -269,6 +271,8 @@ async def run_agent_container(
         f"--cpus={cpus}",
         f"--memory={memory}",
     ]
+    if docker_network:
+        cmd.extend(["--network", docker_network])
 
     for host_path, container_path in mounts:
         cmd.extend(["-v", f"{host_path}:{container_path}:ro"])
@@ -283,7 +287,7 @@ async def run_agent_container(
         "-e",
         f"RUN_ID={routing_ctx.get('run_id', 'unknown')}",
         "-e",
-        f"S3_ENDPOINT={os.environ.get('S3_ENDPOINT', 'http://localhost:9000')}",
+        f"S3_ENDPOINT={os.environ.get('CONTAINER_S3_ENDPOINT', 'http://minio:9000')}",
         "-e",
         f"S3_ACCESS_KEY={os.environ.get('S3_ACCESS_KEY', 'minioadmin')}",
         "-e",
