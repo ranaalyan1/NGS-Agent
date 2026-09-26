@@ -1,0 +1,18 @@
+# R1 and R2 have different read counts / names.
+id: NF-PAIR-008
+title: "The two read files do not match each other"
+severity: fatal
+anchors:
+  - "Read pairs do not match"
+  - "Number of reads in file"
+  - "different number of reads"
+  - "not the same length"
+  - "Improperly paired"
+explanation: >-
+  The forward and reverse read files do not line up: different numbers of reads,
+  or different read names in the same order. Something split, trimmed or
+  filtered one file but not the other.
+fix: >-
+  Re-run trimming and filtering on both files together (never separately), or
+  re-pair the files, then restart the run from that step.
+reference: "https://subread.sourceforge.net/featureCounts.html"

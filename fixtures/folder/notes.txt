@@ -1,0 +1,3 @@
+This is an ordinary text file.
+It mentions sequencing, adapters and quality scores,
+but it is not any recognised NGS file format.

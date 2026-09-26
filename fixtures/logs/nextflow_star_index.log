@@ -1,0 +1,99 @@
+ N E X T F L O W  ~  version 24.04.2
+Launching `https://github.com/nf-core/rnaseq` [admiring_lovelace] DSL2 - revision: 3.14.0
+------------------------------------------------------
+executor >  slurm (24)
+[1a/2b3c4d] process > NFCORE_RNASEQ:RNASEQ:INPUT_CHECK:SAMPLESHEET_CHECK (samplesheet.csv) [100%] 1 of 1 ✔
+Jun-11 04:00:00:00 INFO  n.processor.TaskPollingMonitor - Task submitted > NFCORE_RNASEQ:RNASEQ:FASTQC_FASTQ:FASTQC (sample1)
+Jun-11 04:01:10:10 INFO  n.processor.TaskPollingMonitor - Task submitted > NFCORE_RNASEQ:RNASEQ:FASTQC_FASTQ:FASTQC (sample2)
+Jun-11 04:02:20:20 INFO  n.processor.TaskPollingMonitor - Task submitted > NFCORE_RNASEQ:RNASEQ:FASTQC_FASTQ:FASTQC (sample3)
+Jun-11 04:03:30:30 INFO  n.processor.TaskPollingMonitor - Task submitted > NFCORE_RNASEQ:RNASEQ:FASTQC_FASTQ:FASTQC (sample4)
+Jun-11 04:04:40:40 INFO  n.processor.TaskPollingMonitor - Task submitted > NFCORE_RNASEQ:RNASEQ:FASTQC_FASTQ:FASTQC (sample5)
+Jun-11 04:05:50:50 INFO  n.processor.TaskPollingMonitor - Task submitted > NFCORE_RNASEQ:RNASEQ:FASTQC_FASTQ:FASTQC (sample6)
+Jun-11 04:06:00:00 INFO  n.processor.TaskPollingMonitor - Task submitted > NFCORE_RNASEQ:RNASEQ:FASTQC_FASTQ:FASTQC (sample1)
+Jun-11 04:07:10:10 INFO  n.processor.TaskPollingMonitor - Task submitted > NFCORE_RNASEQ:RNASEQ:FASTQC_FASTQ:FASTQC (sample2)
+Jun-11 04:08:20:20 INFO  n.processor.TaskPollingMonitor - Task submitted > NFCORE_RNASEQ:RNASEQ:FASTQC_FASTQ:FASTQC (sample3)
+Jun-11 04:00:30:30 INFO  n.processor.TaskPollingMonitor - Task submitted > NFCORE_RNASEQ:RNASEQ:FASTQC_FASTQ:FASTQC (sample4)
+Jun-11 04:01:40:40 INFO  n.processor.TaskPollingMonitor - Task submitted > NFCORE_RNASEQ:RNASEQ:FASTQC_FASTQ:FASTQC (sample5)
+Jun-11 04:02:50:50 INFO  n.processor.TaskPollingMonitor - Task submitted > NFCORE_RNASEQ:RNASEQ:FASTQC_FASTQ:FASTQC (sample6)
+Jun-11 04:03:00:00 INFO  n.processor.TaskPollingMonitor - Task submitted > NFCORE_RNASEQ:RNASEQ:FASTQC_FASTQ:FASTQC (sample1)
+Jun-11 04:04:10:10 INFO  n.processor.TaskPollingMonitor - Task submitted > NFCORE_RNASEQ:RNASEQ:FASTQC_FASTQ:FASTQC (sample2)
+Jun-11 04:05:20:20 INFO  n.processor.TaskPollingMonitor - Task submitted > NFCORE_RNASEQ:RNASEQ:FASTQC_FASTQ:FASTQC (sample3)
+Jun-11 04:06:30:30 INFO  n.processor.TaskPollingMonitor - Task submitted > NFCORE_RNASEQ:RNASEQ:FASTQC_FASTQ:FASTQC (sample4)
+Jun-11 04:07:40:40 INFO  n.processor.TaskPollingMonitor - Task submitted > NFCORE_RNASEQ:RNASEQ:FASTQC_FASTQ:FASTQC (sample5)
+Jun-11 04:08:50:50 INFO  n.processor.TaskPollingMonitor - Task submitted > NFCORE_RNASEQ:RNASEQ:FASTQC_FASTQ:FASTQC (sample6)
+Jun-11 04:00:00:00 INFO  n.processor.TaskPollingMonitor - Task submitted > NFCORE_RNASEQ:RNASEQ:FASTQC_FASTQ:FASTQC (sample1)
+Jun-11 04:01:10:10 INFO  n.processor.TaskPollingMonitor - Task submitted > NFCORE_RNASEQ:RNASEQ:FASTQC_FASTQ:FASTQC (sample2)
+Jun-11 04:02:20:20 INFO  n.processor.TaskPollingMonitor - Task submitted > NFCORE_RNASEQ:RNASEQ:FASTQC_FASTQ:FASTQC (sample3)
+Jun-11 04:03:30:30 INFO  n.processor.TaskPollingMonitor - Task submitted > NFCORE_RNASEQ:RNASEQ:FASTQC_FASTQ:FASTQC (sample4)
+Jun-11 04:04:40:40 INFO  n.processor.TaskPollingMonitor - Task submitted > NFCORE_RNASEQ:RNASEQ:FASTQC_FASTQ:FASTQC (sample5)
+Jun-11 04:05:50:50 INFO  n.processor.TaskPollingMonitor - Task submitted > NFCORE_RNASEQ:RNASEQ:FASTQC_FASTQ:FASTQC (sample6)
+Jun-11 04:06:00:00 INFO  n.processor.TaskPollingMonitor - Task submitted > NFCORE_RNASEQ:RNASEQ:FASTQC_FASTQ:FASTQC (sample1)
+Jun-11 04:07:10:10 INFO  n.processor.TaskPollingMonitor - Task submitted > NFCORE_RNASEQ:RNASEQ:FASTQC_FASTQ:FASTQC (sample2)
+Jun-11 04:08:20:20 INFO  n.processor.TaskPollingMonitor - Task submitted > NFCORE_RNASEQ:RNASEQ:FASTQC_FASTQ:FASTQC (sample3)
+Jun-11 04:00:30:30 INFO  n.processor.TaskPollingMonitor - Task submitted > NFCORE_RNASEQ:RNASEQ:FASTQC_FASTQ:FASTQC (sample4)
+Jun-11 04:01:40:40 INFO  n.processor.TaskPollingMonitor - Task submitted > NFCORE_RNASEQ:RNASEQ:FASTQC_FASTQ:FASTQC (sample5)
+Jun-11 04:02:50:50 INFO  n.processor.TaskPollingMonitor - Task submitted > NFCORE_RNASEQ:RNASEQ:FASTQC_FASTQ:FASTQC (sample6)
+Jun-11 04:03:00:00 INFO  n.processor.TaskPollingMonitor - Task submitted > NFCORE_RNASEQ:RNASEQ:FASTQC_FASTQ:FASTQC (sample1)
+Jun-11 04:04:10:10 INFO  n.processor.TaskPollingMonitor - Task submitted > NFCORE_RNASEQ:RNASEQ:FASTQC_FASTQ:FASTQC (sample2)
+Jun-11 04:05:20:20 INFO  n.processor.TaskPollingMonitor - Task submitted > NFCORE_RNASEQ:RNASEQ:FASTQC_FASTQ:FASTQC (sample3)
+Jun-11 04:06:30:30 INFO  n.processor.TaskPollingMonitor - Task submitted > NFCORE_RNASEQ:RNASEQ:FASTQC_FASTQ:FASTQC (sample4)
+Jun-11 04:07:40:40 INFO  n.processor.TaskPollingMonitor - Task submitted > NFCORE_RNASEQ:RNASEQ:FASTQC_FASTQ:FASTQC (sample5)
+Jun-11 04:08:50:50 INFO  n.processor.TaskPollingMonitor - Task submitted > NFCORE_RNASEQ:RNASEQ:FASTQC_FASTQ:FASTQC (sample6)
+Jun-11 04:00:00:00 INFO  n.processor.TaskPollingMonitor - Task submitted > NFCORE_RNASEQ:RNASEQ:FASTQC_FASTQ:FASTQC (sample1)
+Jun-11 04:01:10:10 INFO  n.processor.TaskPollingMonitor - Task submitted > NFCORE_RNASEQ:RNASEQ:FASTQC_FASTQ:FASTQC (sample2)
+Jun-11 04:02:20:20 INFO  n.processor.TaskPollingMonitor - Task submitted > NFCORE_RNASEQ:RNASEQ:FASTQC_FASTQ:FASTQC (sample3)
+Jun-11 04:03:30:30 INFO  n.processor.TaskPollingMonitor - Task submitted > NFCORE_RNASEQ:RNASEQ:FASTQC_FASTQ:FASTQC (sample4)
+Jun-11 04:04:40:40 INFO  n.processor.TaskPollingMonitor - Task submitted > NFCORE_RNASEQ:RNASEQ:FASTQC_FASTQ:FASTQC (sample5)
+Jun-11 04:05:50:50 INFO  n.processor.TaskPollingMonitor - Task submitted > NFCORE_RNASEQ:RNASEQ:FASTQC_FASTQ:FASTQC (sample6)
+Jun-11 04:06:00:00 INFO  n.processor.TaskPollingMonitor - Task submitted > NFCORE_RNASEQ:RNASEQ:FASTQC_FASTQ:FASTQC (sample1)
+Jun-11 04:07:10:10 INFO  n.processor.TaskPollingMonitor - Task submitted > NFCORE_RNASEQ:RNASEQ:FASTQC_FASTQ:FASTQC (sample2)
+Jun-11 04:08:20:20 INFO  n.processor.TaskPollingMonitor - Task submitted > NFCORE_RNASEQ:RNASEQ:FASTQC_FASTQ:FASTQC (sample3)
+Jun-11 04:00:30:30 INFO  n.processor.TaskPollingMonitor - Task submitted > NFCORE_RNASEQ:RNASEQ:FASTQC_FASTQ:FASTQC (sample4)
+Jun-11 04:01:40:40 INFO  n.processor.TaskPollingMonitor - Task submitted > NFCORE_RNASEQ:RNASEQ:FASTQC_FASTQ:FASTQC (sample5)
+Jun-11 04:02:50:50 INFO  n.processor.TaskPollingMonitor - Task submitted > NFCORE_RNASEQ:RNASEQ:FASTQC_FASTQ:FASTQC (sample6)
+Jun-11 04:03:00:00 INFO  n.processor.TaskPollingMonitor - Task submitted > NFCORE_RNASEQ:RNASEQ:FASTQC_FASTQ:FASTQC (sample1)
+Jun-11 04:04:10:10 INFO  n.processor.TaskPollingMonitor - Task submitted > NFCORE_RNASEQ:RNASEQ:FASTQC_FASTQ:FASTQC (sample2)
+Jun-11 04:05:20:20 INFO  n.processor.TaskPollingMonitor - Task submitted > NFCORE_RNASEQ:RNASEQ:FASTQC_FASTQ:FASTQC (sample3)
+Jun-11 04:06:30:30 INFO  n.processor.TaskPollingMonitor - Task submitted > NFCORE_RNASEQ:RNASEQ:FASTQC_FASTQ:FASTQC (sample4)
+Jun-11 04:07:40:40 INFO  n.processor.TaskPollingMonitor - Task submitted > NFCORE_RNASEQ:RNASEQ:FASTQC_FASTQ:FASTQC (sample5)
+Jun-11 04:08:50:50 INFO  n.processor.TaskPollingMonitor - Task submitted > NFCORE_RNASEQ:RNASEQ:FASTQC_FASTQ:FASTQC (sample6)
+Jun-11 04:00:00:00 INFO  n.processor.TaskPollingMonitor - Task submitted > NFCORE_RNASEQ:RNASEQ:FASTQC_FASTQ:FASTQC (sample1)
+Jun-11 04:01:10:10 INFO  n.processor.TaskPollingMonitor - Task submitted > NFCORE_RNASEQ:RNASEQ:FASTQC_FASTQ:FASTQC (sample2)
+Jun-11 04:02:20:20 INFO  n.processor.TaskPollingMonitor - Task submitted > NFCORE_RNASEQ:RNASEQ:FASTQC_FASTQ:FASTQC (sample3)
+Jun-11 04:03:30:30 INFO  n.processor.TaskPollingMonitor - Task submitted > NFCORE_RNASEQ:RNASEQ:FASTQC_FASTQ:FASTQC (sample4)
+Jun-11 04:04:40:40 INFO  n.processor.TaskPollingMonitor - Task submitted > NFCORE_RNASEQ:RNASEQ:FASTQC_FASTQ:FASTQC (sample5)
+Jun-11 04:05:50:50 INFO  n.processor.TaskPollingMonitor - Task submitted > NFCORE_RNASEQ:RNASEQ:FASTQC_FASTQ:FASTQC (sample6)
+Jun-11 04:12:07.331 [Task monitor] ERROR ~ Error executing process > 'NFCORE_RNASEQ:RNASEQ:ALIGN_STAR:STAR_ALIGN (sample1)'
+
+Caused by:
+  Process `NFCORE_RNASEQ:RNASEQ:ALIGN_STAR:STAR_ALIGN (sample1)` terminated with an error exit status (137)
+
+Command executed:
+
+  STAR       --genomeDir /refs/GRCh38/star_index       --readFilesIn sample1_R1.fastq.gz sample1_R2.fastq.gz       --runThreadN 8
+
+  cat <<-END_VERSIONS > versions.yml
+  "NFCORE_RNASEQ:RNASEQ:ALIGN_STAR:STAR_ALIGN":
+      STAR: 2.7.11a
+  END_VERSIONS
+
+Command exit status:
+  137
+
+Command output:
+  (empty)
+
+Command error:
+  STAR version: 2.7.11a
+  Aug 11 04:12:03 ..... started STAR run
+  Aug 11 04:12:03 ..... loading genome
+  EXITING because of FATAL ERROR in input: Genome version is incompatible with the genome index version
+  SOLUTION: please BOOST the genome index with the same genome FASTA file, or re-generate the genome index with this genome FASTA
+  SOLUTION: genome compatibility is defined by the genome length and the number of reference sequences
+  The Genome was generated with the following parameters: --genomeSAindexNbases 14
+  Aug 11 04:12:07 ...... FATAL ERROR, exiting
+
+Work dir:
+  /work/aa/1234abcd5678ef
+
+Tip: you can try to figure out what's wrong by changing to the process work dir and showing the script file named `.command.sh`

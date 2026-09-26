@@ -1,0 +1,16 @@
+# A JVM tool (GATK, Picard, Qualimap) ran out of Java heap.
+id: NF-JAVA-006
+title: "A Java tool ran out of heap memory"
+severity: fatal
+anchors:
+  - "Java heap space"
+  - "java.lang.OutOfMemoryError"
+  - "GC overhead limit exceeded"
+  - "OutOfMemoryError"
+explanation: >-
+  A Java-based tool (GATK, Picard, Qualimap) was not given enough Java heap.
+  This is a memory setting, not a data problem.
+fix: >-
+  Increase the Java heap for the failing tool (for example -Xmx16g), or reduce
+  the number of threads it uses, then re-run the step with -resume.
+reference: "https://github.com/broadinstitute/gatk"

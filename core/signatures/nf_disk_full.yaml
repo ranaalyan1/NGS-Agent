@@ -1,0 +1,18 @@
+# The scratch disk filled up mid-run.
+id: NF-DISK-005
+title: "The disk ran out of space"
+severity: fatal
+anchors:
+  - "No space left on device"
+  - "Disk quota exceeded"
+  - "out of disk space"
+  - "ENOSPC"
+explanation: >-
+  The job wrote more temporary data than the disk could hold, so it stopped
+  part-way. Intermediate files (sorted BAMs in particular) can be several times
+  larger than the input.
+fix: >-
+  Free space on the work directory or point scratch to a larger volume, then
+  re-run the failed step. Deleting the work directory of the failed task is
+  enough; the rest of the run can resume with -resume.
+reference: "https://www.nextflow.io/docs/latest/"

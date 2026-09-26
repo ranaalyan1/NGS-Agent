@@ -1,0 +1,5 @@
+Total read pairs processed:         20,000,000
+  Read 1 with adapter:               1,120,334 (5.6%)
+Pairs written (passing filters):    19,880,112 (99.4%)
+Total basepairs processed: 3,000,000,000 bp
+  Quality-trimmed:               12,004,331 bp (0.4%)

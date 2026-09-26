@@ -1,0 +1,14 @@
+                                 Started job on |       Jun 01 09:12:33
+                             Started mapping on |       Jun 01 09:14:02
+                                    Input reads |       40000000
+                                Average input read length |       148
+                                    Uniquely mapped reads number |       36040000
+                                     Uniquely mapped reads % |       90.10%
+                                       Average mapped length |       146
+                                  Number of splices: Total |       41233881
+                       Number of reads mapped to multiple loci |       1203948
+                              % of reads mapped to multiple loci |       3.01%
+                              % of reads mapped to too many loci |       0.02%
+                              % of reads unmapped: too many mismatches |       1.10%
+                                  % of reads unmapped: too short |       0.40%
+                                      % of reads unmapped: other |       1.02%

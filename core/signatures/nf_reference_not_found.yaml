@@ -1,0 +1,19 @@
+# A reference genome / index file could not be opened.
+id: NF-REF-009
+title: "A reference file could not be found or opened"
+severity: fatal
+anchors:
+  - "Reference genome not found"
+  - "could not open file"
+  - "Failed to open file"
+  - "Unable to open"
+  - "reference not found"
+  - "Cannot open file"
+explanation: >-
+  The tool was told to read a reference genome, index or annotation that is not
+  at the path given, or that it cannot open. The reads are fine; the reference
+  configuration is not.
+fix: >-
+  Check the reference paths in your config (genome, fasta, gtf, index) and that
+  every file is readable on the machine running the job, then re-run.
+reference: "https://www.nextflow.io/docs/latest/"

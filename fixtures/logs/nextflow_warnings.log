@@ -1,0 +1,127 @@
+ N E X T F L O W  ~  version 23.10.1
+Launching `./main.nf` [silly_bhaskara] DSL2 - revision: 1.2.3
+WARN  ~ The following invalid input values have been detected: sample0 has an empty 'strandedness' field; defaulting to 'auto'.
+WARN  ~ The following invalid input values have been detected: sample1 has an empty 'strandedness' field; defaulting to 'auto'.
+WARN  ~ The following invalid input values have been detected: sample2 has an empty 'strandedness' field; defaulting to 'auto'.
+WARN  ~ The following invalid input values have been detected: sample3 has an empty 'strandedness' field; defaulting to 'auto'.
+WARN  ~ The following invalid input values have been detected: sample4 has an empty 'strandedness' field; defaulting to 'auto'.
+WARN  ~ The following invalid input values have been detected: sample5 has an empty 'strandedness' field; defaulting to 'auto'.
+WARN  ~ The following invalid input values have been detected: sample6 has an empty 'strandedness' field; defaulting to 'auto'.
+WARN  ~ The following invalid input values have been detected: sample7 has an empty 'strandedness' field; defaulting to 'auto'.
+WARN  ~ The following invalid input values have been detected: sample8 has an empty 'strandedness' field; defaulting to 'auto'.
+WARN  ~ The following invalid input values have been detected: sample9 has an empty 'strandedness' field; defaulting to 'auto'.
+WARN  ~ The following invalid input values have been detected: sample10 has an empty 'strandedness' field; defaulting to 'auto'.
+WARN  ~ The following invalid input values have been detected: sample11 has an empty 'strandedness' field; defaulting to 'auto'.
+WARN  ~ The following invalid input values have been detected: sample12 has an empty 'strandedness' field; defaulting to 'auto'.
+WARN  ~ The following invalid input values have been detected: sample13 has an empty 'strandedness' field; defaulting to 'auto'.
+WARN  ~ The following invalid input values have been detected: sample14 has an empty 'strandedness' field; defaulting to 'auto'.
+WARN  ~ The following invalid input values have been detected: sample15 has an empty 'strandedness' field; defaulting to 'auto'.
+WARN  ~ The following invalid input values have been detected: sample16 has an empty 'strandedness' field; defaulting to 'auto'.
+WARN  ~ The following invalid input values have been detected: sample17 has an empty 'strandedness' field; defaulting to 'auto'.
+WARN  ~ The following invalid input values have been detected: sample18 has an empty 'strandedness' field; defaulting to 'auto'.
+WARN  ~ The following invalid input values have been detected: sample19 has an empty 'strandedness' field; defaulting to 'auto'.
+WARN  ~ The following invalid input values have been detected: sample20 has an empty 'strandedness' field; defaulting to 'auto'.
+WARN  ~ The following invalid input values have been detected: sample21 has an empty 'strandedness' field; defaulting to 'auto'.
+WARN  ~ The following invalid input values have been detected: sample22 has an empty 'strandedness' field; defaulting to 'auto'.
+WARN  ~ The following invalid input values have been detected: sample23 has an empty 'strandedness' field; defaulting to 'auto'.
+WARN  ~ The following invalid input values have been detected: sample24 has an empty 'strandedness' field; defaulting to 'auto'.
+WARN  ~ The following invalid input values have been detected: sample25 has an empty 'strandedness' field; defaulting to 'auto'.
+WARN  ~ The following invalid input values have been detected: sample26 has an empty 'strandedness' field; defaulting to 'auto'.
+WARN  ~ The following invalid input values have been detected: sample27 has an empty 'strandedness' field; defaulting to 'auto'.
+WARN  ~ The following invalid input values have been detected: sample28 has an empty 'strandedness' field; defaulting to 'auto'.
+WARN  ~ The following invalid input values have been detected: sample29 has an empty 'strandedness' field; defaulting to 'auto'.
+WARN  ~ The following invalid input values have been detected: sample30 has an empty 'strandedness' field; defaulting to 'auto'.
+WARN  ~ The following invalid input values have been detected: sample31 has an empty 'strandedness' field; defaulting to 'auto'.
+WARN  ~ The following invalid input values have been detected: sample32 has an empty 'strandedness' field; defaulting to 'auto'.
+WARN  ~ The following invalid input values have been detected: sample33 has an empty 'strandedness' field; defaulting to 'auto'.
+WARN  ~ The following invalid input values have been detected: sample34 has an empty 'strandedness' field; defaulting to 'auto'.
+WARN  ~ The following invalid input values have been detected: sample35 has an empty 'strandedness' field; defaulting to 'auto'.
+WARN  ~ The following invalid input values have been detected: sample36 has an empty 'strandedness' field; defaulting to 'auto'.
+WARN  ~ The following invalid input values have been detected: sample37 has an empty 'strandedness' field; defaulting to 'auto'.
+WARN  ~ The following invalid input values have been detected: sample38 has an empty 'strandedness' field; defaulting to 'auto'.
+WARN  ~ The following invalid input values have been detected: sample39 has an empty 'strandedness' field; defaulting to 'auto'.
+WARN  ~ The following invalid input values have been detected: sample40 has an empty 'strandedness' field; defaulting to 'auto'.
+WARN  ~ The following invalid input values have been detected: sample41 has an empty 'strandedness' field; defaulting to 'auto'.
+WARN  ~ The following invalid input values have been detected: sample42 has an empty 'strandedness' field; defaulting to 'auto'.
+WARN  ~ The following invalid input values have been detected: sample43 has an empty 'strandedness' field; defaulting to 'auto'.
+WARN  ~ The following invalid input values have been detected: sample44 has an empty 'strandedness' field; defaulting to 'auto'.
+WARN  ~ The following invalid input values have been detected: sample45 has an empty 'strandedness' field; defaulting to 'auto'.
+WARN  ~ The following invalid input values have been detected: sample46 has an empty 'strandedness' field; defaulting to 'auto'.
+WARN  ~ The following invalid input values have been detected: sample47 has an empty 'strandedness' field; defaulting to 'auto'.
+WARN  ~ The following invalid input values have been detected: sample48 has an empty 'strandedness' field; defaulting to 'auto'.
+WARN  ~ The following invalid input values have been detected: sample49 has an empty 'strandedness' field; defaulting to 'auto'.
+Jun-02 10:20:30 INFO  nextflow.processor.TaskRun - Task completed > CAT_CAT (chunk_0) [100%]
+Jun-02 11:21:31 INFO  nextflow.processor.TaskRun - Task completed > CAT_CAT (chunk_1) [100%]
+Jun-02 12:22:32 INFO  nextflow.processor.TaskRun - Task completed > CAT_CAT (chunk_2) [100%]
+Jun-02 13:23:33 INFO  nextflow.processor.TaskRun - Task completed > CAT_CAT (chunk_3) [100%]
+Jun-02 14:24:34 INFO  nextflow.processor.TaskRun - Task completed > CAT_CAT (chunk_4) [100%]
+Jun-02 15:25:35 INFO  nextflow.processor.TaskRun - Task completed > CAT_CAT (chunk_5) [100%]
+Jun-02 16:20:30 INFO  nextflow.processor.TaskRun - Task completed > CAT_CAT (chunk_6) [100%]
+Jun-02 17:21:31 INFO  nextflow.processor.TaskRun - Task completed > CAT_CAT (chunk_7) [100%]
+Jun-02 18:22:32 INFO  nextflow.processor.TaskRun - Task completed > CAT_CAT (chunk_8) [100%]
+Jun-02 10:23:33 INFO  nextflow.processor.TaskRun - Task completed > CAT_CAT (chunk_9) [100%]
+Jun-02 11:24:34 INFO  nextflow.processor.TaskRun - Task completed > CAT_CAT (chunk_10) [100%]
+Jun-02 12:25:35 INFO  nextflow.processor.TaskRun - Task completed > CAT_CAT (chunk_11) [100%]
+Jun-02 13:20:30 INFO  nextflow.processor.TaskRun - Task completed > CAT_CAT (chunk_12) [100%]
+Jun-02 14:21:31 INFO  nextflow.processor.TaskRun - Task completed > CAT_CAT (chunk_13) [100%]
+Jun-02 15:22:32 INFO  nextflow.processor.TaskRun - Task completed > CAT_CAT (chunk_14) [100%]
+Jun-02 16:23:33 INFO  nextflow.processor.TaskRun - Task completed > CAT_CAT (chunk_15) [100%]
+Jun-02 17:24:34 INFO  nextflow.processor.TaskRun - Task completed > CAT_CAT (chunk_16) [100%]
+Jun-02 18:25:35 INFO  nextflow.processor.TaskRun - Task completed > CAT_CAT (chunk_17) [100%]
+Jun-02 10:20:30 INFO  nextflow.processor.TaskRun - Task completed > CAT_CAT (chunk_18) [100%]
+Jun-02 11:21:31 INFO  nextflow.processor.TaskRun - Task completed > CAT_CAT (chunk_19) [100%]
+Jun-02 12:22:32 INFO  nextflow.processor.TaskRun - Task completed > CAT_CAT (chunk_20) [100%]
+Jun-02 13:23:33 INFO  nextflow.processor.TaskRun - Task completed > CAT_CAT (chunk_21) [100%]
+Jun-02 14:24:34 INFO  nextflow.processor.TaskRun - Task completed > CAT_CAT (chunk_22) [100%]
+Jun-02 15:25:35 INFO  nextflow.processor.TaskRun - Task completed > CAT_CAT (chunk_23) [100%]
+Jun-02 16:20:30 INFO  nextflow.processor.TaskRun - Task completed > CAT_CAT (chunk_24) [100%]
+Jun-02 17:21:31 INFO  nextflow.processor.TaskRun - Task completed > CAT_CAT (chunk_25) [100%]
+Jun-02 18:22:32 INFO  nextflow.processor.TaskRun - Task completed > CAT_CAT (chunk_26) [100%]
+Jun-02 10:23:33 INFO  nextflow.processor.TaskRun - Task completed > CAT_CAT (chunk_27) [100%]
+Jun-02 11:24:34 INFO  nextflow.processor.TaskRun - Task completed > CAT_CAT (chunk_28) [100%]
+Jun-02 12:25:35 INFO  nextflow.processor.TaskRun - Task completed > CAT_CAT (chunk_29) [100%]
+Jun-02 13:20:30 INFO  nextflow.processor.TaskRun - Task completed > CAT_CAT (chunk_30) [100%]
+Jun-02 14:21:31 INFO  nextflow.processor.TaskRun - Task completed > CAT_CAT (chunk_31) [100%]
+Jun-02 15:22:32 INFO  nextflow.processor.TaskRun - Task completed > CAT_CAT (chunk_32) [100%]
+Jun-02 16:23:33 INFO  nextflow.processor.TaskRun - Task completed > CAT_CAT (chunk_33) [100%]
+Jun-02 17:24:34 INFO  nextflow.processor.TaskRun - Task completed > CAT_CAT (chunk_34) [100%]
+Jun-02 18:25:35 INFO  nextflow.processor.TaskRun - Task completed > CAT_CAT (chunk_35) [100%]
+Jun-02 10:20:30 INFO  nextflow.processor.TaskRun - Task completed > CAT_CAT (chunk_36) [100%]
+Jun-02 11:21:31 INFO  nextflow.processor.TaskRun - Task completed > CAT_CAT (chunk_37) [100%]
+Jun-02 12:22:32 INFO  nextflow.processor.TaskRun - Task completed > CAT_CAT (chunk_38) [100%]
+Jun-02 13:23:33 INFO  nextflow.processor.TaskRun - Task completed > CAT_CAT (chunk_39) [100%]
+Jun-02 14:24:34 INFO  nextflow.processor.TaskRun - Task completed > CAT_CAT (chunk_40) [100%]
+Jun-02 15:25:35 INFO  nextflow.processor.TaskRun - Task completed > CAT_CAT (chunk_41) [100%]
+Jun-02 16:20:30 INFO  nextflow.processor.TaskRun - Task completed > CAT_CAT (chunk_42) [100%]
+Jun-02 17:21:31 INFO  nextflow.processor.TaskRun - Task completed > CAT_CAT (chunk_43) [100%]
+Jun-02 18:22:32 INFO  nextflow.processor.TaskRun - Task completed > CAT_CAT (chunk_44) [100%]
+Jun-02 10:23:33 INFO  nextflow.processor.TaskRun - Task completed > CAT_CAT (chunk_45) [100%]
+Jun-02 11:24:34 INFO  nextflow.processor.TaskRun - Task completed > CAT_CAT (chunk_46) [100%]
+Jun-02 12:25:35 INFO  nextflow.processor.TaskRun - Task completed > CAT_CAT (chunk_47) [100%]
+Jun-02 13:20:30 INFO  nextflow.processor.TaskRun - Task completed > CAT_CAT (chunk_48) [100%]
+Jun-02 14:21:31 INFO  nextflow.processor.TaskRun - Task completed > CAT_CAT (chunk_49) [100%]
+Jun-02 15:22:32 INFO  nextflow.processor.TaskRun - Task completed > CAT_CAT (chunk_50) [100%]
+Jun-02 16:23:33 INFO  nextflow.processor.TaskRun - Task completed > CAT_CAT (chunk_51) [100%]
+Jun-02 17:24:34 INFO  nextflow.processor.TaskRun - Task completed > CAT_CAT (chunk_52) [100%]
+Jun-02 18:25:35 INFO  nextflow.processor.TaskRun - Task completed > CAT_CAT (chunk_53) [100%]
+Jun-02 10:20:30 INFO  nextflow.processor.TaskRun - Task completed > CAT_CAT (chunk_54) [100%]
+Jun-02 11:21:31 INFO  nextflow.processor.TaskRun - Task completed > CAT_CAT (chunk_55) [100%]
+Jun-02 12:22:32 INFO  nextflow.processor.TaskRun - Task completed > CAT_CAT (chunk_56) [100%]
+Jun-02 13:23:33 INFO  nextflow.processor.TaskRun - Task completed > CAT_CAT (chunk_57) [100%]
+Jun-02 14:24:34 INFO  nextflow.processor.TaskRun - Task completed > CAT_CAT (chunk_58) [100%]
+Jun-02 15:25:35 INFO  nextflow.processor.TaskRun - Task completed > CAT_CAT (chunk_59) [100%]
+Jun-02 19:44:11.120 [Task monitor] ERROR ~ Error executing process > 'NFCORE_RNASEQ:RNASEQ:ALIGN_STAR:STAR_ALIGN (sample3)'
+
+Caused by:
+  Process `NFCORE_RNASEQ:RNASEQ:ALIGN_STAR:STAR_ALIGN (sample3)` terminated with an error exit status (137)
+
+Command error:
+  .command.run: line 42: 31415 Killed                    STAR --genomeDir /refs/GRCh38/star_index
+  Command exit status:
+  137
+  slurmstepd: error: Detected 1 oom-kill event(s) in step. Some of your processes may have been killed by the cgroup out-of-memory handler.
+
+Work dir:
+  /work/cd/9988aabb
+
+Execution cancelled -- Finishing pending tasks before exit

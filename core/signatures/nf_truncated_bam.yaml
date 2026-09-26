@@ -1,0 +1,18 @@
+# A BAM/CRAM is incomplete: no EOF block, or a truncated read stream.
+id: NF-BAM-007
+title: "An alignment file is incomplete (truncated)"
+severity: fatal
+anchors:
+  - "truncated file"
+  - "Truncated file"
+  - "BGZF EOF marker is absent"
+  - "no BGZF EOF"
+  - "premature end of file"
+explanation: >-
+  A BAM or CRAM file ends before it should. That happens when a copy was
+  interrupted or a job was killed while writing. Tools cannot trust the file, so
+  they stop.
+fix: >-
+  Delete the partial file and re-run the step that produced it. If the file was
+  copied from elsewhere, copy it again and check the transfer completed.
+reference: "https://www.htslib.org/"

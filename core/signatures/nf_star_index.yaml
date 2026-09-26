@@ -1,0 +1,19 @@
+# STAR refuses an index built from a different genome FASTA.
+id: NF-STAR-003
+title: "STAR index does not match the reference genome"
+severity: fatal
+anchors:
+  - "EXITING because of FATAL ERROR"
+  - "Genome version is incompatible with the genome index version"
+  - "genome index version"
+  - "SOLUTION: please BOOST the genome index"
+explanation: >-
+  The aligner was pointed at a genome index that was built from a different
+  version of the reference than the one being used now. Nothing is wrong with
+  the reads: the reference and the index simply disagree, so STAR stops before
+  aligning anything.
+fix: >-
+  Rebuild the STAR index from the exact FASTA you are aligning against (or
+  download the matching index), then re-run only the alignment step. Reads and
+  trimming do not need to be repeated.
+reference: "https://github.com/alexdobin/STAR"

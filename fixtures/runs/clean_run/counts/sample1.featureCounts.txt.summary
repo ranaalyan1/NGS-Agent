@@ -1,0 +1,10 @@
+Status	sample_counts/sample1.bam
+Assigned	7800000
+Unassigned_Unmapped	990000
+Unassigned_NoFeatures	550000
+Unassigned_Ambiguity	440000
+Unassigned_MappingQuality	154000
+Unassigned_Chimera	66000
+__no_feature	31000
+__ambiguous	12000
+Number of pairs	10000000

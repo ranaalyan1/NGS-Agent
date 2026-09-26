@@ -1,0 +1,18 @@
+# A file the process needed was not staged / did not exist.
+id: NF-INPUT-002
+title: "An input file was missing"
+severity: fatal
+anchors:
+  - "No such file or directory"
+  - "cannot find the file"
+  - "Input file not found"
+  - "Missing input file"
+  - "No such file"
+explanation: >-
+  One of the files the job expected was not there when it started. Usually the
+  previous step did not produce it, it was moved, or the path in the
+  samplesheet is wrong.
+fix: >-
+  Check the path named in the error message and in your samplesheet. Re-run the
+  step that should have produced the file, then resume with -resume.
+reference: "https://www.nextflow.io/docs/latest/"

@@ -1,0 +1,4 @@
+sample,fastq_1,fastq_2,strandedness
+sample1,/data/sample1_R1.fastq.gz,/data/sample1_R2.fastq.gz,reverse
+sample2,/data/sample2_R1.fastq.gz,/data/sample2_R2.fastq.gz,reverse
+sample3,/data/sample3_R1.fastq.gz,/data/sample3_R2.fastq.gz,reverse
