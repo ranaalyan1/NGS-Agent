@@ -87,23 +87,31 @@ Repository = "https://github.com/ranaalyan1/NGS-Agent"
 "Bug Tracker" = "https://github.com/ranaalyan1/NGS-Agent/issues"
 
 [project.scripts]
+# The v1 product: one command shape, `ngs <path>`.
+ngs = "doors.cli:main"
+# Legacy (pre-rebuild) entry points, kept for existing installs.
 ngsagent = "ngs_agent.cli:main"
-ngs = "ngs_agent.cli:main"
 # Agentic (v2) CLI: NL planning + backend-aware pipeline execution.
 ngs-agent = "ngs_agent.cli.app:main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["ngs_agent"]
+packages = ["ngs_agent", "core", "doors"]
 # Demo files power `ngsagent demo` from an installed wheel. Listed
 # explicitly because default exclude patterns drop *.log files.
 artifacts = [
   "ngs_agent/demo_data/sample.vcf",
   "ngs_agent/demo_data/sample.log",
+  # Non-Python files the v1 product needs at runtime.
+  "core/signatures/*.yaml",
+  "doors/gui/index.html",
 ]
 
 [tool.hatch.build.targets.sdist]
 include = [
   "ngs_agent/",
+  "core/",
+  "doors/",
+  "fixtures/",
   "demo_data/",
   "agents/",
   "workflows/",
@@ -144,6 +152,11 @@ ignore = ["BLE001", "UP042"]
 "tests/test_debate.py" = ["W293", "W291"]
 "tests/test_pipeline.py" = ["E501"]
 "tests/test_reports.py" = ["E501"]
+# Generated fixture content: long lines are the log/table text being planted.
+"scripts/make_fixtures.py" = ["E501", "B905"]
+"scripts/make_screenshot.py" = ["E501"]
+# FastAPI's `File(...)` as a default argument is the documented idiom.
+"doors/gui/app.py" = ["B008"]
 # Swarm agent containers: safe auto-fixes applied; deeper refactors deferred.
 # UP017 stays off: the containers run Python 3.10 (ubuntu:22.04) and
 # datetime.UTC is 3.11+; the timezone.utc spelling must be kept.
