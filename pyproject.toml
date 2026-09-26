@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "ngs-agent"
-version = "0.2.0"
-description = "Pipeline log watcher, VCF/QC interpreter, and multi-agent debate platform for wet-lab NGS teams"
+version = "1.0.0"
+description = "Drop an NGS file, get a plain-language answer with receipts: FastQC/MultiQC quality control, run-folder audit, pipeline-log diagnosis"
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "Apache-2.0" }

@@ -42,10 +42,20 @@ from datetime import UTC
 from pathlib import Path
 from typing import Any
 
-from ..models import BamInfo, CountsInfo, FileEntry, Receipt, RunModel
+from ..models import (
+    KIND_CROMWELL_LOG,
+    KIND_MULTIQC,
+    KIND_SNAKEMAKE_LOG,
+    BamInfo,
+    CountsInfo,
+    FileEntry,
+    Receipt,
+    RunModel,
+)
 from ..sniff import sniff
 from ..util import read_gzip_head, read_head, sha256_file
 from .fastqc import FastQCParseError, parse_fastqc
+from .multiqc import MultiQCParseError, parse_multiqc
 
 MAX_FILES = 2000
 #: Files bigger than this are represented by their size, not their content, when
@@ -621,6 +631,10 @@ def parse_folder(root: str | Path) -> RunModel:
     root_path = Path(root)
     model = RunModel(root=str(root_path))
     metrics = _Metrics()
+    #: Per-sample duplication from any combined quality summary in the folder.
+    #: Merged after the walk so Picard metrics (read later in sort order) win
+    #: over summary numbers for the same sample.
+    multiqc_dups: dict[str, tuple[float, Receipt]] = {}
 
     files: list[Path] = []
     for path in sorted(root_path.rglob("*")):
@@ -674,7 +688,14 @@ def parse_folder(root: str | Path) -> RunModel:
             model.qc_files.append(entry)
             _extract_adapter_curve(path, relpath, metrics)
 
+        elif result.kind == KIND_MULTIQC:
+            model.qc_files.append(entry)
+            _collect_multiqc_duplication(path, relpath, multiqc_dups)
+
         elif result.kind == "nextflow_log":
+            model.logs.append(entry)
+
+        elif result.kind in (KIND_SNAKEMAKE_LOG, KIND_CROMWELL_LOG):
             model.logs.append(entry)
 
         elif path.name.lower().endswith(".summary"):
@@ -756,9 +777,53 @@ def parse_folder(root: str | Path) -> RunModel:
                 _extract_builds(text, metrics)
                 _extract_strandedness_and_layout(text, metrics)
 
+    if multiqc_dups:
+        by_sample = metrics.values.setdefault("duplication_by_sample", {})
+        for sample, (value, receipt) in sorted(multiqc_dups.items()):
+            if sample not in by_sample:
+                by_sample[sample] = value
+                metrics.add_receipt("duplication_by_sample", receipt)
+
     model.metrics = metrics.values
     model.evidence = metrics.evidence
     return model
+
+
+def _collect_multiqc_duplication(
+    path: Path, relpath: str, acc: dict[str, tuple[float, Receipt]]
+) -> None:
+    """Stash per-sample duplication from a combined quality summary.
+
+    Summaries are a fallback: Picard metrics name the same samples with more
+    precise numbers, so the merge after the walk only fills samples Picard
+    never mentioned.
+    """
+    try:
+        facts = parse_multiqc(path)
+    except (MultiQCParseError, OSError):
+        # QC files are a bonus: if one will not parse, the audit carries on.
+        return
+    try:
+        digest = sha256_file(path)[:12]
+    except OSError:
+        digest = "unreadable"
+    for sample in facts.samples:
+        if sample.duplication_percent is None or sample.name in acc:
+            continue
+        if sample.row:
+            locator = f"{relpath}:line={sample.row}"
+        else:
+            locator = f"{relpath}:sample={sample.name}"
+        acc[sample.name] = (
+            sample.duplication_percent / 100.0,
+            Receipt(
+                source=f"file:{digest}",
+                version="MultiQC general stats",
+                timestamp=_now(),
+                locator=locator,
+                detail=f"{sample.name}: duplication {sample.duplication_percent:.2f}%",
+            ),
+        )
 
 
 def _extract_annotation(path: Path, relpath: str, metrics: _Metrics) -> None:

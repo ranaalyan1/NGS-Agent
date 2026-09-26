@@ -1,0 +1,44 @@
+name: Docker image
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/metadata-action@v5
+        id: meta
+        with:
+          images: ghcr.io/${{ github.repository }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Smoke test the published image
+        run: |
+          TAG=$(echo "${{ steps.meta.outputs.tags }}" | head -n 1)
+          docker run --rm "$TAG" ngs --version
+          docker run --rm -d -p 8000:8000 --name ngs-box "$TAG"
+          sleep 8
+          curl -fsS http://127.0.0.1:8000/healthz
+          docker stop ngs-box

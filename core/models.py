@@ -21,6 +21,9 @@ KIND_FASTQC_ZIP = "fastqc_zip"
 KIND_VCF = "vcf"
 KIND_BAM = "bam"
 KIND_NEXTFLOW_LOG = "nextflow_log"
+KIND_SNAKEMAKE_LOG = "snakemake_log"
+KIND_CROMWELL_LOG = "cromwell_log"
+KIND_MULTIQC = "multiqc_report"
 KIND_FOLDER = "folder"
 KIND_UNKNOWN = "unknown"
 
@@ -30,6 +33,9 @@ KIND_LABELS = {
     KIND_VCF: "VCF variant file",
     KIND_BAM: "BAM alignment file",
     KIND_NEXTFLOW_LOG: "Nextflow run log",
+    KIND_SNAKEMAKE_LOG: "Snakemake run log",
+    KIND_CROMWELL_LOG: "Cromwell / WDL run log",
+    KIND_MULTIQC: "MultiQC summary report",
     KIND_FOLDER: "Run folder",
     KIND_UNKNOWN: "Unrecognised file",
 }
@@ -443,6 +449,98 @@ class FastQCFacts:
             read_length=d.get("read_length"),
             read_length_range=tuple(rng) if rng else None,
             gc_percent=d.get("gc_percent"),
+        )
+
+
+@dataclass
+class MultiQCSample:
+    """One sample row of a combined quality summary. Pure facts, no judgement.
+
+    ``row`` is the 1-based row number in a general-stats table (so a rule can
+    cite ``multiqc_general_stats.txt:line=5``); it is 0 when the source has no
+    rows (JSON, HTML), in which case receipts cite ``sample=<name>`` instead.
+    Curves come from the JSON plot data when the report carries it and are
+    empty otherwise — rules that need them stay silent rather than guess.
+    """
+
+    name: str = ""
+    total_sequences: int | None = None
+    read_length: int | None = None
+    gc_percent: float | None = None
+    duplication_percent: float | None = None
+    fails_percent: float | None = None
+    mean_quality: float | None = None
+    adapter_percent: float | None = None
+    row: int = 0
+    per_base_quality: list[Point] = field(default_factory=list)
+    adapter_content: list[Point] = field(default_factory=list)
+    gc_curve: list[Point] = field(default_factory=list)
+    n_content: list[Point] = field(default_factory=list)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "name": self.name,
+            "total_sequences": self.total_sequences,
+            "read_length": self.read_length,
+            "gc_percent": self.gc_percent,
+            "duplication_percent": self.duplication_percent,
+            "fails_percent": self.fails_percent,
+            "mean_quality": self.mean_quality,
+            "adapter_percent": self.adapter_percent,
+            "row": self.row,
+            "per_base_quality": [p.to_dict() for p in self.per_base_quality],
+            "adapter_content": [p.to_dict() for p in self.adapter_content],
+            "gc_curve": [p.to_dict() for p in self.gc_curve],
+            "n_content": [p.to_dict() for p in self.n_content],
+        }
+
+    @classmethod
+    def from_dict(cls, d: dict[str, Any]) -> MultiQCSample:
+        return cls(
+            name=d.get("name", ""),
+            total_sequences=d.get("total_sequences"),
+            read_length=d.get("read_length"),
+            gc_percent=d.get("gc_percent"),
+            duplication_percent=d.get("duplication_percent"),
+            fails_percent=d.get("fails_percent"),
+            mean_quality=d.get("mean_quality"),
+            adapter_percent=d.get("adapter_percent"),
+            row=int(d.get("row", 0)),
+            per_base_quality=[Point.from_dict(p) for p in d.get("per_base_quality", [])],
+            adapter_content=[Point.from_dict(p) for p in d.get("adapter_content", [])],
+            gc_curve=[Point.from_dict(p) for p in d.get("gc_curve", [])],
+            n_content=[Point.from_dict(p) for p in d.get("n_content", [])],
+        )
+
+
+@dataclass
+class MultiQCFacts:
+    """Everything extracted from a combined quality summary. Pure facts."""
+
+    source_path: str = ""
+    source_sha256: str = ""
+    multiqc_version: str = ""
+    #: Which shape the source had: "json" | "general_stats" | "html".
+    format: str = ""
+    samples: list[MultiQCSample] = field(default_factory=list)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "source_path": self.source_path,
+            "source_sha256": self.source_sha256,
+            "multiqc_version": self.multiqc_version,
+            "format": self.format,
+            "samples": [s.to_dict() for s in self.samples],
+        }
+
+    @classmethod
+    def from_dict(cls, d: dict[str, Any]) -> MultiQCFacts:
+        return cls(
+            source_path=d.get("source_path", ""),
+            source_sha256=d.get("source_sha256", ""),
+            multiqc_version=d.get("multiqc_version", ""),
+            format=d.get("format", ""),
+            samples=[MultiQCSample.from_dict(s) for s in d.get("samples", [])],
         )
 
 

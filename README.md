@@ -2,10 +2,11 @@
 
 **Drop an NGS file. Get a true answer in plain language, with receipts.**
 
-NGS-Agent reads a FastQC report, a run folder, or a Nextflow log and tells you —
-in sentences a PI can act on — what is wrong, what it means, and the one thing
-to do next. Every claim it makes is printed with the receipt that proves it:
-which file, which line, which rule, which version.
+NGS-Agent reads a FastQC report, a combined quality summary, a run folder, or a
+Nextflow log and tells you — in sentences a PI can act on — what is wrong,
+what it means, and the one thing to do next. Every claim it makes is printed
+with the receipt that proves it: which file, which line, which rule, which
+version.
 
 ```bash
 ngs sample_fastqc.zip
@@ -37,6 +38,27 @@ python -m venv .venv && .venv/bin/pip install -e ".[dev]"
 That is the whole interface. There is no config file, no file-type picker, and
 no menu: the sniffer decides what a file is from its contents.
 
+### Other ways to install
+
+The venv recipe above is for development. For daily use, pick one:
+
+```bash
+# pipx: one isolated install, `ngs` on your PATH
+pipx install "ngs-agent[box] @ git+https://github.com/ranaalyan1/NGS-Agent.git"
+ngs fixtures/fastqc/sample_fastqc.zip
+
+# conda: the same product inside a fresh environment
+conda env create -f environment-box.yml && conda activate ngs-agent-box
+ngs fixtures/fastqc/sample_fastqc.zip
+
+# Docker: no Python needed on the host; serves the Box on port 8000
+docker build -t ngs-agent .
+docker run --rm -p 8000:8000 ngs-agent
+# ...then open http://127.0.0.1:8000 and drop a file on it.
+# Each release also publishes ghcr.io/ranaalyan1/ngs-agent, so you can
+# `docker pull` instead of building.
+```
+
 ### Exit codes
 
 | Code | Meaning |
@@ -66,8 +88,10 @@ writes the same verdict as JSON, receipts included.
 | Input | What you get |
 |---|---|
 | FastQC report (`.zip`) | Six QC rules (below). Bottom line: **healthy / trim and proceed / re-sequence**. |
+| Combined quality summary (MultiQC data JSON, general-stats table, or report HTML) | The same six QC rules, judged per sample, plus cohort checks for samples that stand apart (length spread, GC outlier). Bottom line: **healthy / trim and proceed / review / re-sequence**. |
 | Run folder | Ten audit rules that compare the files against each other (below). Bottom line: **healthy / review / fix and re-run**. |
 | Nextflow log | Ten failure signatures, ranked, with the line numbers that matched. Bottom line: **the one root cause**, or an honest "unknown" with the last 20 lines attached. |
+| Snakemake or Cromwell/WDL log | Recognised by content. Full diagnosis is planned — see [ROADMAP.md](ROADMAP.md); today you get an honest verdict naming the runner, never a guess. |
 
 ### The QC rules
 
@@ -132,16 +156,54 @@ tell you — every sentence in v1 comes from a template and a rule.
 
 * running or orchestrating pipelines (Nextflow, Snakemake, Docker, Slurm);
 * interpreting VCF variant files — you will get an honest "I can't interpret
-  this yet" rather than a guess;
+  this yet" rather than a guess. Variant interpretation is the next planned
+  input; see [ROADMAP.md](ROADMAP.md);
 * variant prioritisation or ACMG classification;
 * multi-model debate or persona discussion;
 * an MCP server, accounts, authentication, or any cloud upload.
 
 Those are out of scope by design, not by accident. See `NOTES.md` for what was
-deliberately left out of this build.
+deliberately left out of this build, and `ROADMAP.md` for what is covered,
+what comes next, and what stays out.
 
 It also cannot judge what it cannot see: a folder with no counts summary gets no
 assignment-rate verdict, and says so in the output.
+
+---
+
+## Roadmap
+
+Covered today: FastQC reports, combined quality summaries, run folders,
+Nextflow logs. Recognised, with full diagnosis planned: Snakemake and
+Cromwell/WDL logs. Next planned input: VCF interpretation (variant QC first).
+
+The full plan — ordering, later items, and what stays out of scope by design —
+lives in [ROADMAP.md](ROADMAP.md).
+
+---
+
+## Case study: the run where every step exited 0
+
+An RNA-seq run folder. All four pipeline steps reported success — and 18% of
+reads were assigned to genes, because the alignment and the gene list name
+chromosomes differently (`1` vs `chr1`). Verdict: **fix and re-run**, with the
+fix (re-run quantification with the matching annotation; no re-alignment
+needed) and these receipts:
+
+```
+AUD-STRAND-01: file:8ee3e4f33024 @
+               counts/sample1.featureCounts.txt.summary:line=2
+               — Assigned 1,800,000 of 10,043,000 counted reads = 17.9%
+AUD-STRAND-01: file:8e5658148f4b @
+               star/sample1/Aligned.sortedByCoord.out.bam — 25 @SQ contigs
+AUD-STRAND-01: file:3420f4695f6e @
+               annotation/gencode.v45.annotation.gtf — 25 contigs in column 1
+```
+
+No single file looks wrong on its own — the failure only exists *between*
+files, which is why per-step exit codes miss it. Reproduce it with
+`.venv/bin/python -m doors.cli fixtures/runs/contig_mismatch`; the full
+write-up is [CASE_STUDY.md](CASE_STUDY.md).
 
 ---
 
@@ -165,8 +227,8 @@ no extension, a gzipped VCF, empty and garbage files).
 core/          all logic lives here
   sniff.py       what is this file? (content, never filename)
   assess.py      one entry point: path -> Verdict
-  parse/         fastqc.py, folder.py, nextflow_log.py
-  rules/         qc_rules.py, audit_rules.py
+  parse/         fastqc.py, folder.py, multiqc.py, nextflow_log.py
+  rules/         qc_rules.py, audit_rules.py, multiqc_rules.py
   signatures/    ten Nextflow failure signatures (YAML)
   answer.py      Verdict -> plain language (templates only)
   report.py      Verdict -> standalone HTML + JSON sidecar

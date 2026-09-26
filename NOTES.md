@@ -3,6 +3,33 @@
 What was built, what was deliberately not built, and what needs a human's
 decision. Written for the next person to pick this up.
 
+## 2026-09-26 — launch-gap round (five review items)
+
+1. **VCF roadmap stated publicly** (`ROADMAP.md`, linked from the README scope
+   section and from the VCF verdict itself). No VCF judging yet — still an
+   honest unknown — but the scope and ordering are now written down.
+2. **Snakemake / Cromwell-WDL recognition** (`core/sniff.py`, `core/assess.py`):
+   new `snakemake_log` / `cromwell_log` kinds (WDL source included) that return
+   specific "recognised, diagnosis planned" verdicts instead of generic
+   unknowns. Full signature diagnosis for these runners is roadmap item 2–3.
+3. **MultiQC input** (`core/parse/multiqc.py`, `core/rules/multiqc_rules.py`):
+   reads data JSON, general-stats tables, and report HTML; judges each sample
+   with the same QC rule IDs and thresholds (imported from `qc_rules`, never
+   copied) plus two cohort rules. Run folders containing summaries get them as
+   QC evidence, including a duplication fallback for `AUD-DUP-04`.
+4. **Install friction** (`Dockerfile`, `environment-box.yml`, pipx/conda/Docker
+   recipes in the README, `.github/workflows/docker.yml` publishing
+   `ghcr.io/ranaalyan1/ngs-agent` on tags).
+5. **Adoption proof** (README case-study section + `CASE_STUDY.md`): the
+   contig-mismatch run, with real receipts pasted from actual CLI output.
+
+Deliberate calls: MultiQC findings reuse the six QC rule IDs (same judgments,
+new evidence — the receipts audit needed no change); `RULESET_VERSION` is
+unchanged because no threshold or existing wording moved; the one existing
+test touched (`test_vcf_exits_two_without_guessing`) was made
+wrap-insensitive rather than weakened — it asserted on a line-break accident.
+Docker image build is CI-tested (no Docker in this sandbox).
+
 ## What exists
 
 | Station | Where | Tests |

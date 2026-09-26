@@ -15,9 +15,12 @@ from pathlib import Path
 
 from .diagnose import diagnose
 from .models import (
+    KIND_CROMWELL_LOG,
     KIND_FASTQC_ZIP,
     KIND_FOLDER,
+    KIND_MULTIQC,
     KIND_NEXTFLOW_LOG,
+    KIND_SNAKEMAKE_LOG,
     KIND_UNKNOWN,
     KIND_VCF,
     Receipt,
@@ -26,13 +29,17 @@ from .models import (
 )
 from .parse.fastqc import FastQCParseError, parse_fastqc
 from .parse.folder import folder_digest, parse_folder
+from .parse.multiqc import MultiQCParseError, parse_multiqc
 from .rules.audit_rules import decide as decide_folder
 from .rules.audit_rules import evaluate as evaluate_folder
+from .rules.multiqc_rules import decide as decide_multiqc
+from .rules.multiqc_rules import evaluate as evaluate_multiqc
 from .rules.qc_rules import decide, evaluate
 from .sniff import (
     ACTION_AUDIT_FOLDER,
     ACTION_DIAGNOSE_LOG,
     ACTION_PARSE_FASTQC,
+    ACTION_PARSE_MULTIQC,
     sniff,
 )
 from .util import sha256_file
@@ -109,6 +116,51 @@ def assess_fastqc(path: str | Path) -> Verdict:
     )
 
 
+def assess_multiqc(path: str | Path) -> Verdict:
+    """A combined quality summary in, a Verdict out."""
+    p = Path(path)
+    facts = parse_multiqc(p)
+    findings = evaluate_multiqc(facts)
+    decision, reason = decide_multiqc(facts, findings)
+
+    unknown: list[str] = []
+    if all(s.duplication_percent is None for s in facts.samples):
+        unknown.append("No duplication numbers were reported, so duplication was not judged.")
+    if all(not s.per_base_quality and s.mean_quality is None for s in facts.samples):
+        unknown.append(
+            "No quality numbers were reported, so quality was not judged. "
+            "The data file saved next to the report usually carries them."
+        )
+    if all(not s.adapter_content and s.adapter_percent is None for s in facts.samples):
+        unknown.append("No adapter numbers were reported, so adapter content was not judged.")
+    if all(s.gc_percent is None and not s.gc_curve for s in facts.samples):
+        unknown.append("No GC numbers were reported, so GC content was not judged.")
+    if all(s.read_length is None for s in facts.samples):
+        unknown.append("No read lengths were reported, so length consistency was not judged.")
+    if any(s.fails_percent is not None for s in facts.samples):
+        unknown.append(
+            "Per-module failure rates are shown per sample but have no thresholds "
+            "in this ruleset, so they were not judged."
+        )
+
+    return Verdict(
+        subject=p.name,
+        kind=KIND_MULTIQC,
+        decision=decision,
+        headline=reason,
+        findings=findings,
+        receipts=[_input_receipt(p), _tool_receipt("core/assess.py:assess_multiqc")],
+        unknown=unknown,
+        details={
+            "facts": facts.to_dict(),
+            "input_sha256": facts.source_sha256,
+            "multiqc_version": facts.multiqc_version,
+            "format": facts.format,
+            "n_samples": len(facts.samples),
+        },
+    )
+
+
 def assess_folder(path: str | Path) -> Verdict:
     """A run folder in, a Verdict out."""
     p = Path(path)
@@ -173,20 +225,65 @@ def assess_path(path: str | Path) -> Verdict:
                 details={"sniff": result.to_dict()},
             )
 
+    if result.kind == KIND_MULTIQC or result.suggested_action == ACTION_PARSE_MULTIQC:
+        try:
+            return assess_multiqc(p)
+        except MultiQCParseError as exc:
+            return unknown_verdict(
+                subject=p.name,
+                kind=KIND_MULTIQC,
+                reason=f"This looked like a combined quality summary but could not be read: {exc}",
+                details={"sniff": result.to_dict()},
+            )
+
     if result.kind == KIND_FOLDER or result.suggested_action == ACTION_AUDIT_FOLDER:
         return assess_folder(p)
 
     if result.kind == KIND_NEXTFLOW_LOG or result.suggested_action == ACTION_DIAGNOSE_LOG:
         return diagnose(p)
 
+    if result.kind == KIND_SNAKEMAKE_LOG:
+        return unknown_verdict(
+            subject=p.name,
+            kind=KIND_SNAKEMAKE_LOG,
+            reason=(
+                "This is a Snakemake run log. NGS-Agent diagnoses Nextflow logs "
+                "today; Snakemake diagnosis is planned — see ROADMAP.md for what "
+                "is covered and what comes next."
+            ),
+            details={"sniff": result.to_dict()},
+        )
+
+    if result.kind == KIND_CROMWELL_LOG:
+        if any("WDL source" in note for note in result.notes):
+            reason = (
+                "This is a WDL workflow definition. NGS-Agent interprets run "
+                "outputs (logs, reports, folders), not workflow code, so there is "
+                "nothing here to judge. Cromwell run-log diagnosis is planned — "
+                "see ROADMAP.md."
+            )
+        else:
+            reason = (
+                "This is a Cromwell run log. NGS-Agent diagnoses Nextflow logs "
+                "today; Cromwell/WDL diagnosis is planned — see ROADMAP.md for "
+                "what is covered and what comes next."
+            )
+        return unknown_verdict(
+            subject=p.name,
+            kind=KIND_CROMWELL_LOG,
+            reason=reason,
+            details={"sniff": result.to_dict()},
+        )
+
     if result.kind == KIND_VCF:
         return unknown_verdict(
             subject=p.name,
             kind=KIND_VCF,
             reason=(
-                "This is a VCF variant file. NGS-Agent reads FastQC reports, run "
-                "folders and Nextflow logs; interpreting variants is deliberately "
-                "out of scope for this version."
+                "This is a VCF variant file. NGS-Agent reads quality-control "
+                "reports, run folders and Nextflow logs; interpreting variants is "
+                "deliberately out of scope for this version. Variant "
+                "interpretation is the next planned input — see ROADMAP.md."
             ),
             details={"sniff": result.to_dict()},
         )

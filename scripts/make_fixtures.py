@@ -426,6 +426,209 @@ def make_nomatch_log() -> str:
 
 
 # ==========================================================================
+# MultiQC summaries, Snakemake / Cromwell logs, WDL source
+# ==========================================================================
+def make_multiqc_general_stats() -> str:
+    """Four samples: one over-duplicated, one GC outlier, one short-read."""
+    return (
+        "Sample\tFastQC_percent_duplicates\tFastQC_percent_gc\t"
+        "FastQC_avg_sequence_length\tFastQC_total_sequences\tFastQC_percent_fails\n"
+        "sample1\t8.10\t45.20\t150\t20000000\t0.00\n"
+        "sample2\t58.30\t44.10\t150\t18500000\t9.10\n"
+        "sample3\t12.40\t62.00\t150\t19200000\t0.00\n"
+        "sample4\t9.70\t46.30\t100\t17800000\t0.00\n"
+    )
+
+
+def make_multiqc_clean_general_stats() -> str:
+    return (
+        "Sample\tFastQC_percent_duplicates\tFastQC_percent_gc\t"
+        "FastQC_avg_sequence_length\tFastQC_total_sequences\tFastQC_percent_fails\n"
+        "clean1\t7.20\t45.10\t150\t20000000\t0.00\n"
+        "clean2\t9.40\t44.80\t150\t21000000\t0.00\n"
+    )
+
+
+def make_multiqc_data_json() -> str:
+    """Two samples: one must be re-sequenced, one needs adapter trimming."""
+    import json
+
+    quality_bad = [
+        35.0,
+        34.5,
+        34.0,
+        33.0,
+        31.0,
+        28.0,
+        25.0,
+        22.0,
+        19.0,
+        17.0,
+        15.0,
+        13.0,
+        12.0,
+        11.0,
+        10.0,
+    ]
+    quality_good = [36.0] * 15
+    adapter_bad = [0.1, 0.2, 0.4, 0.8, 1.5, 2.4, 3.6, 5.2, 7.1, 8.8, 10.2, 11.3, 12.0, 12.1, 12.1]
+    adapter_good = [0.1] * 15
+    data = {
+        "report_multiqc_version": "1.21",
+        "report_general_stats_data": [
+            {
+                "mqc_sample1": {
+                    "FastQC_percent_duplicates": 74.2,
+                    "FastQC_percent_gc": 41.0,
+                    "FastQC_avg_sequence_length": 150,
+                    "FastQC_total_sequences": 1200000,
+                },
+                "mqc_sample2": {
+                    "FastQC_percent_duplicates": 11.3,
+                    "FastQC_percent_gc": 43.5,
+                    "FastQC_avg_sequence_length": 150,
+                    "FastQC_total_sequences": 1500000,
+                },
+            }
+        ],
+        "report_plot_data": {
+            "fastqc_per_base_sequence_quality_plot": {
+                "datasets": [
+                    {
+                        "mqc_sample1": {str(i + 1): q for i, q in enumerate(quality_bad)},
+                        "mqc_sample2": {str(i + 1): q for i, q in enumerate(quality_good)},
+                    }
+                ]
+            },
+            "fastqc_adapter_content_plot": {
+                "datasets": [
+                    {
+                        "mqc_sample1": {str(i + 1): a for i, a in enumerate(adapter_good)},
+                        "mqc_sample2": {str(i + 1): a for i, a in enumerate(adapter_bad)},
+                    }
+                ]
+            },
+        },
+    }
+    return json.dumps(data, indent=2) + "\n"
+
+
+def make_multiqc_report_html() -> str:
+    """A minimal but structurally real report: the General Statistics table."""
+    return """<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><title>MultiQC Report</title></head>
+<body>
+<h1>MultiQC v1.21</h1>
+<h2>General Statistics</h2>
+<table id="general_stats_table">
+<tr><th>Sample Name</th><th>% Dups</th><th>% GC</th><th>Length</th><th>M Seqs</th><th>% Failed</th></tr>
+<tr><td>html_sample1</td><td>66.4%</td><td>44.0%</td><td>150 bp</td><td>18.5</td><td>9.1%</td></tr>
+<tr><td>html_sample2</td><td>10.2%</td><td>45.1%</td><td>150 bp</td><td>19.2</td><td>0.0%</td></tr>
+</table>
+</body>
+</html>
+"""
+
+
+def make_snakemake_log() -> str:
+    return """Snakemake v8.16.0
+Building DAG of jobs...
+Using shell: /bin/bash
+[Wed Sep 24 10:12:01 2026]
+rule align:
+    input: data/sample1_R1.fastq.gz, data/sample1_R2.fastq.gz
+    output: results/sample1.bam
+    jobid: 3
+    reason: Missing output files: results/sample1.bam
+    resources: mem_mb=32000, runtime=120
+
+[Wed Sep 24 10:14:33 2026]
+Finished job 3.
+1 of 4 steps (25%) done
+
+[Wed Sep 24 10:14:34 2026]
+rule count:
+    input: results/sample1.bam
+    output: results/sample1.counts.txt
+    jobid: 5
+
+[Wed Sep 24 10:15:02 2026]
+Error in rule count:
+    jobid: 5
+    input: results/sample1.bam
+    output: results/sample1.counts.txt
+    shell:
+        featureCounts -a /refs/genes.gtf -o results/sample1.counts.txt results/sample1.bam
+        (one of the commands exited with non-zero exit code; note that snakemake uses bash strict mode!)
+
+Exiting because a job execution failed
+Complete log: /home/user/project/.snakemake/log/2026-09-24T101201.123456.snakemake.log
+Shutting down, this might take some time
+"""
+
+
+def make_cromwell_log() -> str:
+    return """[2026-09-24 10:12:01,234] [info] Cromwell 86 (service::cromwell)
+[2026-09-24 10:12:01,240] [info] Starting Cromwell workflow engine (Horror Show edition)
+[2026-09-24 10:12:02,111] [info] WorkflowManagerActor Workflow 8f3a2b1c submitted to Cromwell
+[2026-09-24 10:12:02,115] [info] WDL workflow rnaseq version 1.0: 3 calls, 0 scatter blocks
+[2026-09-24 10:12:02,120] [info] WorkflowActor-8f3a2b1c: Status change from Submitted to Running, workflowId=8f3a2b1c-4d2e-4f1a-9c3b-7e6a5d4c3b2a
+[2026-09-24 10:12:02,300] [info] Call cache lookup started for call AlignTask.rnaseq
+[2026-09-24 10:12:02,305] [info] call AlignTask: cache miss, executing in docker image quay.io/biocontainers/hisat2:2.2.1
+[2026-09-24 10:47:19,881] [info] call AlignTask: execution failed (exit code 1): hisat2: ERR: missing index files
+[2026-09-24 10:47:19,890] [error] WorkflowActor-8f3a2b1c: Workflow failed: one or more calls failed
+[2026-09-24 10:47:19,891] [info] Workflow complete. Total time: 35m 17s
+Final Outputs:
+{
+  "rnaseq.bam": null
+}
+"""
+
+
+def make_wdl_source() -> str:
+    return """version 1.0
+
+workflow rnaseq {
+  input {
+    File fastq_r1
+    File fastq_r2
+  }
+
+  call AlignTask {
+    input:
+      fastq_r1 = fastq_r1,
+      fastq_r2 = fastq_r2
+  }
+
+  output {
+    File bam = AlignTask.bam
+  }
+}
+
+task AlignTask {
+  input {
+    File fastq_r1
+    File fastq_r2
+  }
+
+  command <<<
+    hisat2 -x /refs/grch38 -1 ~{fastq_r1} -2 ~{fastq_r2} | samtools sort -o aligned.bam
+  >>>
+
+  output {
+    File bam = "aligned.bam"
+  }
+
+  runtime {
+    docker: "quay.io/biocontainers/hisat2:2.2.1"
+    memory: "32 GB"
+  }
+}
+"""
+
+
+# ==========================================================================
 # Run folders (Station 6)
 # ==========================================================================
 def _samplesheet(paired: bool = True) -> str:
@@ -866,6 +1069,14 @@ def main() -> None:
     _write(FIX / "logs" / "nextflow_star_index.log", make_star_index_fail_log())
     _write(FIX / "logs" / "nextflow_warnings.log", make_warnings_then_fatal_log())
     _write(FIX / "logs" / "nextflow_nomatch.log", make_nomatch_log())
+    _write(FIX / "logs" / "snakemake.log", make_snakemake_log())
+    _write(FIX / "logs" / "cromwell.log", make_cromwell_log())
+    _write(FIX / "wdl" / "example.wdl", make_wdl_source())
+
+    _write(FIX / "multiqc" / "multiqc_general_stats.txt", make_multiqc_general_stats())
+    _write(FIX / "multiqc" / "clean_general_stats.txt", make_multiqc_clean_general_stats())
+    _write(FIX / "multiqc" / "multiqc_data.json", make_multiqc_data_json())
+    _write(FIX / "multiqc" / "multiqc_report.html", make_multiqc_report_html())
 
     _write(
         FIX / "misc" / "plain.txt",
