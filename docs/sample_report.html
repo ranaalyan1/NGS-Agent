@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NGS-Agent report: contig_mismatch</title>
+<style>
+:root{--ink:#12181f;--muted:#5c6b7a;--line:#e3e8ee;--bg:#f6f8fa;--card:#ffffff;
+--fail:#c0392b;--warn:#b9770e;--info:#1f6f8b;--pass:#1e7d46;}
+*{box-sizing:border-box}
+body{margin:0;padding:32px 16px;background:var(--bg);color:var(--ink);
+font:16px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;}
+main{max-width:820px;margin:0 auto;}
+h1{font-size:24px;margin:0 0 4px}
+h2{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
+margin:32px 0 8px;border-bottom:1px solid var(--line);padding-bottom:6px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;
+padding:20px 22px;margin-bottom:14px}
+.verdict{border-left:6px solid var(--pass)}
+.verdict.fail{border-left-color:var(--fail)}
+.verdict.warn{border-left-color:var(--warn)}
+.verdict.unknown{border-left-color:var(--muted)}
+.badge{display:inline-block;font-size:12px;font-weight:700;letter-spacing:.06em;
+text-transform:uppercase;padding:3px 9px;border-radius:99px;color:#fff;background:var(--info)}
+.badge.fail{background:var(--fail)} .badge.warn{background:var(--warn)}
+.badge.info{background:var(--info)} .badge.pass{background:var(--pass)}
+.headline{font-size:20px;margin:10px 0 0 0}
+.finding{border:1px solid var(--line);border-radius:8px;padding:14px 16px;margin-bottom:12px}
+.finding.fail{border-left:4px solid var(--fail)}
+.finding.warn{border-left:4px solid var(--warn)}
+.finding.info{border-left:4px solid var(--info)}
+.finding h3{font-size:16px;margin:0 0 6px}
+.finding p{margin:4px 0}
+.finding .lbl{font-weight:600;color:var(--muted)}
+ol{padding-left:22px;margin:8px 0}
+ul{padding-left:20px;margin:8px 0}
+.receipt{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;
+color:var(--muted);word-break:break-all;margin:2px 0}
+details{margin-top:10px;padding-top:8px;border-top:1px dashed var(--line)}
+summary{cursor:pointer;color:var(--muted);font-size:14px}
+footer{margin:32px 0 0;padding:14px 0 8px;border-top:1px solid var(--line);
+color:var(--muted);font-size:12px;word-break:break-all}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px}
+table{border-collapse:collapse;width:100%;font-size:14px}
+td,th{border-bottom:1px solid var(--line);padding:5px 8px;text-align:left}
+</style>
+</head><body><main>
+<div class="card verdict fail">
+<h1>contig_mismatch</h1>
+<span class="badge fail">Fix this and re-run</span>
+<p class="headline">1 of the 1 findings need the run to be fixed and repeated; nothing here is a judgement call.</p>
+</div>
+<h2>What this is</h2>
+<div class="card">
+<p>This is a folder of results from one sequencing run. NGS-Agent checks the files inside it against each other.</p>
+<p><strong>Bottom line.</strong> Fix this and re-run. 1 of the 1 findings need the run to be fixed and repeated; nothing here is a judgement call.</p>
+</div>
+<h2>What matters</h2>
+<div class="finding fail">
+<h3>Reads and gene annotation are naming chromosomes differently</h3>
+<p><span class="lbl">What it is.</span> Only 18% of reads were assigned to genes. The aligned reads name their chromosomes like &#x27;1&#x27;, but the gene list used for counting names them like &#x27;chr1&#x27;.</p>
+<p><span class="lbl">What it means.</span> The aligner and the gene annotation are working from two different dictionaries of chromosome names, so most reads have no gene to be counted against. Every step reported success, which is exactly why this one gets published by mistake: the counts are real numbers describing almost nothing. Differential expression from this run would be meaningless.</p>
+<p><span class="lbl">Do this.</span> Re-run quantification using the annotation that matches the genome the reads were aligned to (same source, same chromosome naming). You do not need to re-align.</p>
+<details><summary>Receipts and technical details</summary>
+<p class="receipt">rule:AUD-STRAND-01 @ bam contigs vs annotation contigs, assignment rate — AUD-STRAND-01 evaluated against bam contigs vs annotation contigs, assignment rate</p>
+<p class="receipt">file:8ee3e4f33024 @ counts/sample1.featureCounts.txt.summary:line=2 — Assigned 1,800,000 of 10,043,000 counted reads = 17.9%</p>
+<p class="receipt">file:8e5658148f4b @ star/sample1/Aligned.sortedByCoord.out.bam — 25 @SQ contigs, eof_ok=True</p>
+<p class="receipt">file:3420f4695f6e @ annotation/gencode.v45.annotation.gtf — 25 contigs in column 1</p>
+<p class="receipt">rule AUD-STRAND-01 · severity fail</p>
+<table>
+<tr><th>assignment_rate</th><td>0.1792</td></tr>
+<tr><th>contig_style_mismatch</th><td>True</td></tr>
+<tr><th>bam_style</th><td>ensembl</td></tr>
+<tr><th>annotation_style</th><td>ucsc</td></tr>
+<tr><th>contig_overlap</th><td>1.0</td></tr>
+<tr><th>needs_rerun</th><td>True</td></tr>
+</table>
+</details>
+</div>
+<h2>What to do</h2>
+<div class="card"><ol>
+<li>1. Re-run quantification using the annotation that matches the genome the reads were aligned to (same source, same chromosome naming). You do not need to re-align.</li>
+</ol></div>
+<h2>Receipts</h2>
+<div class="card">
+<p class="receipt">AUD-STRAND-01: rule:AUD-STRAND-01 @ bam contigs vs annotation contigs, assignment rate — AUD-STRAND-01 evaluated against bam contigs vs annotation contigs, assignment rate</p>
+<p class="receipt">AUD-STRAND-01: file:8ee3e4f33024 @ counts/sample1.featureCounts.txt.summary:line=2 — Assigned 1,800,000 of 10,043,000 counted reads = 17.9%</p>
+<p class="receipt">AUD-STRAND-01: file:8e5658148f4b @ star/sample1/Aligned.sortedByCoord.out.bam — 25 @SQ contigs, eof_ok=True</p>
+<p class="receipt">AUD-STRAND-01: file:3420f4695f6e @ annotation/gencode.v45.annotation.gtf — 25 contigs in column 1</p>
+<p class="receipt">dir:contig_mismatch @ fixtures/runs/contig_mismatch — Run folder; individual files carry their own hashes</p>
+<p class="receipt">tool:ngs-agent @ core/assess.py:assess_folder — ruleset 2026-09</p>
+<p class="receipt">Tool: ngs-agent 1.0.0, ruleset 2026-09, generated 2026-09-26T10:31:40Z</p>
+</div>
+<footer>
+ngs-agent 1.0.0 · ruleset 2026-09 · generated 2026-09-26T10:31:40Z
+<br>input SHA-256: <code>64e56759822a1c542267aecd3bae33079b1f9511e0b4c1762e6c2cb60ebd7c9a</code>
+<br>Every statement above is backed by the receipt listed beside it. Where evidence was missing, the answer says so.
+</footer></main></body></html>

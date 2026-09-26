@@ -1,0 +1,717 @@
+{
+  "schema": "ngs-agent/verdict/1",
+  "tool_version": "1.0.0",
+  "ruleset_version": "2026-09",
+  "answer": {
+    "What this is": [
+      "This is a folder of results from one sequencing run. NGS-Agent checks the files inside it against each other.",
+      "Bottom line: Fix this and re-run. 1 of the 1 findings need the run to be fixed and repeated; nothing here is a judgement call."
+    ],
+    "What matters": [
+      "Problem \u2014 Reads and gene annotation are naming chromosomes differently.",
+      "    What it is: Only 18% of reads were assigned to genes. The aligned reads name their chromosomes like '1', but the gene list used for counting names them like 'chr1'.",
+      "    What it means: The aligner and the gene annotation are working from two different dictionaries of chromosome names, so most reads have no gene to be counted against. Every step reported success, which is exactly why this one gets published by mistake: the counts are real numbers describing almost nothing. Differential expression from this run would be meaningless."
+    ],
+    "What to do": [
+      "1. Re-run quantification using the annotation that matches the genome the reads were aligned to (same source, same chromosome naming). You do not need to re-align."
+    ],
+    "Receipts": [
+      "AUD-STRAND-01: rule:AUD-STRAND-01 @ bam contigs vs annotation contigs, assignment rate \u2014 AUD-STRAND-01 evaluated against bam contigs vs annotation contigs, assignment rate",
+      "AUD-STRAND-01: file:8ee3e4f33024 @ counts/sample1.featureCounts.txt.summary:line=2 \u2014 Assigned 1,800,000 of 10,043,000 counted reads = 17.9%",
+      "AUD-STRAND-01: file:8e5658148f4b @ star/sample1/Aligned.sortedByCoord.out.bam \u2014 25 @SQ contigs, eof_ok=True",
+      "AUD-STRAND-01: file:3420f4695f6e @ annotation/gencode.v45.annotation.gtf \u2014 25 contigs in column 1",
+      "dir:contig_mismatch @ fixtures/runs/contig_mismatch \u2014 Run folder; individual files carry their own hashes",
+      "tool:ngs-agent @ core/assess.py:assess_folder \u2014 ruleset 2026-09",
+      "Tool: ngs-agent 1.0.0, ruleset 2026-09, generated 2026-09-26T10:31:40Z"
+    ]
+  },
+  "verdict": {
+    "subject": "contig_mismatch",
+    "kind": "folder",
+    "decision": "FIX_AND_RERUN",
+    "headline": "1 of the 1 findings need the run to be fixed and repeated; nothing here is a judgement call.",
+    "what_this_is": "",
+    "what_matters": [],
+    "what_to_do": [],
+    "findings": [
+      {
+        "id": "AUD-STRAND-01",
+        "title": "Reads and gene annotation are naming chromosomes differently",
+        "severity": "fail",
+        "what": "Only 18% of reads were assigned to genes. The aligned reads name their chromosomes like '1', but the gene list used for counting names them like 'chr1'.",
+        "meaning": "The aligner and the gene annotation are working from two different dictionaries of chromosome names, so most reads have no gene to be counted against. Every step reported success, which is exactly why this one gets published by mistake: the counts are real numbers describing almost nothing. Differential expression from this run would be meaningless.",
+        "action": "Re-run quantification using the annotation that matches the genome the reads were aligned to (same source, same chromosome naming). You do not need to re-align.",
+        "receipts": [
+          {
+            "source": "rule:AUD-STRAND-01",
+            "version": "2026-09",
+            "timestamp": "2026-09-26T10:31:40Z",
+            "locator": "bam contigs vs annotation contigs, assignment rate",
+            "detail": "AUD-STRAND-01 evaluated against bam contigs vs annotation contigs, assignment rate",
+            "snippet": ""
+          },
+          {
+            "source": "file:8ee3e4f33024",
+            "version": "featureCounts summary",
+            "timestamp": "2026-09-26T10:31:40Z",
+            "locator": "counts/sample1.featureCounts.txt.summary:line=2",
+            "detail": "Assigned 1,800,000 of 10,043,000 counted reads = 17.9%",
+            "snippet": ""
+          },
+          {
+            "source": "file:8e5658148f4b",
+            "version": "BAM header",
+            "timestamp": "2026-09-26T10:31:40Z",
+            "locator": "star/sample1/Aligned.sortedByCoord.out.bam",
+            "detail": "25 @SQ contigs, eof_ok=True",
+            "snippet": ""
+          },
+          {
+            "source": "file:3420f4695f6e",
+            "version": "annotation",
+            "timestamp": "2026-09-26T10:31:40Z",
+            "locator": "annotation/gencode.v45.annotation.gtf",
+            "detail": "25 contigs in column 1",
+            "snippet": ""
+          }
+        ],
+        "details": {
+          "assignment_rate": 0.1792,
+          "contig_style_mismatch": true,
+          "bam_style": "ensembl",
+          "annotation_style": "ucsc",
+          "contig_overlap": 1.0,
+          "needs_rerun": true
+        }
+      }
+    ],
+    "receipts": [
+      {
+        "source": "dir:contig_mismatch",
+        "version": "listed by ngs-agent 1.0.0",
+        "timestamp": "2026-09-26T10:31:40Z",
+        "locator": "fixtures/runs/contig_mismatch",
+        "detail": "Run folder; individual files carry their own hashes",
+        "snippet": ""
+      },
+      {
+        "source": "tool:ngs-agent",
+        "version": "1.0.0",
+        "timestamp": "2026-09-26T10:31:40Z",
+        "locator": "core/assess.py:assess_folder",
+        "detail": "ruleset 2026-09",
+        "snippet": ""
+      }
+    ],
+    "unknown": [],
+    "details": {
+      "run": {
+        "root": "fixtures/runs/contig_mismatch",
+        "files": [
+          {
+            "path": "fixtures/runs/contig_mismatch/annotation/gencode.v45.annotation.gtf",
+            "relpath": "annotation/gencode.v45.annotation.gtf",
+            "kind": "unknown",
+            "confidence": "none",
+            "size": 47288
+          },
+          {
+            "path": "fixtures/runs/contig_mismatch/counts/sample1.featureCounts.txt",
+            "relpath": "counts/sample1.featureCounts.txt",
+            "kind": "unknown",
+            "confidence": "none",
+            "size": 2191
+          },
+          {
+            "path": "fixtures/runs/contig_mismatch/counts/sample1.featureCounts.txt.summary",
+            "relpath": "counts/sample1.featureCounts.txt.summary",
+            "kind": "unknown",
+            "confidence": "none",
+            "size": 258
+          },
+          {
+            "path": "fixtures/runs/contig_mismatch/fastqc/sample1_fastqc.zip",
+            "relpath": "fastqc/sample1_fastqc.zip",
+            "kind": "fastqc_zip",
+            "confidence": "high",
+            "size": 1765
+          },
+          {
+            "path": "fixtures/runs/contig_mismatch/nextflow.log",
+            "relpath": "nextflow.log",
+            "kind": "nextflow_log",
+            "confidence": "medium",
+            "size": 23597
+          },
+          {
+            "path": "fixtures/runs/contig_mismatch/pipeline_info/execution_trace_2026-06-02.txt",
+            "relpath": "pipeline_info/execution_trace_2026-06-02.txt",
+            "kind": "unknown",
+            "confidence": "none",
+            "size": 474
+          },
+          {
+            "path": "fixtures/runs/contig_mismatch/qc/sample1.MarkDuplicates.metrics.txt",
+            "relpath": "qc/sample1.MarkDuplicates.metrics.txt",
+            "kind": "unknown",
+            "confidence": "none",
+            "size": 440
+          },
+          {
+            "path": "fixtures/runs/contig_mismatch/qc/sample1.insert_size_metrics.txt",
+            "relpath": "qc/sample1.insert_size_metrics.txt",
+            "kind": "unknown",
+            "confidence": "none",
+            "size": 142
+          },
+          {
+            "path": "fixtures/runs/contig_mismatch/qc/sample1.verify_bam.selfSM",
+            "relpath": "qc/sample1.verify_bam.selfSM",
+            "kind": "unknown",
+            "confidence": "none",
+            "size": 204
+          },
+          {
+            "path": "fixtures/runs/contig_mismatch/qc/sample2.MarkDuplicates.metrics.txt",
+            "relpath": "qc/sample2.MarkDuplicates.metrics.txt",
+            "kind": "unknown",
+            "confidence": "none",
+            "size": 440
+          },
+          {
+            "path": "fixtures/runs/contig_mismatch/qc/sample3.MarkDuplicates.metrics.txt",
+            "relpath": "qc/sample3.MarkDuplicates.metrics.txt",
+            "kind": "unknown",
+            "confidence": "none",
+            "size": 441
+          },
+          {
+            "path": "fixtures/runs/contig_mismatch/run_config.yaml",
+            "relpath": "run_config.yaml",
+            "kind": "unknown",
+            "confidence": "none",
+            "size": 154
+          },
+          {
+            "path": "fixtures/runs/contig_mismatch/samplesheet.csv",
+            "relpath": "samplesheet.csv",
+            "kind": "unknown",
+            "confidence": "none",
+            "size": 240
+          },
+          {
+            "path": "fixtures/runs/contig_mismatch/star/sample1/Aligned.sortedByCoord.out.bam",
+            "relpath": "star/sample1/Aligned.sortedByCoord.out.bam",
+            "kind": "bam",
+            "confidence": "high",
+            "size": 358
+          },
+          {
+            "path": "fixtures/runs/contig_mismatch/star/sample1/Log.final.out",
+            "relpath": "star/sample1/Log.final.out",
+            "kind": "unknown",
+            "confidence": "none",
+            "size": 1066
+          },
+          {
+            "path": "fixtures/runs/contig_mismatch/star/sample1/ReadsPerGene.out.tab",
+            "relpath": "star/sample1/ReadsPerGene.out.tab",
+            "kind": "unknown",
+            "confidence": "none",
+            "size": 607
+          },
+          {
+            "path": "fixtures/runs/contig_mismatch/trim/sample1.cutadapt.log",
+            "relpath": "trim/sample1.cutadapt.log",
+            "kind": "unknown",
+            "confidence": "none",
+            "size": 156
+          }
+        ],
+        "bams": [
+          {
+            "path": "fixtures/runs/contig_mismatch/star/sample1/Aligned.sortedByCoord.out.bam",
+            "relpath": "star/sample1/Aligned.sortedByCoord.out.bam",
+            "contigs": [
+              "1",
+              "2",
+              "3",
+              "4",
+              "5",
+              "6",
+              "7",
+              "8",
+              "9",
+              "10",
+              "11",
+              "12",
+              "13",
+              "14",
+              "15",
+              "16",
+              "17",
+              "18",
+              "19",
+              "20",
+              "21",
+              "22",
+              "X",
+              "Y",
+              "MT"
+            ],
+            "build": "",
+            "eof_ok": true,
+            "truncated": false,
+            "header_lines": 27,
+            "notes": []
+          }
+        ],
+        "counts": [
+          {
+            "path": "fixtures/runs/contig_mismatch/counts/sample1.featureCounts.txt",
+            "relpath": "counts/sample1.featureCounts.txt",
+            "columns": [
+              "Geneid",
+              "Chr",
+              "Start",
+              "End",
+              "Strand",
+              "Length",
+              "sample1.bam"
+            ],
+            "n_rows": 50,
+            "max_value": 25500.0,
+            "has_decimals": false,
+            "inferred_units": "counts"
+          }
+        ],
+        "qc_files": [
+          {
+            "path": "fixtures/runs/contig_mismatch/fastqc/sample1_fastqc.zip",
+            "relpath": "fastqc/sample1_fastqc.zip",
+            "kind": "fastqc_zip",
+            "confidence": "high",
+            "size": 1765
+          }
+        ],
+        "logs": [
+          {
+            "path": "fixtures/runs/contig_mismatch/nextflow.log",
+            "relpath": "nextflow.log",
+            "kind": "nextflow_log",
+            "confidence": "medium",
+            "size": 23597
+          }
+        ],
+        "metrics": {
+          "build_evidence": [
+            [
+              "GRCh38",
+              "annotation/gencode.v45.annotation.gtf"
+            ],
+            [
+              "GRCh38",
+              "run_config.yaml:line=1"
+            ],
+            [
+              "GRCh38",
+              "run_config.yaml:line=2"
+            ],
+            [
+              "GRCh38",
+              "run_config.yaml:line=2"
+            ],
+            [
+              "GRCh38",
+              "run_config.yaml:line=3"
+            ]
+          ],
+          "annotation_contigs": [
+            "chr1",
+            "chr2",
+            "chr3",
+            "chr4",
+            "chr5",
+            "chr6",
+            "chr7",
+            "chr8",
+            "chr9",
+            "chr10",
+            "chr11",
+            "chr12",
+            "chr13",
+            "chr14",
+            "chr15",
+            "chr16",
+            "chr17",
+            "chr18",
+            "chr19",
+            "chr20",
+            "chr21",
+            "chr22",
+            "chrX",
+            "chrY",
+            "chrM"
+          ],
+          "contig_styles": {
+            "annotation": "ucsc",
+            "bam": "ensembl"
+          },
+          "counts_units": [
+            [
+              "counts/sample1.featureCounts.txt",
+              "counts"
+            ]
+          ],
+          "assignment_rate": 0.17922931395001493,
+          "counting_pairs": true,
+          "adapter_curve": [
+            [
+              1.0,
+              0.2
+            ],
+            [
+              2.0,
+              0.2
+            ],
+            [
+              3.0,
+              0.2
+            ],
+            [
+              4.0,
+              0.2
+            ],
+            [
+              5.0,
+              0.2
+            ],
+            [
+              6.0,
+              0.2
+            ],
+            [
+              7.0,
+              0.2
+            ],
+            [
+              8.0,
+              0.2
+            ],
+            [
+              9.0,
+              0.2
+            ],
+            [
+              10.0,
+              0.2
+            ],
+            [
+              20.0,
+              0.2
+            ],
+            [
+              30.0,
+              0.2
+            ],
+            [
+              40.0,
+              0.2
+            ],
+            [
+              50.0,
+              0.2
+            ],
+            [
+              60.0,
+              0.2
+            ]
+          ],
+          "adapter_curve_source": "fastqc/sample1_fastqc.zip:sample1_fastqc/fastqc_data.txt",
+          "read_length": 150,
+          "exit_codes": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "duplication_by_sample": {
+            "sample1": 0.091,
+            "sample2": 0.088,
+            "sample3": 0.102
+          },
+          "freemix": 0.0032,
+          "strandedness_declared": "reverse",
+          "layout_declared": "paired",
+          "bam_contigs": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "10",
+            "11",
+            "12",
+            "13",
+            "14",
+            "15",
+            "16",
+            "17",
+            "18",
+            "19",
+            "20",
+            "21",
+            "22",
+            "X",
+            "Y",
+            "MT"
+          ],
+          "alignment_rate": 88.4,
+          "reads_per_gene": [
+            85249995,
+            1924995,
+            83325000
+          ],
+          "trimming_reported": true
+        },
+        "evidence": {
+          "build_evidence": [
+            {
+              "source": "file:3420f4695f6e",
+              "version": "filename",
+              "timestamp": "2026-09-26T10:31:40Z",
+              "locator": "annotation/gencode.v45.annotation.gtf",
+              "detail": "genome build GRCh38",
+              "snippet": ""
+            },
+            {
+              "source": "file:aa555f17d653",
+              "version": "config",
+              "timestamp": "2026-09-26T10:31:40Z",
+              "locator": "run_config.yaml:line=1",
+              "detail": "genome build GRCh38",
+              "snippet": ""
+            },
+            {
+              "source": "file:aa555f17d653",
+              "version": "config",
+              "timestamp": "2026-09-26T10:31:40Z",
+              "locator": "run_config.yaml:line=2",
+              "detail": "genome build GRCh38",
+              "snippet": ""
+            },
+            {
+              "source": "file:aa555f17d653",
+              "version": "config",
+              "timestamp": "2026-09-26T10:31:40Z",
+              "locator": "run_config.yaml:line=2",
+              "detail": "genome build GRCh38",
+              "snippet": ""
+            },
+            {
+              "source": "file:aa555f17d653",
+              "version": "config",
+              "timestamp": "2026-09-26T10:31:40Z",
+              "locator": "run_config.yaml:line=3",
+              "detail": "genome build GRCh38",
+              "snippet": ""
+            }
+          ],
+          "annotation_contigs": [
+            {
+              "source": "file:3420f4695f6e",
+              "version": "annotation",
+              "timestamp": "2026-09-26T10:31:40Z",
+              "locator": "annotation/gencode.v45.annotation.gtf",
+              "detail": "25 contigs in column 1",
+              "snippet": ""
+            }
+          ],
+          "counts_units": [
+            {
+              "source": "file:8c0271788ba1",
+              "version": "counts table",
+              "timestamp": "2026-09-26T10:31:40Z",
+              "locator": "counts/sample1.featureCounts.txt",
+              "detail": "50 rows, max 25500.0, decimals=False -> counts",
+              "snippet": ""
+            }
+          ],
+          "assignment_rate": [
+            {
+              "source": "file:8ee3e4f33024",
+              "version": "featureCounts summary",
+              "timestamp": "2026-09-26T10:31:40Z",
+              "locator": "counts/sample1.featureCounts.txt.summary:line=2",
+              "detail": "Assigned 1,800,000 of 10,043,000 counted reads = 17.9%",
+              "snippet": ""
+            }
+          ],
+          "counting_pairs": [
+            {
+              "source": "file:8ee3e4f33024",
+              "version": "featureCounts summary",
+              "timestamp": "2026-09-26T10:31:40Z",
+              "locator": "counts/sample1.featureCounts.txt.summary:line=10",
+              "detail": "Number of pairs\t10000000",
+              "snippet": ""
+            }
+          ],
+          "adapter_curve": [
+            {
+              "source": "file:1a1e0cba6fa8",
+              "version": "FastQC",
+              "timestamp": "2026-09-26T10:31:40Z",
+              "locator": "fastqc/sample1_fastqc.zip",
+              "detail": "FastQC adapter content peaks at 0.2%",
+              "snippet": ""
+            }
+          ],
+          "adapter_curve_source": [],
+          "read_length": [],
+          "exit_codes": [
+            {
+              "source": "file:ddf0ff5a2bd3",
+              "version": "execution trace",
+              "timestamp": "2026-09-26T10:31:40Z",
+              "locator": "pipeline_info/execution_trace_2026-06-02.txt:line=2",
+              "detail": "1\tabc0001\t1\tNFCORE_RNASEQ:RNASEQ:FASTQC_FASTQ:FASTQC\tCOMPLETED\t0\t12.3s\t99.1%\t1.2%\t1.1 GB\t2.4 GB",
+              "snippet": ""
+            },
+            {
+              "source": "file:ddf0ff5a2bd3",
+              "version": "execution trace",
+              "timestamp": "2026-09-26T10:31:40Z",
+              "locator": "pipeline_info/execution_trace_2026-06-02.txt:line=3",
+              "detail": "2\tabc0002\t2\tNFCORE_RNASEQ:RNASEQ:TRIM_CUTADAPT:CUTADAPT\tCOMPLETED\t0\t12.3s\t99.1%\t1.2%\t1.1 GB\t2.4 GB",
+              "snippet": ""
+            },
+            {
+              "source": "file:ddf0ff5a2bd3",
+              "version": "execution trace",
+              "timestamp": "2026-09-26T10:31:40Z",
+              "locator": "pipeline_info/execution_trace_2026-06-02.txt:line=4",
+              "detail": "3\tabc0003\t3\tNFCORE_RNASEQ:RNASEQ:ALIGN_STAR:STAR_ALIGN\tCOMPLETED\t0\t12.3s\t99.1%\t1.2%\t1.1 GB\t2.4 GB",
+              "snippet": ""
+            },
+            {
+              "source": "file:ddf0ff5a2bd3",
+              "version": "execution trace",
+              "timestamp": "2026-09-26T10:31:40Z",
+              "locator": "pipeline_info/execution_trace_2026-06-02.txt:line=5",
+              "detail": "4\tabc0004\t4\tNFCORE_RNASEQ:RNASEQ:QUANTIFY_FEATURECOUNTS:FEATURECOUNTS\tCOMPLETED\t0\t12.3s\t99.1%\t1.2%\t1.1 GB\t2.4 GB",
+              "snippet": ""
+            }
+          ],
+          "duplication_by_sample": [
+            {
+              "source": "file:0915c2ff4435",
+              "version": "Picard MarkDuplicates",
+              "timestamp": "2026-09-26T10:31:40Z",
+              "locator": "qc/sample1.MarkDuplicates.metrics.txt:line=5",
+              "detail": "sample1: PERCENT_DUPLICATION 0.0910",
+              "snippet": ""
+            },
+            {
+              "source": "file:74d659aa7dd4",
+              "version": "Picard MarkDuplicates",
+              "timestamp": "2026-09-26T10:31:40Z",
+              "locator": "qc/sample2.MarkDuplicates.metrics.txt:line=5",
+              "detail": "sample2: PERCENT_DUPLICATION 0.0880",
+              "snippet": ""
+            },
+            {
+              "source": "file:71a7359a833c",
+              "version": "Picard MarkDuplicates",
+              "timestamp": "2026-09-26T10:31:40Z",
+              "locator": "qc/sample3.MarkDuplicates.metrics.txt:line=5",
+              "detail": "sample3: PERCENT_DUPLICATION 0.1020",
+              "snippet": ""
+            }
+          ],
+          "freemix": [
+            {
+              "source": "file:6b4fcb5b2d0a",
+              "version": "VerifyBamID",
+              "timestamp": "2026-09-26T10:31:40Z",
+              "locator": "qc/sample1.verify_bam.selfSM:line=2",
+              "detail": "FREEMIX 0.0032",
+              "snippet": ""
+            }
+          ],
+          "strandedness_declared": [
+            {
+              "source": "file:aa555f17d653",
+              "version": "config/samplesheet",
+              "timestamp": "2026-09-26T10:31:40Z",
+              "locator": "run_config.yaml:line=4",
+              "detail": "strandedness: reverse",
+              "snippet": ""
+            }
+          ],
+          "layout_declared": [
+            {
+              "source": "file:aa555f17d653",
+              "version": "config/samplesheet",
+              "timestamp": "2026-09-26T10:31:40Z",
+              "locator": "run_config.yaml:line=5",
+              "detail": "protocol: paired_end",
+              "snippet": ""
+            }
+          ],
+          "bam_contigs": [
+            {
+              "source": "file:8e5658148f4b",
+              "version": "BAM header",
+              "timestamp": "2026-09-26T10:31:40Z",
+              "locator": "star/sample1/Aligned.sortedByCoord.out.bam",
+              "detail": "25 @SQ contigs, eof_ok=True",
+              "snippet": ""
+            }
+          ],
+          "alignment_rate": [
+            {
+              "source": "file:34e1aa5c1fdc",
+              "version": "STAR Log.final.out",
+              "timestamp": "2026-09-26T10:31:40Z",
+              "locator": "star/sample1/Log.final.out:line=6",
+              "detail": "Uniquely mapped reads % |       88.40%",
+              "snippet": ""
+            }
+          ],
+          "reads_per_gene": [
+            {
+              "source": "file:4259083b92fe",
+              "version": "STAR ReadsPerGene",
+              "timestamp": "2026-09-26T10:31:40Z",
+              "locator": "star/sample1/ReadsPerGene.out.tab:line=1",
+              "detail": "ReadsPerGene totals across 12 genes: unstranded 85,249,995, forward 1,924,995, reverse 83,325,000",
+              "snippet": ""
+            }
+          ],
+          "trimming_reported": [
+            {
+              "source": "file:1004f80c48ee",
+              "version": "trimming report",
+              "timestamp": "2026-09-26T10:31:40Z",
+              "locator": "trim/sample1.cutadapt.log",
+              "detail": "trimming report present",
+              "snippet": ""
+            }
+          ]
+        }
+      },
+      "input_sha256": "64e56759822a1c542267aecd3bae33079b1f9511e0b4c1762e6c2cb60ebd7c9a",
+      "n_files": 17,
+      "n_bams": 1,
+      "n_logs": 1
+    },
+    "tool_version": "1.0.0",
+    "ruleset_version": "2026-09",
+    "timestamp": "2026-09-26T10:31:40Z"
+  }
+}

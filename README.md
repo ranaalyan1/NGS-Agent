@@ -1,302 +1,183 @@
 # NGS-Agent
 
-Agentic bioinformatics CLI for wet-lab NGS teams. Monitor pipeline logs in real time, parse and interpret VCF and QC outputs, and run three-perspective LLM debates on Variants of Uncertain Significance — all from a single `pip install`.
+**Drop an NGS file. Get a true answer in plain language, with receipts.**
 
-[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue)](https://www.python.org)
-[![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-green)](LICENSE)
-[![PyPI](https://img.shields.io/badge/pypi-ngs--agent-orange)](https://pypi.org/project/ngs-agent/)
+NGS-Agent reads a FastQC report, a run folder, or a Nextflow log and tells you —
+in sentences a PI can act on — what is wrong, what it means, and the one thing
+to do next. Every claim it makes is printed with the receipt that proves it:
+which file, which line, which rule, which version.
+
+```bash
+ngs sample_fastqc.zip
+```
+
+![ngs sample_fastqc.zip — real output](docs/images/quickstart.png)
 
 ---
 
-## Installation
+## 60-second quickstart
 
 ```bash
-pip install ngs-agent
+# 1. Get the code
+git clone https://github.com/ranaalyan1/NGS-Agent.git && cd NGS-Agent
+
+# 2. Install (Python 3.11+)
+python -m venv .venv && .venv/bin/pip install -e ".[dev]"
+
+# 3. Point it at a file
+.venv/bin/python -m doors.cli fixtures/fastqc/sample_fastqc.zip
+
+# 4. Or at a whole run folder — all the steps exited 0, and it is still broken
+.venv/bin/python -m doors.cli fixtures/runs/contig_mismatch
+
+# 5. Or open the Box (drop zone, no instructions needed)
+.venv/bin/python -m uvicorn doors.gui.app:app --host 0.0.0.0 --port 8000
 ```
 
-Core install pulls only `click`, `rich`, and `PyYAML`. 
+That is the whole interface. There is no config file, no file-type picker, and
+no menu: the sniffer decides what a file is from its contents.
 
-To use the `debate` command with an LLM:
+### Exit codes
 
-```bash
-pip install "ngs-agent[llm]"
-```
-
-To run the full Temporal-orchestrated swarm pipeline (RNA-Seq, WGS, WES end-to-end):
-
-```bash
-pip install "ngs-agent[swarm]"
-```
+| Code | Meaning |
+|---|---|
+| `0` | passed, or warnings only |
+| `1` | at least one failing finding |
+| `2` | the input could not be interpreted |
 
 ---
 
-## Usage
+## The Box
 
-```bash
-ngsagent demo                          # try everything on bundled demo data (works anywhere)
-ngsagent watch pipeline.log
-ngsagent analyze variants.vcf --qc multiqc_summary.txt
-ngsagent debate variants.vcf --gene BRCA2
-ngsagent doctor                          # check tools + LLM setup
-ngsagent examples                        # copy-paste recipes
-```
+`POST /analyze` on the GUI is the same pipeline as the CLI. Three states only:
 
-Running bare `ngsagent` shows a quickstart panel (the interactive terminal UI
-is available via `ngsagent tui`).
+**EMPTY** (drop zone) → **CHECKING** (spinner) → **VERDICT** (answer, *Download
+report*, *Details*).
 
-> **Which CLI do I need?** This repo ships three entry points:
->
-> | Command | Purpose |
-> |---|---|
-> | `ngsagent` | Lightweight log/VCF tools: `watch`, `analyze`, `debate`, `doctor`, `demo` (this README's focus). No Docker needed. |
-> | `ngs-agent` | Local agentic pipelines: `ngs-agent run rnaseq --samplesheet samples.csv`. |
-> | `python cli.py` | Temporal + Docker swarm for full RNA-Seq/WGS/WES runs (see [Swarm Pipeline](#swarm-pipeline-full-rna-seq--wgs--wes)). |
+The downloaded report is a single HTML file with inline CSS: no fonts, no
+scripts, no network calls. Email it to a PI and it renders
+([a real one](docs/sample_report.html)). Next to it, `ngs <path> --json`
+writes the same verdict as JSON, receipts included.
 
 ---
 
-## Commands
+## What it reads today
 
-### watch
+| Input | What you get |
+|---|---|
+| FastQC report (`.zip`) | Six QC rules (below). Bottom line: **healthy / trim and proceed / re-sequence**. |
+| Run folder | Ten audit rules that compare the files against each other (below). Bottom line: **healthy / review / fix and re-run**. |
+| Nextflow log | Ten failure signatures, ranked, with the line numbers that matched. Bottom line: **the one root cause**, or an honest "unknown" with the last 20 lines attached. |
 
-Scans a pipeline log against five built-in failure signatures. Pass `--tail` to follow a log as it grows.
+### The QC rules
 
-```bash
-ngsagent watch <logfile> [--tail] [--signatures <dir>]
-```
+| Rule | Catches |
+|---|---|
+| `QC-QUAL-01` | Base quality falling below Q20, and where to trim |
+| `QC-ADAPT-01` | Adapter sequence still in the reads (above 5%) |
+| `QC-DUP-01` | Duplication, with the RNA-seq-versus-WGS context that decides whether it matters |
+| `QC-GC-01` | A narrow GC spike: contamination, not a genome |
+| `QC-N-01` | Cycles where the machine could not call a base |
+| `QC-LEN-01` | Reads that are not all the same length |
 
-Each match prints the matched line, a plain-English explanation of the failure mode, and a concrete suggested fix. Signature severity levels are `critical` and `warning`. No LLM is involved.
+### The folder audit is the point
 
-Built-in signatures:
+These are the failures that do not announce themselves. Every step exits 0,
+every file is present, and the numbers are quietly wrong:
 
-| Name | Severity | Fires when |
-|---|---|---|
-| Adapter Contamination | critical | Adapter sequence detected as overrepresented in reads |
-| Low Alignment Rate | critical | Overall mapping rate below 80% |
-| Low Mean Coverage | critical | Mean sequencing depth below 20x |
-| High PCR Duplication | warning | Duplication rate above 30% |
-| Poor Insert Size | warning | Median insert size below 150 bp |
+| Rule | Catches |
+|---|---|
+| `AUD-STRAND-01` | Chromosomes named differently in the alignment and the gene list, with an assignment rate under 30% — the silent differential-expression killer |
+| `AUD-STRAND-02` | Strandedness setting contradicted by the counts (including libraries that carry no strand information at all) |
+| `AUD-CONTAM-02` | Contamination above 3% |
+| `AUD-DUP-04` | One sample's duplication far above the cohort median |
+| `AUD-TRUNC-01` | An alignment file that was never finished writing |
+| `AUD-BUILD-01` | Two genome builds mixed in one run |
+| `AUD-COUNT-01` | Normalised values (TPM) sitting where raw counts belong |
+| `AUD-PAIRED-01` | Paired-end libraries counted as single-end |
+| `AUD-ADAPT-03` | Adapter read-through (fragments shorter than the reads) |
+| `AUD-ALIGN-01` | Alignment rate below 75% |
 
-You can supply your own YAML signatures directory with `--signatures`. The schema is the same as the built-in files under `ngs_agent/signatures/`.
-
----
-
-### analyze
-
-Parses a VCF file and renders a colour-coded variant report in the terminal. Accepts an optional QC summary text file (MultiQC output or any plaintext file containing metrics).
-
-```bash
-ngsagent analyze <vcffile> [--qc <qcfile>]
-```
-
-VCF parsing reads `GENE`, `CSQ`, `CLNSIG`, and `AF` from the INFO field, and `DP` and `AD` from the sample column to compute read depth and variant allele fraction. Variants are classified automatically:
-
-`Pathogenic` — ClinVar `CLNSIG` contains "pathogenic" without "conflicting"  
-`VUS` — ClinVar `CLNSIG` contains "uncertain", "vus", or "unknown significance"  
-`Other` — everything else (benign, synonymous, unannotated)
-
-QC parsing extracts mapping rate, mean coverage, duplication rate, and Q30 fraction using regex against the file text and grades each metric pass / warn / fail.
+`fixtures/runs/contig_mismatch` is exactly the disaster case: all four steps
+exited 0, and 18% of reads were assigned to genes. NGS-Agent catches it.
 
 ---
 
-### demo
+## Receipts
 
-Runs `watch` + `analyze` on demo files bundled inside the installed package,
-so it works from any directory right after `pip install ngs-agent`:
+A claim without a receipt is an opinion. Every finding carries at least two:
 
-```bash
-ngsagent demo
+```
+QC-QUAL-01: rule:QC-QUAL-01 @ Per base sequence quality — ruleset 2026-09
+QC-QUAL-01: file:751e79c3d819 @ sample_fastqc/fastqc_data.txt:line=28
+            — Per base sequence quality mean = 17.8 at position 40-49 (threshold Q20)
 ```
 
-### debate
+* `rule:<ID>` — which rule said so, and under which ruleset version.
+* `file:<sha256-12>` — the exact line of the exact file the number came from.
+* `signature:<ID>` — for logs, which failure pattern matched, and where.
 
-Submits every VUS in a VCF to three independent LLM personas simultaneously. Each persona evaluates the variant from a different disciplinary angle, then the tool builds a consensus and recommendation.
-
-```bash
-ngsagent debate <vcffile> [--gene <GENE_SYMBOL>] [--html debate.html]
-```
-
-If all LLM calls fail, `debate` aborts with exit code 2 and writes no report —
-it never prints a fabricated "consensus" from failed calls.
-
-The three personas:
-
-`Population Geneticist` — evaluates allele frequency, gnomAD population context, and stratification  
-`Clinical Geneticist` — evaluates ClinVar classification, ACMG criteria, and phenotype fit  
-`Functional Geneticist` — evaluates predicted consequence, splice site impact, and protein-level effect
-
-Consensus logic: if all three agree the variant is pathogenic, it's escalated for clinical follow-up. If all three call it benign, it's flagged for deprioritisation. Mixed opinions surface the disagreement verbatim so the reviewing scientist sees exactly where uncertainty lies.
-
-Requires an LLM backend. Configure one with `ngsagent config wizard`.
+Where evidence is missing, the tool says so and the verdict is **unknown**. It
+never fills the gap with a confident guess.
 
 ---
 
-### config
+## Scope: what NGS-Agent is, and is not
 
-Manages `~/.ngsagent/config.yaml`.
+NGS-Agent is an **interpreter**, not a runner. It never executes a pipeline,
+never uploads anything, and never calls a language model to decide what to
+tell you — every sentence in v1 comes from a template and a rule.
 
-```bash
-ngsagent config wizard
-ngsagent config show
-ngsagent config keys                        # list every valid key
-ngsagent config set llm anthropic
-ngsagent config set anthropic_model claude-sonnet-4-5
-ngsagent config set llm ollama
-ngsagent config set ollama_model llama3.2
-ngsagent config set ollama_host http://localhost:11434
-```
+**v1 does not do:**
 
-Unknown keys are rejected with a "did you mean …?" suggestion (typos are
-never silently saved), and API keys are masked in `config show`.
+* running or orchestrating pipelines (Nextflow, Snakemake, Docker, Slurm);
+* interpreting VCF variant files — you will get an honest "I can't interpret
+  this yet" rather than a guess;
+* variant prioritisation or ACMG classification;
+* multi-model debate or persona discussion;
+* an MCP server, accounts, authentication, or any cloud upload.
 
----
+Those are out of scope by design, not by accident. See `NOTES.md` for what was
+deliberately left out of this build.
 
-## LLM Setup
-
-### Anthropic
-
-```bash
-pip install "ngs-agent[llm]"
-export ANTHROPIC_API_KEY=sk-ant-...
-ngsagent config set llm anthropic
-```
-
-Default model is `claude-sonnet-4-5` (a stable alias that keeps resolving as dated snapshots retire). Override with `ngsagent config set anthropic_model <model>`.
-
-### Ollama (local, no API key)
-
-```bash
-pip install "ngs-agent[llm]"
-ollama pull llama3.2
-ngsagent config set llm ollama
-```
-
-Ollama talks to `http://localhost:11434` by default. Override the host and model via `config set`.
-
-`watch` and `analyze` always work with no LLM configured. Only `debate` requires one.
-
----
-
-## Swarm Pipeline (full RNA-Seq / WGS / WES)
-
-NGS-Agent also ships a Temporal-orchestrated Docker swarm that runs complete genomics pipelines end to end. Each bioinformatics tool runs in its own container as an autonomous agent. Claude is embedded at decision points — QC verdict, trim parameter selection, alignment failure diagnosis, and biological interpretation — with deterministic heuristic fallbacks when no API key is set.
-
-**Requirements:** Docker Engine, Python 3.11+, Linux or macOS (WSL2 on Windows)
-
-**Setup:**
-
-```bash
-cp .env.example .env
-pip install "ngs-agent[swarm]"
-docker compose up -d
-bash scripts/build-agents.sh
-python worker.py
-```
-
-**Submit a paired-end RNA-Seq run:**
-
-```bash
-python cli.py submit \
-  --experiment RNA-Seq \
-  --organism human \
-  --ref-genome data/ref/grch38_idx \
-  --gtf data/ref/genes.gtf \
-  --fastq-r1 data/fastq/R1.fastq.gz \
-  --fastq-r2 data/fastq/R2.fastq.gz \
-  --paired
-```
-
-**Or the one-liner** (single-end; omit `--gtf` for align-only):
-
-```bash
-python cli.py quick --fastq data/fastq/reads.fastq.gz \
-  --ref-genome data/ref/grch38_idx --gtf data/ref/genes.gtf
-```
-
-Notes: `--ref-genome` accepts a HISAT2 index basename (with `.ht2` siblings)
-or a FASTA path. Differential expression needs a batch with ≥2 samples
-across ≥2 conditions (`submit-batch`); single-sample runs stop at counting
-by design, and runs without `--gtf` are align-only (counting/DE skipped).
-
-**Check run status:**
-
-```bash
-python cli.py status <run-id>
-```
-
-**RNA-Seq pipeline stages:**
-
-Ingest (read count + paired/single detection) → QC (real FastQC + Claude verdict) → AI Decider (Trimmomatic parameters from Claude) → Trim (conditional) → Align (HISAT2 + samtools, with AI-guided re-trim retry on low mapping rate) → Count (featureCounts) → Differential Expression (DESeq2, PCA, MA plot, volcano, heatmap) → GO Enrichment (clusterProfiler + Claude biological narrative) → Report Builder (self-contained HTML) → Report Agent (OpenRouter narrative summary)
-
-**WGS / WES pipeline stages:**
-
-Ingest → QC → AI Decider → Trim → BWA-MEM2 (with per-region coverage from panel BED) → GATK (MarkDuplicatesSpark → BQSR → HaplotypeCaller) → Annotation (snpEff, variant CSV) → Coverage Gate (halts run if mean depth below threshold) → Report Builder → Report Agent
-
-All file artifacts are uploaded to MinIO at `s3://ngs-artifacts/<run_id>/<agent>/`. Results are content-addressed using blake2b hashes of the inputs, so identical re-runs return from cache instantly without re-executing any container.
-
----
-
-## Project Layout
-
-```
-ngs_agent/              pip-installable CLI and agent core
-  agent/                models, planner, executor (parallel DAG), orchestrator, verifier, reporter
-  bioinformatics/       samplesheet parsing, workflow catalogue, shared R scripts
-  execution/            backend abstraction (native, Docker, Apptainer, SLURM, PBS) + selector
-  tools/                tool registry, safety/permissions, built-in bioinformatics tools
-  provenance/           streaming SHA-256 manifest (artifacts/manifest.jsonl)
-  artifacts/            local artifact store
-  backends/             LLM provider abstraction: Anthropic, Ollama, Gemini, NoBackend
-  signatures/           YAML failure signatures loaded by the watch command
-agents/                 Container swarm, one agent per pipeline step (integration path)
-  base/base_agent.py    Agent contract: reads AGENT_INPUTS + ROUTING_CONTEXT env vars, prints JSON to stdout
-workflows/              Temporal workflow definitions and activity dispatcher
-shared/                 AgentResult model, MinIO storage helper, Redis+MinIO cache
-cli.py                  Swarm pipeline CLI (submit, status, wizard)
-worker.py               Temporal worker process
-tests/                  Unit + end-to-end tests (stub-tool pipeline runs in normal CI)
-demo_data/              sample.log and sample.vcf for testing without real data
-```
+It also cannot judge what it cannot see: a folder with no counts summary gets no
+assignment-rate verdict, and says so in the output.
 
 ---
 
 ## Development
 
 ```bash
-git clone https://github.com/ranaalyan1/NGS-Agent.git
-cd NGS-Agent
-pip install -e ".[dev,llm]"
-pytest                          # full suite; heavy integration self-skips
-ruff check ngs_agent/ tests/ agents/
-mypy ngs_agent/
+.venv/bin/python -m pytest              # the whole suite (~500 tests)
+.venv/bin/python -m pytest tests/test_audit.py -v   # one station
+python scripts/make_fixtures.py         # regenerate fixtures/ (byte-identical)
+python scripts/make_screenshot.py       # regenerate docs/images/quickstart.png
 ```
 
-### Test suite
+The suite enforces the product's own laws: the Golden Rule (no logic in
+`doors/`), the Law of Receipts (every finding created anywhere in the session is
+audited), and the honest-unknown rule (traps: a VCF renamed `.txt`, a VCF with
+no extension, a gzipped VCF, empty and garbage files).
 
-| File | Covers |
-| --- | --- |
-| `tests/test_workflow_catalog.py` | Workflow catalogue, aliases, intent inference, ambiguity errors |
-| `tests/test_samplesheet.py` | Header aliases, TSV, validation errors, path resolution |
-| `tests/test_execution_backends.py` | Native/docker/apptainer/SLURM/PBS backends, image pins, selector ordering |
-| `tests/test_executor_dag.py` | DAG validation, parallel execution, failure/skip semantics, checkpoints |
-| `tests/test_bio_tools.py` | Command construction for every bioinformatics tool (strandness, splice sites, MAPQ filters, adapter confidence, output discovery) |
-| `tests/test_manifest.py` | Streaming SHA-256 provenance (incl. >512 MB files), JSONL output |
-| `tests/test_planner_and_environment.py` | Per-sample DAG planning, strandedness propagation, tool-prefix conflicts, platform warnings |
-| `tests/test_verifier.py` | Expected-artifact verification, error vs warning severities |
-| `tests/test_reporter.py` | HTML/MD/JSON reports, HTML escaping of all interpolated values |
-| `tests/test_orchestrator_e2e.py` | Full RNA-Seq pipeline with stub tool binaries: parallel DAG, provenance, verification, report, failure propagation |
+### Layout
 
-The orchestrator end-to-end test runs the entire pipeline (discovery → QC →
-trim → align → sort → index → quantify → aggregate → report) against shell-script
-tool doubles, so the pipeline path is verified on every CI run without containers.
-Container-based integration tests are marked `integration` and self-skip when
-Docker is unavailable; run them explicitly with:
-
-```bash
-pytest -m integration tests/
+```
+core/          all logic lives here
+  sniff.py       what is this file? (content, never filename)
+  assess.py      one entry point: path -> Verdict
+  parse/         fastqc.py, folder.py, nextflow_log.py
+  rules/         qc_rules.py, audit_rules.py
+  signatures/    ten Nextflow failure signatures (YAML)
+  answer.py      Verdict -> plain language (templates only)
+  report.py      Verdict -> standalone HTML + JSON sidecar
+doors/         ways in; no logic
+  cli.py         ngs <path>
+  gui/           FastAPI + one HTML page
+fixtures/      generated test data, including planted failures
 ```
 
 ---
 
-## License
+## Licence
 
-Apache 2.0. See [LICENSE](LICENSE).
+Apache-2.0. See [LICENSE](LICENSE).
