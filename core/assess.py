@@ -260,7 +260,10 @@ def assess_path(path: str | Path) -> Verdict:
             return unknown_verdict(
                 subject=p.name,
                 kind=KIND_CROMWELL_LOG,
-                reason="This is a WDL workflow definition. WDL workflow code is not analysed; static analysis is out of scope. See ROADMAP.md.",
+                reason=(
+                    "This is a WDL workflow definition. WDL workflow code is not "
+                    "analysed; static analysis is out of scope. See ROADMAP.md."
+                ),
                 details={"sniff": result.to_dict()},
             )
         return diagnose_runner(p, "cromwell")
@@ -315,7 +318,8 @@ def assess_path(path: str | Path) -> Verdict:
             ],
             unknown=unjudged
             + [
-                "QC metrics judge call quality only; they do not assess pathogenicity or variant truth."
+                "QC metrics judge call quality only; they do not assess "
+                "pathogenicity or variant truth."
             ],
             details={
                 "input_sha256": facts["source_sha256"],

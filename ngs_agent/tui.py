@@ -49,82 +49,82 @@ FILE_EXTENSIONS = {".vcf", ".log", ".txt", ".tsv", ".csv", ".yaml", ".yml"}
 
 THEMES: dict[str, dict[str, str]] = {
     "dark": {
-        "accent":      NGS_GREEN,
-        "accent_dim":  NGS_GREEN_DIM,
-        "title":       f"bold {NGS_GREEN}",
-        "shadow":      NGS_GREEN_DIM,
-        "border":      NGS_GREEN_DIM,
-        "prompt":      f"bold {NGS_GREEN}",
+        "accent": NGS_GREEN,
+        "accent_dim": NGS_GREEN_DIM,
+        "title": f"bold {NGS_GREEN}",
+        "shadow": NGS_GREEN_DIM,
+        "border": NGS_GREEN_DIM,
+        "prompt": f"bold {NGS_GREEN}",
         "panel_title": f"bold {NGS_GREEN}",
-        "muted":       "dim white",
-        "status_bg":   "on #0A0A0A",
-        "llm_ok":      "green",
-        "llm_none":    "red",
+        "muted": "dim white",
+        "status_bg": "on #0A0A0A",
+        "llm_ok": "green",
+        "llm_none": "red",
     },
     "light": {
-        "accent":      "#007A4A",
-        "accent_dim":  "#005533",
-        "title":       "bold #007A4A",
-        "shadow":      "#005533",
-        "border":      "#007A4A",
-        "prompt":      "bold #007A4A",
+        "accent": "#007A4A",
+        "accent_dim": "#005533",
+        "title": "bold #007A4A",
+        "shadow": "#005533",
+        "border": "#007A4A",
+        "prompt": "bold #007A4A",
         "panel_title": "bold #007A4A",
-        "muted":       "dim black",
-        "status_bg":   "on #F0F0F0",
-        "llm_ok":      "dark_green",
-        "llm_none":    "dark_red",
+        "muted": "dim black",
+        "status_bg": "on #F0F0F0",
+        "llm_ok": "dark_green",
+        "llm_none": "dark_red",
     },
     "colorblind": {
-        "accent":      "#0077BB",
-        "accent_dim":  "#004477",
-        "title":       "bold #0077BB",
-        "shadow":      "#004477",
-        "border":      "#0077BB",
-        "prompt":      "bold #0077BB",
+        "accent": "#0077BB",
+        "accent_dim": "#004477",
+        "title": "bold #0077BB",
+        "shadow": "#004477",
+        "border": "#0077BB",
+        "prompt": "bold #0077BB",
         "panel_title": "bold #0077BB",
-        "muted":       "dim white",
-        "status_bg":   "on #0A0A0A",
-        "llm_ok":      "#0077BB",
-        "llm_none":    "#EE7733",
+        "muted": "dim white",
+        "status_bg": "on #0A0A0A",
+        "llm_ok": "#0077BB",
+        "llm_none": "#EE7733",
     },
     "ansi": {
-        "accent":      "bright_green",
-        "accent_dim":  "green",
-        "title":       "bold bright_green",
-        "shadow":      "green",
-        "border":      "green",
-        "prompt":      "bold bright_green",
+        "accent": "bright_green",
+        "accent_dim": "green",
+        "title": "bold bright_green",
+        "shadow": "green",
+        "border": "green",
+        "prompt": "bold bright_green",
         "panel_title": "bold bright_green",
-        "muted":       "dim",
-        "status_bg":   "",
-        "llm_ok":      "green",
-        "llm_none":    "red",
+        "muted": "dim",
+        "status_bg": "",
+        "llm_ok": "green",
+        "llm_none": "red",
     },
     "ansi-light": {
-        "accent":      "green",
-        "accent_dim":  "dark_green",
-        "title":       "bold green",
-        "shadow":      "dark_green",
-        "border":      "green",
-        "prompt":      "bold green",
+        "accent": "green",
+        "accent_dim": "dark_green",
+        "title": "bold green",
+        "shadow": "dark_green",
+        "border": "green",
+        "prompt": "bold green",
         "panel_title": "bold green",
-        "muted":       "dim",
-        "status_bg":   "",
-        "llm_ok":      "green",
-        "llm_none":    "red",
+        "muted": "dim",
+        "status_bg": "",
+        "llm_ok": "green",
+        "llm_none": "red",
     },
     "midnight": {
-        "accent":      "#7B61FF",
-        "accent_dim":  "#4A3BAA",
-        "title":       "bold #7B61FF",
-        "shadow":      "#4A3BAA",
-        "border":      "#7B61FF",
-        "prompt":      "bold #7B61FF",
+        "accent": "#7B61FF",
+        "accent_dim": "#4A3BAA",
+        "title": "bold #7B61FF",
+        "shadow": "#4A3BAA",
+        "border": "#7B61FF",
+        "prompt": "bold #7B61FF",
         "panel_title": "bold #7B61FF",
-        "muted":       "dim white",
-        "status_bg":   "on #050510",
-        "llm_ok":      "#7B61FF",
-        "llm_none":    "#FF6B6B",
+        "muted": "dim white",
+        "status_bg": "on #050510",
+        "llm_ok": "#7B61FF",
+        "llm_none": "#FF6B6B",
     },
 }
 
@@ -151,6 +151,7 @@ def _render_title_lines() -> list[str]:
     """Return ASCII art lines for the app title."""
     try:
         import pyfiglet  # type: ignore[import]
+
         rendered = pyfiglet.figlet_format(APP_NAME, font="banner3")
         lines = [ln for ln in rendered.splitlines() if ln.strip()]
         if lines:
@@ -180,8 +181,9 @@ def render_title(console: Console, theme: dict[str, str]) -> None:
 
     # Reset: print clean fg block
     for line in lines:
-        console.print(Text(line, style=theme["title"]), justify="center",
-                      highlight=False, overflow="crop")
+        console.print(
+            Text(line, style=theme["title"]), justify="center", highlight=False, overflow="crop"
+        )
 
 
 def render_title_clean(console: Console, theme: dict[str, str]) -> None:
@@ -196,24 +198,31 @@ def render_title_clean(console: Console, theme: dict[str, str]) -> None:
         # Print dim shadow shifted 2 cols right
         for line in lines:
             padded = "  " + line  # 2-col right shift for shadow
-            console.print(Text(padded, style=theme["shadow"]),
-                          justify="center", highlight=False, overflow="crop")
+            console.print(
+                Text(padded, style=theme["shadow"]),
+                justify="center",
+                highlight=False,
+                overflow="crop",
+            )
         # Move cursor up n lines
         sys.stdout.write(f"\033[{n}A")
         sys.stdout.flush()
         # Print bright foreground on top
         for line in lines:
-            console.print(Text(line, style=theme["title"]),
-                          justify="center", highlight=False, overflow="crop")
+            console.print(
+                Text(line, style=theme["title"]), justify="center", highlight=False, overflow="crop"
+            )
     else:
         for line in lines:
-            console.print(Text(line, style=theme["title"]),
-                          justify="center", highlight=False, overflow="crop")
+            console.print(
+                Text(line, style=theme["title"]), justify="center", highlight=False, overflow="crop"
+            )
 
 
 # ---------------------------------------------------------------------------
 # Theme picker
 # ---------------------------------------------------------------------------
+
 
 def pick_theme(console: Console) -> str:
     """Show theme picker. Returns chosen theme name."""
@@ -227,6 +236,7 @@ def pick_theme(console: Console) -> str:
     console.print()
 
     from rich.prompt import Prompt
+
     while True:
         raw = Prompt.ask(
             "Theme number",
@@ -247,6 +257,7 @@ def pick_theme(console: Console) -> str:
 # Welcome banner
 # ---------------------------------------------------------------------------
 
+
 def render_welcome(console: Console, theme: dict[str, str]) -> None:
     """Render the welcome screen with STATIC Nibi (no eye tracking).
 
@@ -254,6 +265,7 @@ def render_welcome(console: Console, theme: dict[str, str]) -> None:
     intro, see run_tui() which calls show_nibi_intro() directly.
     """
     from rich.align import Align
+
     _render_welcome_top(console, theme)
     console.print(Align.center(render_nibi(theme, "happy", 0, 0)))
     console.print()
@@ -295,12 +307,12 @@ def _render_welcome_panels(console: Console, theme: dict[str, str]) -> None:
     slash_lines = "\n".join(
         f"[{theme['accent']}]{cmd:<10}[/{theme['accent']}]  [{theme['muted']}]{desc}[/{theme['muted']}]"
         for cmd, desc in [
-            ("/help",   "show command palette"),
-            ("/theme",  "switch color theme"),
-            ("/files",  "browse VCF / log / QC files"),
+            ("/help", "show command palette"),
+            ("/theme", "switch color theme"),
+            ("/files", "browse VCF / log / QC files"),
             ("/status", "show config + LLM backend"),
-            ("/clear",  "clear screen"),
-            ("/exit",   "leave the TUI"),
+            ("/clear", "clear screen"),
+            ("/exit", "leave the TUI"),
         ]
     )
     slash_panel = Panel(
@@ -317,6 +329,7 @@ def _render_welcome_panels(console: Console, theme: dict[str, str]) -> None:
 # ---------------------------------------------------------------------------
 # Status bar
 # ---------------------------------------------------------------------------
+
 
 def render_status_bar(console: Console, theme: dict[str, str], cfg: dict[str, Any]) -> None:
     llm = cfg.get("llm", "none")
@@ -346,23 +359,34 @@ def render_status_bar(console: Console, theme: dict[str, str], cfg: dict[str, An
 # /help palette
 # ---------------------------------------------------------------------------
 
+
 def show_help(console: Console, theme: dict[str, str]) -> None:
     console.print()
-    console.print(
-        Text("NGS-Agent TUI — command palette", style=theme["panel_title"])
-    )
+    console.print(Text("NGS-Agent TUI — command palette", style=theme["panel_title"]))
     console.print()
 
     console.print(Text("Subcommands (run as if from the shell):", style=theme["muted"]))
     for name, usage, desc in [
-        ("watch",   "watch <logfile> [--tail] [--signatures DIR]",
-         "Scan a pipeline log against failure signatures."),
-        ("analyze", "analyze <vcffile> [--qc <qcfile>]",
-         "Parse VCF + optional QC summary; render colour-coded report."),
-        ("debate",  "debate <vcffile> [--gene <GENE>]",
-         "Run three-persona LLM debate on every VUS. Requires LLM."),
-        ("config",  "config wizard | show | set <key> <value>",
-         "Inspect or modify ~/.ngsagent/config.yaml."),
+        (
+            "watch",
+            "watch <logfile> [--tail] [--signatures DIR]",
+            "Scan a pipeline log against failure signatures.",
+        ),
+        (
+            "analyze",
+            "analyze <vcffile> [--qc <qcfile>]",
+            "Parse VCF + optional QC summary; render colour-coded report.",
+        ),
+        (
+            "debate",
+            "debate <vcffile> [--gene <GENE>]",
+            "Run three-persona LLM debate on every VUS. Requires LLM.",
+        ),
+        (
+            "config",
+            "config wizard | show | set <key> <value>",
+            "Inspect or modify ~/.ngsagent/config.yaml.",
+        ),
     ]:
         console.print(f"  [{theme['accent']}]{usage}[/{theme['accent']}]")
         console.print(f"    [{theme['muted']}]{desc}[/{theme['muted']}]")
@@ -370,15 +394,17 @@ def show_help(console: Console, theme: dict[str, str]) -> None:
     console.print()
     console.print(Text("Slash commands (TUI only):", style=theme["muted"]))
     for cmd, desc in [
-        ("/help",   "Show this palette."),
-        ("/theme",  "Switch color theme."),
-        ("/files",  "Browse VCF / log / QC files in cwd."),
+        ("/help", "Show this palette."),
+        ("/theme", "Switch color theme."),
+        ("/files", "Browse VCF / log / QC files in cwd."),
         ("/status", "Show config + LLM backend."),
-        ("/clear",  "Clear the screen."),
-        ("/exit",   "Leave the TUI. (Ctrl+D also works.)"),
+        ("/clear", "Clear the screen."),
+        ("/exit", "Leave the TUI. (Ctrl+D also works.)"),
     ]:
-        console.print(f"  [{theme['accent']}]{cmd:<10}[/{theme['accent']}]  "
-                      f"[{theme['muted']}]{desc}[/{theme['muted']}]")
+        console.print(
+            f"  [{theme['accent']}]{cmd:<10}[/{theme['accent']}]  "
+            f"[{theme['muted']}]{desc}[/{theme['muted']}]"
+        )
 
     console.print()
     console.print(Text("Tips:", style=theme["muted"]))
@@ -395,6 +421,7 @@ def show_help(console: Console, theme: dict[str, str]) -> None:
 # /status
 # ---------------------------------------------------------------------------
 
+
 def show_status(console: Console, theme: dict[str, str], cfg: dict[str, Any]) -> None:
     console.print()
     t = Table(show_header=False, box=None, padding=(0, 2))
@@ -403,9 +430,11 @@ def show_status(console: Console, theme: dict[str, str], cfg: dict[str, Any]) ->
     for key, val in cfg.items():
         t.add_row(key, str(val))
     console.print(
-        Panel(t,
-              title=f"[{theme['panel_title']}]~/.ngsagent/config.yaml[/{theme['panel_title']}]",
-              border_style=theme["border"])
+        Panel(
+            t,
+            title=f"[{theme['panel_title']}]~/.ngsagent/config.yaml[/{theme['panel_title']}]",
+            border_style=theme["border"],
+        )
     )
     console.print()
 
@@ -414,17 +443,17 @@ def show_status(console: Console, theme: dict[str, str], cfg: dict[str, Any]) ->
 # /files picker
 # ---------------------------------------------------------------------------
 
+
 def show_files(console: Console, theme: dict[str, str]) -> str | None:
     """List relevant files in cwd. Returns a suggested command string or None."""
     cwd = Path.cwd()
-    files = sorted(
-        p for p in cwd.iterdir()
-        if p.is_file() and p.suffix.lower() in FILE_EXTENSIONS
-    )
+    files = sorted(p for p in cwd.iterdir() if p.is_file() and p.suffix.lower() in FILE_EXTENSIONS)
 
     console.print()
     if not files:
-        console.print(f"  [{theme['muted']}]No VCF / log / QC files found in {cwd}[/{theme['muted']}]")
+        console.print(
+            f"  [{theme['muted']}]No VCF / log / QC files found in {cwd}[/{theme['muted']}]"
+        )
         console.print()
         return None
 
@@ -443,6 +472,7 @@ def show_files(console: Console, theme: dict[str, str]) -> str | None:
     console.print()
 
     from rich.prompt import Prompt
+
     raw = Prompt.ask(
         f"  [{theme['accent']}]Pick [][/{theme['accent']}]",
         default="",
@@ -462,8 +492,10 @@ def show_files(console: Console, theme: dict[str, str]) -> str | None:
                 suggestion = f"watch {chosen.name}"
             else:
                 suggestion = f"analyze {chosen.name}"
-            console.print(f"  [{theme['muted']}]Suggested: [/{theme['muted']}]"
-                          f"[{theme['accent']}]{suggestion}[/{theme['accent']}]")
+            console.print(
+                f"  [{theme['muted']}]Suggested: [/{theme['muted']}]"
+                f"[{theme['accent']}]{suggestion}[/{theme['accent']}]"
+            )
             console.print()
             return suggestion
     except ValueError:
@@ -474,6 +506,7 @@ def show_files(console: Console, theme: dict[str, str]) -> str | None:
 # ---------------------------------------------------------------------------
 # Slash command dispatcher
 # ---------------------------------------------------------------------------
+
 
 def handle_slash(
     cmd: str,
@@ -524,9 +557,11 @@ def handle_slash(
 # Subprocess dispatcher — streams output live
 # ---------------------------------------------------------------------------
 
+
 def _resolve_ngsagent() -> list[str]:
     """Return the argv prefix to invoke ngsagent."""
     import shutil
+
     if shutil.which("ngsagent"):
         return ["ngsagent"]
     return [sys.executable, "-m", "ngs_agent.cli"]
@@ -555,18 +590,19 @@ def dispatch_command(line: str, console: Console, theme: dict[str, str]) -> None
     # Pick Nibi's pre-run expression based on subcommand
     subcmd = tokens[0].lower()
     pre_expr: Expression = (
-        "analyzing" if subcmd in ("analyze", "watch") else
-        "curious"   if subcmd == "debate" else
-        "thinking"  if subcmd == "config" else
-        "running"
+        "analyzing"
+        if subcmd in ("analyze", "watch")
+        else "curious"
+        if subcmd == "debate"
+        else "thinking"
+        if subcmd == "config"
+        else "running"
     )
 
     cmd_prefix = _resolve_ngsagent()
     full_cmd = cmd_prefix + tokens
 
-    console.print(
-        f"  [{theme['muted']}]$ {' '.join(full_cmd)}[/{theme['muted']}]"
-    )
+    console.print(f"  [{theme['muted']}]$ {' '.join(full_cmd)}[/{theme['muted']}]")
     # Show Nibi with pre-run expression
     console.print(Align.center(render_nibi(theme, pre_expr)))
     console.print()
@@ -613,6 +649,7 @@ def dispatch_command(line: str, console: Console, theme: dict[str, str]) -> None
 # REPL prompt
 # ---------------------------------------------------------------------------
 
+
 def _make_prompt_session(theme: dict[str, str]) -> Any:
     """Build a prompt_toolkit PromptSession with history + autocomplete."""
     try:
@@ -649,6 +686,7 @@ def read_line(
     if prompt_session is not None:
         try:
             from prompt_toolkit.styles import Style  # type: ignore[import]
+
             pt_style = Style.from_dict({"prompt": theme["accent"].lstrip("#")})
             return prompt_session.prompt(prompt_str)
         except (EOFError, KeyboardInterrupt):
@@ -659,6 +697,7 @@ def read_line(
     # Fallback: rich / plain input
     try:
         from rich.prompt import Prompt
+
         return Prompt.ask(
             f"[{theme['prompt']}]>[/{theme['prompt']}]",
             console=console,
@@ -671,6 +710,7 @@ def read_line(
 # ---------------------------------------------------------------------------
 # Main entry point
 # ---------------------------------------------------------------------------
+
 
 def run_tui() -> None:
     console = Console(force_terminal=True, legacy_windows=False)
@@ -713,9 +753,7 @@ def run_tui() -> None:
             continue
 
         if line.startswith("/"):
-            should_continue, should_clear, theme, cfg = handle_slash(
-                line, console, theme, cfg
-            )
+            should_continue, should_clear, theme, cfg = handle_slash(line, console, theme, cfg)
             if should_clear:
                 render_welcome(console, theme)
             if not should_continue:

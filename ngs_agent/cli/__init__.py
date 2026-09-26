@@ -149,8 +149,12 @@ def _print_match(match) -> None:
 
 @main.command()
 @click.argument("vcffile", type=click.Path(path_type=Path))
-@click.option("--qc", type=click.Path(path_type=Path), default=None, help="QC summary or FastQC file.")
-@click.option("--html", type=click.Path(path_type=Path), default=None, help="Export interactive HTML report.")
+@click.option(
+    "--qc", type=click.Path(path_type=Path), default=None, help="QC summary or FastQC file."
+)
+@click.option(
+    "--html", type=click.Path(path_type=Path), default=None, help="Export interactive HTML report."
+)
 def analyze(vcffile: Path, qc: Path | None, html: Path | None) -> None:
     """Parse a VCF and render a variant/QC report.
 
@@ -165,8 +169,7 @@ def analyze(vcffile: Path, qc: Path | None, html: Path | None) -> None:
     if not variants:
         _fail(
             f"No variants found in {vcffile}.",
-            "The file may be header-only, empty, or not tab-separated VCF. "
-            "Try: ngsagent demo",
+            "The file may be header-only, empty, or not tab-separated VCF. Try: ngsagent demo",
         )
         return
 
@@ -190,7 +193,9 @@ def analyze(vcffile: Path, qc: Path | None, html: Path | None) -> None:
 @main.command()
 @click.argument("vcffile", type=click.Path(path_type=Path))
 @click.option("--gene", default=None, help="Debate a specific gene (default: all VUS).")
-@click.option("--html", type=click.Path(path_type=Path), default=None, help="Export HTML debate report.")
+@click.option(
+    "--html", type=click.Path(path_type=Path), default=None, help="Export HTML debate report."
+)
 def debate(vcffile: Path, gene: str | None, html: Path | None) -> None:
     """Run a 3-persona LLM debate on VUS variants with ACMG criteria.
 
@@ -235,7 +240,12 @@ def debate(vcffile: Path, gene: str | None, html: Path | None) -> None:
 
     results = []
     for variant in variants:
-        console.print(Panel(f"[bold]{variant.gene}[/bold] {variant.chrom}:{variant.pos} {variant.ref}>{variant.alt}", style="magenta"))
+        console.print(
+            Panel(
+                f"[bold]{variant.gene}[/bold] {variant.chrom}:{variant.pos} {variant.ref}>{variant.alt}",
+                style="magenta",
+            )
+        )
         try:
             result = debate_variant(variant, backend)
             results.append(result)
@@ -253,7 +263,9 @@ def debate(vcffile: Path, gene: str | None, html: Path | None) -> None:
             console.print(f"\n[bold]{op.persona}[/bold] — [yellow]{op.stance}[/yellow]{acmg_str}")
             console.print(op.reasoning)
         console.print(f"\n[bold]Consensus:[/bold] {result.consensus}")
-        console.print(f"[bold]ACMG Evaluation:[/bold] {result.acmg_evaluation.classification} ({result.acmg_evaluation.explanation})")
+        console.print(
+            f"[bold]ACMG Evaluation:[/bold] {result.acmg_evaluation.classification} ({result.acmg_evaluation.explanation})"
+        )
         console.print(f"[bold]Recommendation:[/bold] {result.recommendation}\n")
 
     if html:
@@ -286,11 +298,25 @@ def plan(intent: tuple[str, ...], workflow: str) -> None:
     table.add_column("ETA")
     table.add_column("Expected Artifacts")
 
-    table.add_row("1. Ingestion & QC", "FastQC + Trimmomatic", "2-5 min", "fastqc_report.html, clean_reads.fq.gz")
-    table.add_row("2. Spliced Alignment", "HISAT2 / STAR", "15-45 min", "aligned_sorted.bam, align.log")
+    table.add_row(
+        "1. Ingestion & QC",
+        "FastQC + Trimmomatic",
+        "2-5 min",
+        "fastqc_report.html, clean_reads.fq.gz",
+    )
+    table.add_row(
+        "2. Spliced Alignment", "HISAT2 / STAR", "15-45 min", "aligned_sorted.bam, align.log"
+    )
     table.add_row("3. Quantification", "featureCounts / StringTie", "5-15 min", "counts_matrix.tsv")
-    table.add_row("4. Differential Expression", "DESeq2 / EdgeR", "3-8 min", "de_results.csv, volcano_plot.png")
-    table.add_row("5. Interpretation & Report", "Multi-Agent Interpreter", "1-3 min", "clinical_report.html")
+    table.add_row(
+        "4. Differential Expression",
+        "DESeq2 / EdgeR",
+        "3-8 min",
+        "de_results.csv, volcano_plot.png",
+    )
+    table.add_row(
+        "5. Interpretation & Report", "Multi-Agent Interpreter", "1-3 min", "clinical_report.html"
+    )
 
     con = console
     con.print(table)
@@ -359,6 +385,7 @@ def examples() -> None:
 def tui() -> None:
     """Launch the interactive terminal UI (mascot, slash commands)."""
     from ngs_agent.tui import run_tui
+
     run_tui()
 
 
@@ -429,7 +456,9 @@ def config_set(key: str, value: str) -> None:
     # numbers (a model tag like '3.3' must stay a string in YAML).
     cfg[key] = value
     save_config(cfg)
-    console.print(f"[green]Set[/green] {key} = {value if key not in SECRET_KEYS else '**** (hidden)'}")
+    console.print(
+        f"[green]Set[/green] {key} = {value if key not in SECRET_KEYS else '**** (hidden)'}"
+    )
 
 
 if __name__ == "__main__":

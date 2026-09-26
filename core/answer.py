@@ -21,6 +21,7 @@ from typing import Any
 
 from .models import (
     DECISION_LABELS,
+    DECISION_UNKNOWN,
     KIND_CROMWELL_LOG,
     KIND_FASTQC_ZIP,
     KIND_FOLDER,
@@ -28,6 +29,7 @@ from .models import (
     KIND_MULTIQC,
     KIND_NEXTFLOW_LOG,
     KIND_SNAKEMAKE_LOG,
+    KIND_UNKNOWN,
     KIND_VCF,
     SEVERITY_FAIL,
     SEVERITY_INFO,
@@ -166,7 +168,7 @@ def _describe_multiqc(verdict: Verdict) -> str:
 
 
 def _describe_unknown(verdict: Verdict) -> str:
-    label = KIND_LABELS.get(verdict.kind, "")
+    label = "" if verdict.kind == KIND_UNKNOWN else KIND_LABELS.get(verdict.kind, "")
     if label:
         article = "an" if label[:1].lower() in "aeiou" else "a"
         return f"This is {article} {label}."
@@ -228,7 +230,8 @@ def _what_matters(verdict: Verdict) -> AnswerBlock:
             observed = "not computed" if titv is None else f"{titv:.3g}"
             context = metrics.get(
                 "titv_context",
-                "Ti/Tv expectations vary between whole-genome and exome data; no assay type is inferred.",
+                "Ti/Tv expectations vary between whole-genome and exome data; "
+                "no assay type is inferred.",
             )
             block.lines.append(f"Observed Ti/Tv is {observed}. {context}")
         return block
@@ -264,10 +267,15 @@ def _what_to_do(verdict: Verdict) -> AnswerBlock:
         if finding.action and finding.action not in actions:
             actions.append(finding.action)
     if not actions:
-        if verdict.unknown:
+        if verdict.decision == DECISION_UNKNOWN:
             block.lines = [
                 "Open this file with the tool that produced it, or send it to "
                 "your bioinformatician: NGS-Agent has no evidence to judge it on."
+            ]
+        elif verdict.unknown:
+            block.lines = [
+                "Nothing to fix. Carry on with the next step, keeping the caveat "
+                "above in mind."
             ]
         else:
             block.lines = ["Nothing to fix. Carry on with the next step."]

@@ -23,12 +23,12 @@ from ngs_agent.backends.base import LLMBackend
 
 # Well-known provider presets (base_url, default_model)
 PROVIDER_PRESETS: dict[str, tuple[str, str]] = {
-    "openrouter":  ("https://openrouter.ai/api/v1",          "openrouter/auto"),
-    "groq":        ("https://api.groq.com/openai/v1",         "llama-3.3-70b-versatile"),
-    "deepseek":    ("https://api.deepseek.com/v1",            "deepseek-chat"),
-    "gemini":      ("https://generativelanguage.googleapis.com/v1beta/openai", "gemini-2.0-flash"),
-    "lmstudio":    ("http://localhost:1234/v1",               "local-model"),
-    "llamacpp":    ("http://localhost:8080/v1",               "local-model"),
+    "openrouter": ("https://openrouter.ai/api/v1", "openrouter/auto"),
+    "groq": ("https://api.groq.com/openai/v1", "llama-3.3-70b-versatile"),
+    "deepseek": ("https://api.deepseek.com/v1", "deepseek-chat"),
+    "gemini": ("https://generativelanguage.googleapis.com/v1beta/openai", "gemini-2.0-flash"),
+    "lmstudio": ("http://localhost:1234/v1", "local-model"),
+    "llamacpp": ("http://localhost:8080/v1", "local-model"),
 }
 
 
@@ -97,18 +97,13 @@ class OpenAICompatBackend(LLMBackend):
                 data = json.loads(resp.read().decode("utf-8"))
         except urllib.error.HTTPError as exc:
             body = exc.read().decode("utf-8", errors="replace")
-            raise RuntimeError(
-                f"HTTP {exc.code} from {self.base_url}: {body[:400]}"
-            ) from exc
+            raise RuntimeError(f"HTTP {exc.code} from {self.base_url}: {body[:400]}") from exc
         except urllib.error.URLError as exc:
-            raise RuntimeError(
-                f"Cannot reach {self.base_url}: {exc}"
-            ) from exc
+            raise RuntimeError(f"Cannot reach {self.base_url}: {exc}") from exc
 
         try:
             return data["choices"][0]["message"]["content"]
         except (KeyError, IndexError) as exc:
             raise RuntimeError(
-                f"Unexpected response shape from {self.base_url}: "
-                f"{json.dumps(data)[:300]}"
+                f"Unexpected response shape from {self.base_url}: {json.dumps(data)[:300]}"
             ) from exc

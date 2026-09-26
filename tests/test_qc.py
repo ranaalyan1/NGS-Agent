@@ -42,10 +42,7 @@ class TestQCParser:
         """Plaintext summary with Q30 and coverage should be extracted."""
         summary_file = tmp_path / "qc_summary.txt"
         summary_file.write_text(
-            "Mapping rate: 88.5%\n"
-            "Mean coverage: 42.1\n"
-            "Q30: 91.2%\n"
-            "Duplication rate: 12.4%\n",
+            "Mapping rate: 88.5%\nMean coverage: 42.1\nQ30: 91.2%\nDuplication rate: 12.4%\n",
             encoding="utf-8",
         )
         metrics = QCParser.parse(summary_file)

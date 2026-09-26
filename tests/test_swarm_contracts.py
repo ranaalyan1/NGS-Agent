@@ -30,7 +30,7 @@ def _load_agent_main(agent_dir: str, extra_stubs: dict | None = None):
 
         storage_mod.MinioStorage = MinioStorage
         sys.modules["storage"] = storage_mod
-    for name in (extra_stubs or {}):
+    for name in extra_stubs or {}:
         sys.modules[name] = (extra_stubs or {})[name]
     base_dir = str(ROOT / "agents" / "base")
     if base_dir not in sys.path:

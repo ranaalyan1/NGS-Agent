@@ -10,7 +10,6 @@ from pydantic import BaseModel
 from ngs_agent.tools.permissions import PermissionPolicy, SafetyLevel
 
 if False:  # pragma: no cover
-
     pass
 
 InputModelT = TypeVar("InputModelT", bound=BaseModel)

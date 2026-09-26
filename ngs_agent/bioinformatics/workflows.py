@@ -33,7 +33,7 @@ WORKFLOWS: dict[str, WorkflowSpec] = {
             key="rnaseq",
             label="RNA-Seq",
             description="Differential expression: QC, trimming, HISAT2 alignment, featureCounts,"
-                "MultiQC.",
+            "MultiQC.",
             keywords=(
                 "rnaseq",
                 "rna-seq",
@@ -60,7 +60,7 @@ WORKFLOWS: dict[str, WorkflowSpec] = {
             key="variant",
             label="Variant calling",
             description="Small variant calling: QC, BWA-MEM2 alignment, GATK variant calling,"
-                "snpEff annotation.",
+            "snpEff annotation.",
             keywords=(
                 "variant",
                 "variants",

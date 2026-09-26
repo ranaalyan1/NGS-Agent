@@ -1104,10 +1104,12 @@ def main() -> None:
     _write(growing/"truncated.part", _nextflow_banner()+"Command error:\njava.lang.OutOfMemoryError: Java heap")
     sm=FIX/"logs"/"snakemake"
     sm_cases={"missing_input":"MissingInputException: missing reads.fastq.gz\n", "ambiguous_rule":"AmbiguousRuleException: target output matches rules a and b\n", "unknown_target":"No rule to produce target.xyz\n", "wildcards":"WildcardError: Wildcards in input files cannot be determined\n", "conda":"ResolvePackageNotFound: missing package\n", "job_failed":"Error in rule align:\n(one of the commands exited with non-zero exit code 7)\n", "incomplete":"Removing output files of failed job: marked as incomplete\n", "cycle":"CyclicGraphException: cycle in the graph\n", "no_match":"Snakemake started workflow successfully\nBuilding DAG of jobs...\n"}
-    for name,content in sm_cases.items(): _write(sm/(name+".log"),content)
+    for name, content in sm_cases.items():
+        _write(sm / (name + ".log"), content)
     cw=FIX/"logs"/"cromwell"
     cw_cases={"failed_call":"Call AlignTask failed\n", "shard_retry":"Shard 2 failed after retries exhausted\n", "backend":"Backend error: failed to submit job\n", "localization":"Failed to localize input file\n", "capture":"Failed to read task stdout file\n", "no_match":"Cromwell workflow is running\n"}
-    for name,content in cw_cases.items(): _write(cw/(name+".log"),content)
+    for name, content in cw_cases.items():
+        _write(cw / (name + ".log"), content)
     _write(FIX / "wdl" / "example.wdl", make_wdl_source())
 
     _write(FIX / "multiqc" / "multiqc_general_stats.txt", make_multiqc_general_stats())

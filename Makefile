@@ -29,7 +29,7 @@ test-integration:
 	pytest -m "integration"
 
 lint:
-	ruff check ngs_agent tests
+	ruff check ngs_agent core doors scripts tests agents
 	ruff format --check ngs_agent tests
 
 format:

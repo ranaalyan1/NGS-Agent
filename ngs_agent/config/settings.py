@@ -30,6 +30,7 @@ class NGSSettings(BaseModel):
     @classmethod
     def validate_safety_levels(cls, v: set[str]) -> set[str]:
         from ngs_agent.tools.permissions import SafetyLevel
+
         valid_levels = {level.value for level in SafetyLevel}
         for level in v:
             if level not in valid_levels:

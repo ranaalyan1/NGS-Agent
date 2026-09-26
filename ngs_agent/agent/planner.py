@@ -104,7 +104,7 @@ class PlannerAgent:
             risks.append(
                 f"Tool '{conflict.name}' resolves to {conflict.path}, outside the expected "
                 f"environment prefix {report.expected_prefix}; a different version may run  than"
-                    f"the one pinned in environment.yml."
+                f"the one pinned in environment.yml."
             )
             next_actions.append(
                 f"Activate the project environment (or set NGS_TOOL_PREFIX) so "
@@ -148,13 +148,13 @@ class PlannerAgent:
         if workflow.key == "rnaseq" and self._discover_hisat2_index(context) is None:
             risks.append(
                 "No prebuilt HISAT2 index found; the plan includes an index-build step (or will"
-                    "stop before alignment if no FASTA is available)."
+                "stop before alignment if no FASTA is available)."
             )
         risks.append("Expensive steps require confirmation unless explicitly suppressed by policy.")
         if not context.samples:
             risks.append(
                 "No samplesheet discovered; the plan uses generic single-sample steps.  Provide"
-                    "a samplesheet (sample,fastq_1,fastq_2) for per-sample parallel execution."
+                "a samplesheet (sample,fastq_1,fastq_2) for per-sample parallel execution."
             )
 
         next_actions = list(env_actions)
@@ -162,7 +162,7 @@ class PlannerAgent:
             next_actions.insert(
                 0,
                 f"Use discovered samplesheet: {context.samplesheets[0].name}"
-                    f"({len(context.samples)} samples)",
+                f"({len(context.samples)} samples)",
             )
         elif not context.samples:
             next_actions.append("Provide a samplesheet or run in dry-run mode to inspect context.")
@@ -172,7 +172,7 @@ class PlannerAgent:
             objective=objective,
             workflow=workflow.key,
             summary=f"{workflow.label} analysis plan prepared from the current experiment"
-                f"context. {workflow.description}",
+            f"context. {workflow.description}",
             estimated_duration_minutes=estimated_duration,
             estimated_cost_label="medium" if estimated_duration < 120 else "high",
             context=context,
@@ -197,7 +197,7 @@ class PlannerAgent:
             PlanStep(
                 name="discover-context",
                 description="Inspect the working directory for samplesheets, references, and"
-                    "existing checkpoints.",
+                "existing checkpoints.",
                 command_preview=f"scan {context.working_directory}",
                 safety_level=SafetyLevel.READ,
                 estimated_duration_minutes=1,
@@ -216,7 +216,7 @@ class PlannerAgent:
                     PlanStep(
                         name="build-index",
                         description=f"Build HISAT2 index from {fasta.name} (no prebuilt index"
-                            f"found).",
+                        f"found).",
                         command_preview=f"hisat2-build {fasta.name} genome_index",
                         safety_level=SafetyLevel.EXPENSIVE,
                         estimated_duration_minutes=45,
@@ -275,7 +275,7 @@ class PlannerAgent:
                     PlanStep(
                         name=f"trim-{record.sample}",
                         description=f"Trim reads for sample {record.sample} using the"
-                            f"QC-informed policy.",
+                        f"QC-informed policy.",
                         command_preview=(
                             f"trimmomatic {'PE' if record.paired_end else 'SE'} -> {trim_dir}"
                         ),
@@ -322,7 +322,7 @@ class PlannerAgent:
                             )
                         ),
                         command_preview=f"hisat2 -x {Path(index_basename).name}"
-                            f"--known-splicesites-infile splicesites.txt | samtools view",
+                        f"--known-splicesites-infile splicesites.txt | samtools view",
                         safety_level=SafetyLevel.EXPENSIVE,
                         estimated_duration_minutes=30,
                         estimated_cost_label="medium",
@@ -467,7 +467,7 @@ class PlannerAgent:
                     PlanStep(
                         name="quantify",
                         description="Generate gene-level counts for downstream differential"
-                            "expression.",
+                        "expression.",
                         command_preview="featureCounts",
                         safety_level=SafetyLevel.EXPENSIVE,
                         estimated_duration_minutes=20,
@@ -484,7 +484,7 @@ class PlannerAgent:
             PlanStep(
                 name="report",
                 description="Render publication-ready HTML report, provenance manifest, and AI"
-                    "summary.",
+                "summary.",
                 command_preview="report.html + manifest.jsonl",
                 safety_level=SafetyLevel.WRITE,
                 estimated_duration_minutes=5,
@@ -571,7 +571,7 @@ class PlannerAgent:
             PlanStep(
                 name="discover-context",
                 description="Inspect the working directory for samplesheets, references, and"
-                    "existing checkpoints.",
+                "existing checkpoints.",
                 command_preview=f"scan {context.working_directory}",
                 safety_level=SafetyLevel.READ,
                 estimated_duration_minutes=1,
@@ -652,8 +652,8 @@ class PlannerAgent:
                         "role": "user",
                         "content": (
                             "You are an expert NGS workflow planner. Produce a concise JSON plan"
-                                "with steps, duration estimates, risks, next_actions, and safety "
-                                "flags. "
+                            "with steps, duration estimates, risks, next_actions, and safety "
+                            "flags. "
                             "Use the current experiment context only. "
                             f"Objective: {objective}\n"
                             f"Workflow: {workflow}\n"

@@ -50,9 +50,9 @@ class VerifierAgent:
                     VerificationIssue(
                         severity=IssueSeverity.ERROR,
                         message=f"Step {outcome.step_name} failed with return code"
-                            f"{outcome.returncode}.",
+                        f"{outcome.returncode}.",
                         remediation="Inspect stderr, rerun the failed step, or resume from the"
-                            "checkpoint.",
+                        "checkpoint.",
                     )
                 )
             if outcome.status == StepStatus.SKIPPED:
@@ -64,7 +64,7 @@ class VerifierAgent:
                             f"({outcome.details.get('reason', 'unknown reason')})."
                         ),
                         remediation="Resolve the upstream failure and re-run; skipped steps"
-                            "produced no outputs.",
+                        "produced no outputs.",
                     )
                 )
             produced_paths.extend(_collect_paths(outcome.artifacts))
@@ -90,7 +90,7 @@ class VerifierAgent:
                     severity=IssueSeverity.WARNING,
                     message=f"Expected artifact not observed on disk: {item}",
                     remediation="Check the selected backend, tool availability, and working"
-                        "directory mounts.",
+                    "directory mounts.",
                 )
             )
 

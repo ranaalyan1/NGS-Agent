@@ -97,12 +97,12 @@ def parse_samplesheet(path: Path, validate_files: bool = True) -> list[SampleRec
         if sample_col is None:
             raise SampleSheetError(
                 f"Samplesheet {path.name} has no sample column (expected one of"
-                    f"{sorted(SAMPLE_ALIASES)})"
+                f"{sorted(SAMPLE_ALIASES)})"
             )
         if r1_col is None:
             raise SampleSheetError(
                 f"Samplesheet {path.name} has no fastq_1 column (expected one of"
-                    f"{sorted(FASTQ1_ALIASES)})"
+                f"{sorted(FASTQ1_ALIASES)})"
             )
 
         records: list[SampleRecord] = []

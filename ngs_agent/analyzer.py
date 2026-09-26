@@ -63,7 +63,12 @@ def parse_vcf(path: Path) -> list[Variant]:
             format_keys = parts[8].split(":") if len(parts) > 8 else []
             fmt = parts[9] if len(parts) > 9 else ""
 
-            csq_raw = _info_field(info, "CSQ") or _info_field(info, "ANN") or _info_field(info, "CONSEQUENCE") or "."
+            csq_raw = (
+                _info_field(info, "CSQ")
+                or _info_field(info, "ANN")
+                or _info_field(info, "CONSEQUENCE")
+                or "."
+            )
             consequence = _parse_consequence(csq_raw)
 
             gene = _info_field(info, "GENE") or _info_field(info, "SYMBOL")

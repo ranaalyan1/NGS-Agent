@@ -46,7 +46,15 @@ def run_diagnostics(console: Console | None = None) -> list[DiagnosticCheck]:
     if sys.version_info >= (3, 11):
         checks.append(DiagnosticCheck("Runtime", "Python Version", "OK", f"Python {py_ver}"))
     else:
-        checks.append(DiagnosticCheck("Runtime", "Python Version", "WARN", f"Python {py_ver}", "Recommended Python >= 3.11"))
+        checks.append(
+            DiagnosticCheck(
+                "Runtime",
+                "Python Version",
+                "WARN",
+                f"Python {py_ver}",
+                "Recommended Python >= 3.11",
+            )
+        )
 
     # 2. Bioinformatics Binaries
     bio_tools = [
@@ -63,7 +71,15 @@ def run_diagnostics(console: Console | None = None) -> list[DiagnosticCheck]:
         if path:
             checks.append(DiagnosticCheck("Bioinformatics", label, "OK", path))
         else:
-            checks.append(DiagnosticCheck("Bioinformatics", label, "WARN", "Not in PATH", f"Only needed for pipeline execution: {desc}"))
+            checks.append(
+                DiagnosticCheck(
+                    "Bioinformatics",
+                    label,
+                    "WARN",
+                    "Not in PATH",
+                    f"Only needed for pipeline execution: {desc}",
+                )
+            )
 
     # 3. Container & Workflow Runtimes
     container_tools = [
@@ -82,10 +98,15 @@ def run_diagnostics(console: Console | None = None) -> list[DiagnosticCheck]:
     cfg = load_config()
     active_llm = str(cfg.get("llm", "none") or "none").lower()
     if active_llm in ("none", ""):
-        checks.append(DiagnosticCheck(
-            "LLM Config", "Configured Backend", "INFO", "none",
-            "Only `debate` needs an LLM. Run `ngsagent config wizard` to set one up.",
-        ))
+        checks.append(
+            DiagnosticCheck(
+                "LLM Config",
+                "Configured Backend",
+                "INFO",
+                "none",
+                "Only `debate` needs an LLM. Run `ngsagent config wizard` to set one up.",
+            )
+        )
     else:
         checks.append(DiagnosticCheck("LLM Config", "Configured Backend", "OK", active_llm))
 
@@ -94,36 +115,53 @@ def run_diagnostics(console: Console | None = None) -> list[DiagnosticCheck]:
         if backend == active_llm:
             # The active backend must actually have credentials.
             if has:
-                checks.append(DiagnosticCheck("LLM Keys", label, "OK", "Available (active backend)"))
+                checks.append(
+                    DiagnosticCheck("LLM Keys", label, "OK", "Available (active backend)")
+                )
             else:
-                checks.append(DiagnosticCheck(
-                    "LLM Keys", label, "MISSING",
-                    "Not set — `debate` will fail",
-                    f"Set {env_var} or re-run `ngsagent config wizard`.",
-                ))
+                checks.append(
+                    DiagnosticCheck(
+                        "LLM Keys",
+                        label,
+                        "MISSING",
+                        "Not set — `debate` will fail",
+                        f"Set {env_var} or re-run `ngsagent config wizard`.",
+                    )
+                )
         else:
-            checks.append(DiagnosticCheck(
-                "LLM Keys", label, "OK" if has else "INFO",
-                "Available" if has else "Not set",
-            ))
+            checks.append(
+                DiagnosticCheck(
+                    "LLM Keys",
+                    label,
+                    "OK" if has else "INFO",
+                    "Available" if has else "Not set",
+                )
+            )
 
     # Ollama (local, no API key) — check reachability when selected.
     if active_llm == "ollama":
         host = str(cfg.get("ollama_host", "http://localhost:11434"))
         import urllib.request
+
         try:
             with urllib.request.urlopen(host.rstrip("/") + "/api/tags", timeout=3) as resp:
                 reachable = resp.status == 200
         except Exception:
             reachable = False
         if reachable:
-            checks.append(DiagnosticCheck("LLM Keys", "Ollama Server", "OK", f"Reachable at {host}"))
+            checks.append(
+                DiagnosticCheck("LLM Keys", "Ollama Server", "OK", f"Reachable at {host}")
+            )
         else:
-            checks.append(DiagnosticCheck(
-                "LLM Keys", "Ollama Server", "MISSING",
-                f"Unreachable at {host} — `debate` will fail",
-                "Start Ollama (`ollama serve`) and pull a model (`ollama pull llama3.2`).",
-            ))
+            checks.append(
+                DiagnosticCheck(
+                    "LLM Keys",
+                    "Ollama Server",
+                    "MISSING",
+                    f"Unreachable at {host} — `debate` will fail",
+                    "Start Ollama (`ollama serve`) and pull a model (`ollama pull llama3.2`).",
+                )
+            )
 
     return checks
 
@@ -148,7 +186,9 @@ def print_diagnostics(checks: list[DiagnosticCheck], console: Console | None = N
     table.add_column("Hint / Resolution")
 
     for c in checks:
-        style = {"OK": "green", "WARN": "yellow", "MISSING": "red", "INFO": "dim white"}.get(c.status, "white")
+        style = {"OK": "green", "WARN": "yellow", "MISSING": "red", "INFO": "dim white"}.get(
+            c.status, "white"
+        )
         table.add_row(c.category, c.name, f"[{style}]{c.status}[/{style}]", c.details, c.hint)
 
     con.print(table)

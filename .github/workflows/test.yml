@@ -36,7 +36,7 @@ jobs:
 
     - name: Run ruff check
       run: |
-        ruff check ngs_agent/ tests/ agents/
+        ruff check ngs_agent/ core/ doors/ scripts/ tests/ agents/
 
     - name: Run mypy
       run: |

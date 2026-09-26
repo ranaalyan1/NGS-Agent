@@ -34,8 +34,15 @@ from rich.text import Text
 # ---------------------------------------------------------------------------
 
 Expression = Literal[
-    "happy", "thinking", "analyzing", "running",
-    "success", "error", "curious", "coffee", "sleeping",
+    "happy",
+    "thinking",
+    "analyzing",
+    "running",
+    "success",
+    "error",
+    "curious",
+    "coffee",
+    "sleeping",
 ]
 
 # ---------------------------------------------------------------------------
@@ -55,8 +62,8 @@ Expression = Literal[
 # Base body — expression-neutral rows (eyes and mouth are substituted)
 # Column layout: leading 2 spaces so centering works nicely
 _BODY = [
-    #0         1         2
-    #0123456789012345678901234567
+    # 0         1         2
+    # 0123456789012345678901234567
     "    ╭═╮   ╭═╮              ",  # 0  antenna tops
     "    ║G║   ║C║              ",  # 1  DNA bases
     "    ╰═╯   ╰═╯              ",  # 2  antenna bottoms
@@ -76,7 +83,7 @@ _BODY = [
 
 # Eye row index and pupil column positions (left-eye, right-eye)
 _EYE_ROW = 6
-_LEFT_PUPIL_COL = 7   # the ◉ char in "( ◉ )"
+_LEFT_PUPIL_COL = 7  # the ◉ char in "( ◉ )"
 _RIGHT_PUPIL_COL = 17
 
 # Mouth row index
@@ -85,41 +92,41 @@ _MOUTH_ROW = 8
 # Mouth strings per expression (must fit in the body width between │ chars)
 # Each string is exactly the content of row 8 (replaces "       ‿‿‿        ")
 _MOUTHS: dict[Expression, str] = {
-    "happy":     "  │       ‿‿‿        │      ",   # smile
-    "thinking":  "  │       ···        │      ",   # dots
-    "analyzing": "  │      ─────       │      ",   # flat focused
-    "running":   "  │      ≋≋≋≋≋       │      ",   # vibrating
-    "success":   "  │      \\(^▽^)/     │      ",   # celebration
-    "error":     "  │       ︵         │      ",   # sad
-    "curious":   "  │       ·‿·        │      ",   # curious small smile
-    "coffee":    "  │      ～～～       │      ",   # steam/drinking
-    "sleeping":  "  │      ─ ─ ─       │      ",   # flat sleeping
+    "happy": "  │       ‿‿‿        │      ",  # smile
+    "thinking": "  │       ···        │      ",  # dots
+    "analyzing": "  │      ─────       │      ",  # flat focused
+    "running": "  │      ≋≋≋≋≋       │      ",  # vibrating
+    "success": "  │      \\(^▽^)/     │      ",  # celebration
+    "error": "  │       ︵         │      ",  # sad
+    "curious": "  │       ·‿·        │      ",  # curious small smile
+    "coffee": "  │      ～～～       │      ",  # steam/drinking
+    "sleeping": "  │      ─ ─ ─       │      ",  # flat sleeping
 }
 
 # Eye strings per expression (replaces row 6 entirely)
 _EYES: dict[Expression, str] = {
-    "happy":     "  │  ( ◉ )   ( ◉ )  │      ",
-    "thinking":  "  │  ( ◔ )   ( ◉ )  │      ",   # one eye up
-    "analyzing": "  │  ( ◈ )   ( ◈ )  │      ",   # focused square pupils
-    "running":   "  │  ( ◉ )   ( ◉ )  │      ",
-    "success":   "  │  ( ★ )   ( ★ )  │      ",   # star eyes
-    "error":     "  │  ( × )   ( × )  │      ",   # X eyes
-    "curious":   "  │  ( ◔ )   ( ◔ )  │      ",   # looking up
-    "coffee":    "  │  ( - )   ( - )  │      ",   # half-closed
-    "sleeping":  "  │  ( _ )   ( _ )  │      ",   # closed
+    "happy": "  │  ( ◉ )   ( ◉ )  │      ",
+    "thinking": "  │  ( ◔ )   ( ◉ )  │      ",  # one eye up
+    "analyzing": "  │  ( ◈ )   ( ◈ )  │      ",  # focused square pupils
+    "running": "  │  ( ◉ )   ( ◉ )  │      ",
+    "success": "  │  ( ★ )   ( ★ )  │      ",  # star eyes
+    "error": "  │  ( × )   ( × )  │      ",  # X eyes
+    "curious": "  │  ( ◔ )   ( ◔ )  │      ",  # looking up
+    "coffee": "  │  ( - )   ( - )  │      ",  # half-closed
+    "sleeping": "  │  ( _ )   ( _ )  │      ",  # closed
 }
 
 # Nucleus glow per expression
 _NUCLEUS: dict[Expression, str] = {
-    "happy":     "  │    ·  ⊛  ·      │      ",
-    "thinking":  "  │    ·  ⊙  ·      │      ",
+    "happy": "  │    ·  ⊛  ·      │      ",
+    "thinking": "  │    ·  ⊙  ·      │      ",
     "analyzing": "  │    ·  ⊕  ·      │      ",
-    "running":   "  │    ·  ⊗  ·      │      ",
-    "success":   "  │    ✦  ⊛  ✦      │      ",
-    "error":     "  │    ·  ⊘  ·      │      ",
-    "curious":   "  │    ·  ⊙  ·      │      ",
-    "coffee":    "  │    ·  ⊛  ·      │      ",
-    "sleeping":  "  │    ·  ⊙  ·      │      ",
+    "running": "  │    ·  ⊗  ·      │      ",
+    "success": "  │    ✦  ⊛  ✦      │      ",
+    "error": "  │    ·  ⊘  ·      │      ",
+    "curious": "  │    ·  ⊙  ·      │      ",
+    "coffee": "  │    ·  ⊛  ·      │      ",
+    "sleeping": "  │    ·  ⊙  ·      │      ",
 }
 
 # Pupil movement bounds (for mouse tracking)
@@ -128,21 +135,22 @@ PUPIL_DY_RANGE = (-1, 1)
 
 # Map pupil char per expression (replaces ◉)
 _PUPIL_CHAR: dict[Expression, str] = {
-    "happy":     "◉",
-    "thinking":  "◔",
+    "happy": "◉",
+    "thinking": "◔",
     "analyzing": "◈",
-    "running":   "◉",
-    "success":   "★",
-    "error":     "×",
-    "curious":   "◔",
-    "coffee":    "-",
-    "sleeping":  "_",
+    "running": "◉",
+    "success": "★",
+    "error": "×",
+    "curious": "◔",
+    "coffee": "-",
+    "sleeping": "_",
 }
 
 
 # ---------------------------------------------------------------------------
 # render_nibi
 # ---------------------------------------------------------------------------
+
 
 def render_nibi(
     theme: dict,
@@ -163,9 +171,9 @@ def render_nibi(
         Only applied on expressions with movable pupils (happy, running,
         curious). Clamped to PUPIL_DX_RANGE / PUPIL_DY_RANGE.
     """
-    accent     = theme.get("accent",     "#00FF9C")
+    accent = theme.get("accent", "#00FF9C")
     accent_dim = theme.get("accent_dim", "#00805A")
-    muted      = theme.get("muted",      "dim white")
+    muted = theme.get("muted", "dim white")
 
     # Coral/salmon body color — Nibi's signature look from the design sheet
     body_color = "#FF6B6B"
@@ -173,8 +181,8 @@ def render_nibi(
     # Build the grid from the base body, substituting expression rows
     grid: list[str] = list(_BODY)
     grid[_MOUTH_ROW] = _MOUTHS.get(expression, _MOUTHS["happy"])
-    grid[_EYE_ROW]   = _EYES.get(expression, _EYES["happy"])
-    grid[9]          = _NUCLEUS.get(expression, _NUCLEUS["happy"])
+    grid[_EYE_ROW] = _EYES.get(expression, _EYES["happy"])
+    grid[9] = _NUCLEUS.get(expression, _NUCLEUS["happy"])
 
     # Apply mouse-tracking pupil offset for expressions that support it
     movable = expression in ("happy", "running", "curious", "thinking", "analyzing")
@@ -187,7 +195,7 @@ def render_nibi(
         # Left eye bracket spans roughly cols 5-9, right eye cols 15-19.
         pupil_char = _PUPIL_CHAR.get(expression, "◉")
         eye_str = grid[_EYE_ROW]
-        chars   = list(eye_str)
+        chars = list(eye_str)
         # Shift left pupil col
         lc = _LEFT_PUPIL_COL + dx
         lc = max(5, min(9, lc))
@@ -244,15 +252,15 @@ def render_nibi(
 # ---------------------------------------------------------------------------
 
 EXPRESSION_HINTS: dict[Expression, str] = {
-    "happy":     "Nibi is ready  ·  move your mouse  ·  press any key to continue",
-    "thinking":  "Nibi is thinking...",
+    "happy": "Nibi is ready  ·  move your mouse  ·  press any key to continue",
+    "thinking": "Nibi is thinking...",
     "analyzing": "Nibi is analyzing your data...",
-    "running":   "Nibi is running the pipeline...",
-    "success":   "Done! Nibi is happy with the results.",
-    "error":     "Nibi encountered an error.",
-    "curious":   "Nibi is curious about that file...",
-    "coffee":    "Nibi is taking a coffee break. ☕",
-    "sleeping":  "Nibi is sleeping. zZz",
+    "running": "Nibi is running the pipeline...",
+    "success": "Done! Nibi is happy with the results.",
+    "error": "Nibi encountered an error.",
+    "curious": "Nibi is curious about that file...",
+    "coffee": "Nibi is taking a coffee break. ☕",
+    "sleeping": "Nibi is sleeping. zZz",
 }
 
 
@@ -263,6 +271,7 @@ EXPRESSION_HINTS: dict[Expression, str] = {
 try:
     import termios  # type: ignore[import]
     import tty  # type: ignore[import]
+
     HAVE_TERMIOS = True
 except ImportError:
     HAVE_TERMIOS = False
@@ -393,6 +402,7 @@ class MouseTracker:
 # show_nibi_intro — welcome screen with live eye tracking
 # ---------------------------------------------------------------------------
 
+
 def show_nibi_intro(
     console: Console,
     theme: dict,
@@ -432,8 +442,7 @@ def show_nibi_intro(
 
     started = False
     try:
-        with Live(build(), console=console, refresh_per_second=15,
-                  transient=False) as live:
+        with Live(build(), console=console, refresh_per_second=15, transient=False) as live:
             if not tracker.start():
                 time.sleep(2.0)
                 return
@@ -466,6 +475,7 @@ def show_nibi_intro(
 # show_nibi_inline — one-shot render for status bars and non-live contexts
 # ---------------------------------------------------------------------------
 
+
 def show_nibi_inline(
     console: Console,
     theme: dict,
@@ -473,12 +483,11 @@ def show_nibi_inline(
 ) -> None:
     """Print Nibi statically (no Live block, no mouse tracking)."""
     from rich.align import Align
+
     console.print(Align.center(render_nibi(theme, expression)))
     hint = EXPRESSION_HINTS.get(expression, "")
     if hint:
-        console.print(
-            Align.center(Text(hint, style=f"italic {theme.get('muted', 'dim white')}"))
-        )
+        console.print(Align.center(Text(hint, style=f"italic {theme.get('muted', 'dim white')}")))
 
 
 # ---------------------------------------------------------------------------
@@ -494,15 +503,22 @@ if __name__ == "__main__":
     con = Console(force_terminal=True, legacy_windows=False)
     con.clear()
     con.print()
-    con.print(Text("NGS-Agent — Nibi preview", style=f"bold {theme['accent']}"),
-              justify="center")
+    con.print(Text("NGS-Agent — Nibi preview", style=f"bold {theme['accent']}"), justify="center")
     con.print()
 
     # Cycle through all expressions
     import time as _t
+
     exprs: list[Expression] = [
-        "happy", "thinking", "analyzing", "running",
-        "success", "error", "curious", "coffee", "sleeping",
+        "happy",
+        "thinking",
+        "analyzing",
+        "running",
+        "success",
+        "error",
+        "curious",
+        "coffee",
+        "sleeping",
     ]
     for expr in exprs:
         con.clear()
@@ -512,8 +528,9 @@ if __name__ == "__main__":
 
     con.clear()
     con.print()
-    con.print(Text("Live eye-tracking (8s) — move your mouse",
-                   style=theme["muted"]), justify="center")
+    con.print(
+        Text("Live eye-tracking (8s) — move your mouse", style=theme["muted"]), justify="center"
+    )
     con.print()
     show_nibi_intro(con, theme, duration=8.0)
     con.print()

@@ -10,6 +10,7 @@ class TestExtractJson:
     def _extract_json(text: str) -> dict | None:
         """Copy of the helper from agents - will be DRY'd in Phase 2."""
         import re
+
         if not text:
             return None
         for candidate in [text.strip()] + [
@@ -33,16 +34,16 @@ class TestExtractJson:
 
     def test_json_with_surrounding_text(self):
         """JSON embedded in text should be extracted via regex."""
-        text = '''Here's the result: {"verdict": "pass", "confidence": 0.95}. Hope that helps!'''
+        text = """Here's the result: {"verdict": "pass", "confidence": 0.95}. Hope that helps!"""
         result = self._extract_json(text)
         assert result is not None
         assert result["verdict"] == "pass"
 
     def test_json_with_markdown_fences(self):
         """JSON in markdown code blocks should be extracted."""
-        text = '''```json
+        text = """```json
 {"status": "ok", "data": [1, 2, 3]}
-```'''
+```"""
         result = self._extract_json(text)
         assert result is not None
         assert result["status"] == "ok"
@@ -129,6 +130,7 @@ class TestNormalizeParams:
     def _normalize_params(params: dict) -> dict:
         """Copy from AIDeciderAgent - clamp and validate trim params."""
         import re
+
         merged = {**TestNormalizeParams.DEFAULT_TRIM_PARAMS, **(params or {})}
 
         try:
@@ -160,7 +162,7 @@ class TestNormalizeParams:
         """Out-of-range params should be clamped."""
         result = self._normalize_params({"LEADING": 100, "MINLEN": 10})
         assert result["LEADING"] == 40  # max
-        assert result["MINLEN"] == 36   # min
+        assert result["MINLEN"] == 36  # min
 
     def test_invalid_slidingwindow_resets_to_default(self):
         """Invalid SLIDINGWINDOW format should reset to default."""

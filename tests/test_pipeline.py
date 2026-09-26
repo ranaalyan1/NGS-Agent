@@ -21,7 +21,9 @@ def _docker_available() -> bool:
     return shutil.which("docker") is not None
 
 
-def _run_container(agent: str, inputs: dict, routing: dict, mounts: list[tuple[str, str]] | None = None):
+def _run_container(
+    agent: str, inputs: dict, routing: dict, mounts: list[tuple[str, str]] | None = None
+):
     cmd = ["docker", "run", "--rm"]
     # The agents reach MinIO at S3_ENDPOINT (http://localhost:9000 on the CI
     # host); with the default bridge network "localhost" would be the agent

@@ -286,7 +286,7 @@ def doctor() -> None:
         selected = selector.select(settings.backend_preference)
         console.print(
             f"[dim]Backend ({settings.backend_preference}): {selected.backend.name} -"
-                f"{selected.reason}[/dim]"
+            f"{selected.reason}[/dim]"
         )
     except RuntimeError as exc:
         console.print(f"[red]Backend: {exc}[/red]")

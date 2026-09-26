@@ -1,6 +1,5 @@
 """Unit tests for HTML and Markdown report generation."""
 
-
 from ngs_agent.analyzer import Variant
 from ngs_agent.debate import DebateResult, PersonaOpinion
 from ngs_agent.qc import QCMetric
@@ -47,8 +46,18 @@ class TestReportBuilder:
             DebateResult(
                 variant=variants[1],
                 opinions=[
-                    PersonaOpinion(persona="Pop Gen", stance="VUS", reasoning="Low AF but present in gnomAD.", acmg_criteria=["PM2"]),
-                    PersonaOpinion(persona="Clin Gen", stance="Likely Pathogenic", reasoning="Phenotype matches BRCA2 syndrome.", acmg_criteria=["PP4"]),
+                    PersonaOpinion(
+                        persona="Pop Gen",
+                        stance="VUS",
+                        reasoning="Low AF but present in gnomAD.",
+                        acmg_criteria=["PM2"],
+                    ),
+                    PersonaOpinion(
+                        persona="Clin Gen",
+                        stance="Likely Pathogenic",
+                        reasoning="Phenotype matches BRCA2 syndrome.",
+                        acmg_criteria=["PP4"],
+                    ),
                 ],
                 consensus="Debate resolved via ACMG criteria: Likely Pathogenic.",
                 recommendation="Prioritize BRCA2 for clinical correlation.",
@@ -56,7 +65,9 @@ class TestReportBuilder:
         ]
 
         out_html = tmp_path / "test_report.html"
-        html = generate_html_report(variants, qc_metrics=qc_metrics, debates=debates, output_path=out_html)
+        html = generate_html_report(
+            variants, qc_metrics=qc_metrics, debates=debates, output_path=out_html
+        )
 
         assert out_html.exists()
         assert "BRCA1" in html

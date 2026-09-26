@@ -12,6 +12,7 @@ from ngs_agent.watcher import (
 
 DATA_DIR = Path(__file__).parent / "data"
 
+
 class TestSignatureLoading:
     """Test signature RAML loading and compilation."""
 
@@ -29,6 +30,7 @@ class TestSignatureLoading:
         sigs = load_signatures()
         for sig in sigs:
             assert len(sig._compiled) > 0
+
 
 class TestExtractValue:
     """Test numeric and scientific notation extraction from log lines."""
@@ -56,6 +58,7 @@ class TestExtractValue:
     def test_empty_line_returns_none(self):
         assert _extract_value("", None) is None
 
+
 class TestMatchLine:
     """Test matching single lines against signatures."""
 
@@ -80,16 +83,14 @@ class TestMatchLine:
         assert match_line("# Comment line with 5% alignment", 1, sigs) == []
         assert match_line("   ", 2, sigs) == []
 
+
 class TestScanFile:
     """Test scanning files."""
 
     def test_scan_file_returns_matches(self, tmp_path):
         log_file = tmp_path / "test.log"
         log_file.write_text(
-            "Starting alignment...\n"
-            "Overall alignment rate: 65.0%\n"
-            "Duplicate rate: 45.0%\n"
-            "Done.\n",
+            "Starting alignment...\nOverall alignment rate: 65.0%\nDuplicate rate: 45.0%\nDone.\n",
             encoding="utf-8",
         )
         sigs = load_signatures()

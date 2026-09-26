@@ -522,7 +522,7 @@ class TrimmomaticTool(BioinformaticsTool[TrimmomaticInput, TrimmomaticOutput]):
                         "role": "user",
                         "content": (
                             "You are an NGS trimming expert. Return strict JSON with trim params"
-                                "and confidence. "
+                            "and confidence. "
                             f"FastQC summary: {summary}\n"
                             'Schema: {"params": {...}, "confidence": 0.0-1.0, "source": string}'
                         ),
@@ -543,8 +543,7 @@ class TrimmomaticTool(BioinformaticsTool[TrimmomaticInput, TrimmomaticOutput]):
             )
         except (json.JSONDecodeError, ValueError, TypeError) as exc:
             logger.warning(
-                "AI trim parameter selection returned invalid data (%s); falling back to"
-                    "heuristics",
+                "AI trim parameter selection returned invalid data (%s); falling back toheuristics",
                 exc,
             )
             return None
@@ -596,7 +595,7 @@ class TrimmomaticTool(BioinformaticsTool[TrimmomaticInput, TrimmomaticOutput]):
         params = dict(default_params)
         reasons.append(
             f"Parsed {len(entries)} FastQC module results ({len(failed_modules)} FAIL,"
-                f"{len(warned_modules)} WARN)"
+            f"{len(warned_modules)} WARN)"
         )
 
         # Module-driven policy: adapter contamination and low per-base quality
@@ -628,7 +627,7 @@ class TrimmomaticTool(BioinformaticsTool[TrimmomaticInput, TrimmomaticOutput]):
         confidence = min(0.95, round(confidence, 2))
         reasons.append(
             f"Confidence {confidence:.2f} = 0.5 base + FAIL/WARN evidence + actionable-module"
-                f"bonus (capped 0.95)"
+            f"bonus (capped 0.95)"
         )
         return params, "heuristic:fastqc", confidence, reasons
 
@@ -768,7 +767,7 @@ class HISAT2Tool(BioinformaticsTool[HISAT2Input, HISAT2Output]):
     name = "hisat2"
     description = (
         "Splice-aware alignment with HISAT2, using known splice sites extracted  from the GTF"
-            "annotation (--known-splicesites-infile)."
+        "annotation (--known-splicesites-infile)."
     )
     safety_level = SafetyLevel.EXPENSIVE
     estimated_cost = "high"
@@ -951,7 +950,7 @@ class SamtoolsTool(BioinformaticsTool[SamtoolsInput, SamtoolsOutput]):
             if payload.output_path is None:
                 raise ToolExecutionError(
                     "samtools view requires output_path (records are otherwise written to"
-                        "stdout, not a file)."
+                    "stdout, not a file)."
                 )
             command = [
                 "samtools",
@@ -1000,7 +999,7 @@ class FeatureCountsTool(BioinformaticsTool[FeatureCountsInput, FeatureCountsOutp
     name = "featureCounts"
     description = (
         "Gene-level quantification with featureCounts: strandness-aware  (-s), multi-mapping"
-            "reads excluded by default, optional MAPQ pre-filtering."
+        "reads excluded by default, optional MAPQ pre-filtering."
     )
     safety_level = SafetyLevel.EXPENSIVE
     estimated_cost = "medium"
@@ -1184,7 +1183,7 @@ class DESeq2Tool(BioinformaticsTool[DESeq2Input, DESeq2Output]):
         if not script.exists():
             raise ToolExecutionError(
                 f"DESeq2 analysis script not found: {script}. The R components ship with the"
-                    f"package;  reinstall ngs-agent or report a packaging bug."
+                f"package;  reinstall ngs-agent or report a packaging bug."
             )
         payload.output_dir.mkdir(parents=True, exist_ok=True)
         command = [
@@ -1242,7 +1241,7 @@ class GOEnrichmentTool(BioinformaticsTool[GOEnrichmentInput, GOEnrichmentOutput]
         if not script.exists():
             raise ToolExecutionError(
                 f"Enrichment analysis script not found: {script}. The R components ship with the"
-                    f"package;  reinstall ngs-agent or report a packaging bug."
+                f"package;  reinstall ngs-agent or report a packaging bug."
             )
         payload.output_dir.mkdir(parents=True, exist_ok=True)
         command = [

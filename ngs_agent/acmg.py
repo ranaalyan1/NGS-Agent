@@ -166,8 +166,8 @@ def compute_acmg_classification(criteria_codes: list[str]) -> ACMGEvaluation:
     bs = sum(1 for c in codes if c.startswith("BS"))
     bp = sum(1 for c in codes if c.startswith("BP"))
 
-    has_pathogenic = (pvs1 > 0 or ps > 0 or pm > 0 or pp > 0)
-    has_benign = (ba1 > 0 or bs > 0 or bp > 0)
+    has_pathogenic = pvs1 > 0 or ps > 0 or pm > 0 or pp > 0
+    has_benign = ba1 > 0 or bs > 0 or bp > 0
 
     # Standalone Benign
     if ba1 >= 1 and not has_pathogenic:
@@ -218,10 +218,7 @@ def compute_acmg_classification(criteria_codes: list[str]) -> ACMGEvaluation:
         )
 
     # Likely Benign combinations
-    is_likely_benign = (
-        (bs >= 1 and bp >= 1)
-        or (bp >= 2)
-    )
+    is_likely_benign = (bs >= 1 and bp >= 1) or (bp >= 2)
     if is_likely_benign and not has_pathogenic:
         return ACMGEvaluation(
             codes=codes,

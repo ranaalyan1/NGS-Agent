@@ -16,9 +16,17 @@ from ngs_agent.watcher import load_signatures
 
 def _variant() -> Variant:
     return Variant(
-        chrom="1", pos=100, ref="A", alt="G", gene="BRCA1",
-        consequence="missense", clinvar="Uncertain_significance",
-        af=0.001, depth=100, vaf=0.5, is_vus=True,
+        chrom="1",
+        pos=100,
+        ref="A",
+        alt="G",
+        gene="BRCA1",
+        consequence="missense",
+        clinvar="Uncertain_significance",
+        af=0.001,
+        depth=100,
+        vaf=0.5,
+        is_vus=True,
     )
 
 
@@ -127,9 +135,16 @@ class TestSignaturesFile:
 class TestReportsEscaping:
     def test_html_escapes_variant_fields(self):
         v = Variant(
-            chrom="1", pos=1, ref="<A>", alt="G", gene="<b>BRCA</b>",
-            consequence="x", clinvar="<script>alert(1)</script>",
-            af=None, depth=None, vaf=None,
+            chrom="1",
+            pos=1,
+            ref="<A>",
+            alt="G",
+            gene="<b>BRCA</b>",
+            consequence="x",
+            clinvar="<script>alert(1)</script>",
+            af=None,
+            depth=None,
+            vaf=None,
         )
         html = generate_html_report([v])
         assert "<script>" not in html

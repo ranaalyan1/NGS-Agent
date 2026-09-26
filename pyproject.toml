@@ -163,6 +163,8 @@ ignore = ["BLE001", "UP042"]
 # Generated fixture content: long lines are the log/table text being planted.
 "scripts/make_fixtures.py" = ["E501", "B905"]
 "scripts/make_screenshot.py" = ["E501"]
+# Rule text templates: long lines are user-facing sentences kept intact.
+"core/rules/vcf_rules.py" = ["E501"]
 # FastAPI's `File(...)` as a default argument is the documented idiom.
 "doors/gui/app.py" = ["B008"]
 # Swarm agent containers: safe auto-fixes applied; deeper refactors deferred.

@@ -14,15 +14,17 @@ from __future__ import annotations
 
 import argparse
 import gzip
-import time
-from datetime import UTC, datetime
 import json
 import os
 import sys
+import time
 from collections.abc import Sequence
+from datetime import UTC, datetime
+from pathlib import Path
 
 from core.answer import Answer, answer_verdict
 from core.assess import assess_path
+from core.diagnose import diagnose, run_finished
 from core.models import (
     DECISION_LABELS,
     DECISION_UNKNOWN,
@@ -31,7 +33,6 @@ from core.models import (
     Verdict,
 )
 from core.report import render_json
-from core.diagnose import diagnose, run_finished
 from core.version import RULESET_VERSION, TOOL_VERSION
 
 EXIT_OK = 0
@@ -71,10 +72,19 @@ def exit_code(verdict: Verdict) -> int:
     return EXIT_OK
 
 
+def _fit(text: str, width: int) -> str:
+    """Truncate ``text`` to ``width`` characters, marking the cut with an ellipsis."""
+    return text if len(text) <= width else text[: max(0, width - 1)] + "…"
+
+
 def _card(title: str, subtitle: str, colour: bool) -> list[str]:
+    """A three-line box exactly ``WIDTH`` characters wide on every row."""
+    title = _fit(title, WIDTH - 6)
+    subtitle = _fit(subtitle, WIDTH - 4)
     label = _colour(f" {title} ", "bold", colour)
-    top = f"┌─{label}" + "─" * max(0, WIDTH - len(title) - 4) + "┐"
-    sub = f"│ {subtitle:<{WIDTH - 2}} │"
+    # "┌─" + " title " + fill + "┐" == WIDTH
+    top = f"┌─{label}" + "─" * (WIDTH - len(title) - 5) + "┐"
+    sub = f"│ {subtitle:<{WIDTH - 4}} │"
     bottom = "└" + "─" * (WIDTH - 2) + "┘"
     return [top, sub, bottom]
 
@@ -185,6 +195,10 @@ def main(argv: Sequence[str] | None = None) -> int:
             parser.error("--interval must be greater than zero")
         return watch_nextflow(args.path, args.interval)
 
+    if not Path(args.path).exists():
+        print(f"ngs: error: no such file or directory: {args.path}", file=sys.stderr)
+        return EXIT_UNKNOWN
+
     verdict = assess_path(args.path)
     answer = answer_verdict(verdict)
 
@@ -223,6 +237,7 @@ def watch_nextflow(path: str, interval: float = 15.0, *, sleep=time.sleep) -> in
     shown: set[str] = set()
     snapshot = ""
     current = None
+    status_shown = False
     try:
         while True:
             try:
@@ -245,19 +260,26 @@ def watch_nextflow(path: str, interval: float = 15.0, *, sleep=time.sleep) -> in
             current = diagnose(path, text_override=snapshot)
             for finding in current.findings:
                 if finding.id not in shown:
+                    if status_shown:
+                        print()
+                        status_shown = False
                     _live_print(current)
                     shown.add(finding.id)
             if run_finished(path, snapshot):
                 # Canonical final snapshot: same renderer and verdict path as one-shot mode.
                 final = assess_path(path)
+                if status_shown:
+                    print()
                 print(render_terminal(final, answer_verdict(final)))
                 return exit_code(final)
             stamp = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
             print(
-                f"\rWatching · {seen_bytes} bytes read · last process event: {last_event} · checked {stamp}",
+                f"\rWatching · {seen_bytes} bytes read · "
+                f"last process event: {last_event} · checked {stamp}",
                 end="",
                 flush=True,
             )
+            status_shown = True
             sleep(interval)
     except KeyboardInterrupt:
         print()

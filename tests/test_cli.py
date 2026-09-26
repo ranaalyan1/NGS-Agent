@@ -242,3 +242,35 @@ def test_the_cli_door_holds_no_thresholds():
     source = Path("doors/cli.py").read_text(encoding="utf-8")
     for banned in ("Q_DROP", "ADAPTER_WARN", "DUP_FAIL", "ASSIGNMENT_FAIL", "0.05"):
         assert banned not in source, f"door hard-codes {banned}"
+
+
+def test_missing_path_reports_the_path_on_stderr(capsys):
+    code = main(["definitely/not/here.zip"])
+    captured = capsys.readouterr()
+    assert code == EXIT_UNKNOWN
+    assert "no such file or directory" in captured.err
+    assert "definitely/not/here.zip" in captured.err
+
+
+@pytest.mark.parametrize(
+    "subject",
+    ["x", "contig_mismatch", "a_very_long_sample_name_" * 6],
+)
+def test_card_rows_are_all_the_same_width(subject):
+    from doors.cli import WIDTH, _card
+
+    rows = _card(subject, "Run folder · Fix this and re-run " * 4, colour=False)
+    assert [len(row) for row in rows] == [WIDTH, WIDTH, WIDTH]
+
+
+def test_unrecognised_file_is_not_described_as_a_file_type(capsys):
+    _, out = run(capsys, str(fx("misc", "garbage.bin")))
+    assert "This is an Unrecognised file" not in out
+    assert "I could not work out what this file is" in out
+
+
+def test_healthy_log_does_not_claim_there_is_no_evidence(capsys):
+    code, out = run(capsys, str(fx("logs", "nextflow.log")))
+    assert code == EXIT_OK
+    assert "no evidence to judge it on" not in out
+    assert "Nothing to fix" in out

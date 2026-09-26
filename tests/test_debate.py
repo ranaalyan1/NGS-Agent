@@ -1,6 +1,5 @@
 """Unit tests for debate module - stance extraction and consensus logic."""
 
-
 from ngs_agent.debate import (
     PersonaOpinion,
     _build_consensus,
@@ -11,7 +10,7 @@ from ngs_agent.debate import (
 
 class TestExtractStance:
     """Test stance extraction from LLM responses.
-    
+
     BUG: Current implementation uses naive substring matching which misclassifies
     negations like "not likely pathogenic" as "Likely pathogenic".
     """
@@ -38,26 +37,26 @@ class TestExtractStance:
 
     def test_negation_not_pathogenic_should_not_match_pathogenic(self):
         """BUG TEST: 'not likely pathogenic' should NOT be classified as 'Likely Pathogenic'.
-        
-        Current buggy behavior: substring match finds "likely pathogenic" in 
+
+        Current buggy behavior: substring match finds "likely pathogenic" in
         "not likely pathogenic" and returns "Likely Pathogenic".
-        
+
         Expected: Should recognize the negation and classify appropriately.
         """
         text = "This variant is NOT likely pathogenic; evidence points to benign."
         result = _extract_stance(text)
         # This test documents the bug - currently fails
         # After fix, should NOT return "Likely Pathogenic"
-        assert result != "Likely Pathogenic", \
+        assert result != "Likely Pathogenic", (
             f"BUG: Negated 'not likely pathogenic' incorrectly classified as '{result}'"
+        )
 
     def test_negation_not_benign(self):
         """BUG TEST: 'not benign' should NOT be classified as 'Benign'."""
         text = "The variant is not benign; it shows pathogenic features."
         result = _extract_stance(text)
         # Currently buggy - will match "benign" substring
-        assert result != "Benign", \
-            f"BUG: Negated 'not benign' incorrectly classified as '{result}'"
+        assert result != "Benign", f"BUG: Negated 'not benign' incorrectly classified as '{result}'"
 
     def test_no_stance_returns_uncertain(self):
         """When no stance keywords found, should return 'Uncertain'."""
@@ -117,24 +116,30 @@ class TestBuildRecommendation:
     def test_pathogenic_recommendation(self):
         """Pathogenic consensus → clinical correlation recommendation."""
         consensus = "All personas lean pathogenic."
+
         # Create a mock variant object
         class MockVariant:
             gene = "BRCA1"
+
         rec = _build_recommendation(consensus, MockVariant())  # type: ignore
         assert "clinical" in rec.lower() or "prioritize" in rec.lower()
 
     def test_benign_recommendation(self):
         """Benign consensus → deprioritize recommendation."""
         consensus = "All personas lean benign."
+
         class MockVariant:
             gene = "TP53"
+
         rec = _build_recommendation(consensus, MockVariant())  # type: ignore
         assert "deprioritize" in rec.lower() or "benign" in rec.lower()
 
     def test_vus_recommendation(self):
         """VUS → further study recommendation."""
         consensus = "All personas agree: remains VUS."
+
         class MockVariant:
             gene = "KRAS"
+
         rec = _build_recommendation(consensus, MockVariant())  # type: ignore
         assert "VUS" in rec or "reclassification" in rec.lower() or "segregation" in rec.lower()

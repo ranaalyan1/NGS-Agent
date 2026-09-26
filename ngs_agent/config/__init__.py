@@ -112,13 +112,13 @@ def run_wizard() -> dict[str, Any]:
     console.print()
     console.print("[bold]Choose a backend:[/bold]")
     backends = [
-        ("anthropic",    "Anthropic Claude  (requires ANTHROPIC_API_KEY)"),
-        ("openrouter",   "OpenRouter        (free & paid models, requires OPENROUTER_API_KEY)"),
-        ("groq",         "Groq              (fast inference, requires GROQ_API_KEY)"),
-        ("deepseek",     "DeepSeek          (requires DEEPSEEK_API_KEY)"),
-        ("gemini",       "Google Gemini     (requires GEMINI_API_KEY)"),
-        ("ollama",       "Ollama            (local, no API key)"),
-        ("openai_compat","Other OpenAI-compatible provider"),
+        ("anthropic", "Anthropic Claude  (requires ANTHROPIC_API_KEY)"),
+        ("openrouter", "OpenRouter        (free & paid models, requires OPENROUTER_API_KEY)"),
+        ("groq", "Groq              (fast inference, requires GROQ_API_KEY)"),
+        ("deepseek", "DeepSeek          (requires DEEPSEEK_API_KEY)"),
+        ("gemini", "Google Gemini     (requires GEMINI_API_KEY)"),
+        ("ollama", "Ollama            (local, no API key)"),
+        ("openai_compat", "Other OpenAI-compatible provider"),
     ]
     for i, (key, label) in enumerate(backends, 1):
         console.print(f"  [cyan]{i}[/cyan]. {label}")
@@ -149,7 +149,9 @@ def run_wizard() -> dict[str, Any]:
             default=cfg.get("openrouter_model", "openrouter/auto"),
         )
         console.print("[dim]Set OPENROUTER_API_KEY in your environment or paste it here.[/dim]")
-        key = Prompt.ask("API key [dim](leave blank to use env var)[/dim]", default="", password=True)
+        key = Prompt.ask(
+            "API key [dim](leave blank to use env var)[/dim]", default="", password=True
+        )
         if key:
             cfg["openrouter_api_key"] = key
 
@@ -158,7 +160,11 @@ def run_wizard() -> dict[str, Any]:
             "Model  [dim](e.g. llama-3.3-70b-versatile, mixtral-8x7b-32768)[/dim]",
             default=cfg.get("groq_model", "llama-3.3-70b-versatile"),
         )
-        key = Prompt.ask("API key [dim](leave blank to use GROQ_API_KEY env var)[/dim]", default="", password=True)
+        key = Prompt.ask(
+            "API key [dim](leave blank to use GROQ_API_KEY env var)[/dim]",
+            default="",
+            password=True,
+        )
         if key:
             cfg["groq_api_key"] = key
 
@@ -167,7 +173,11 @@ def run_wizard() -> dict[str, Any]:
             "Model",
             default=cfg.get("deepseek_model", "deepseek-chat"),
         )
-        key = Prompt.ask("API key [dim](leave blank to use DEEPSEEK_API_KEY env var)[/dim]", default="", password=True)
+        key = Prompt.ask(
+            "API key [dim](leave blank to use DEEPSEEK_API_KEY env var)[/dim]",
+            default="",
+            password=True,
+        )
         if key:
             cfg["deepseek_api_key"] = key
 
@@ -176,7 +186,11 @@ def run_wizard() -> dict[str, Any]:
             "Model  [dim](e.g. gemini-2.0-flash, gemini-2.5-pro)[/dim]",
             default=cfg.get("gemini_model", "gemini-2.0-flash"),
         )
-        key = Prompt.ask("API key [dim](leave blank to use GEMINI_API_KEY env var)[/dim]", default="", password=True)
+        key = Prompt.ask(
+            "API key [dim](leave blank to use GEMINI_API_KEY env var)[/dim]",
+            default="",
+            password=True,
+        )
         if key:
             cfg["gemini_api_key"] = key
 
@@ -199,7 +213,11 @@ def run_wizard() -> dict[str, Any]:
             "Model",
             default=cfg.get("openai_compat_model", "openrouter/auto"),
         )
-        key = Prompt.ask("API key [dim](leave blank to use OPENAI_COMPAT_API_KEY env var)[/dim]", default="", password=True)
+        key = Prompt.ask(
+            "API key [dim](leave blank to use OPENAI_COMPAT_API_KEY env var)[/dim]",
+            default="",
+            password=True,
+        )
         if key:
             cfg["openai_compat_api_key"] = key
 

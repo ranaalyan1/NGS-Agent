@@ -16,6 +16,7 @@ def _esc(value: object) -> str:
     cannot break (or inject markup into) a shared report."""
     return _html.escape("" if value is None else str(value), quote=True)
 
+
 HTML_TEMPLATE = """<!DOCTYPE html>
 <html lang="en">
 <head>

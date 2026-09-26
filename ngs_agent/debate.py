@@ -185,7 +185,9 @@ def _extract_stance(text: str) -> str:
     has_pathogenic = bool(re.search(r"\bpathogenic\b", lower))
     has_likely_benign = bool(re.search(r"\blikely\s+benign\b", lower))
     has_benign = bool(re.search(r"\bbenign\b", lower))
-    has_vus = bool(re.search(r"\b(vus|uncertain(?:\s+significance)?|unknown\s+significance)\b", lower))
+    has_vus = bool(
+        re.search(r"\b(vus|uncertain(?:\s+significance)?|unknown\s+significance)\b", lower)
+    )
 
     if has_likely_pathogenic and not has_likely_benign and not has_benign:
         return "Likely Pathogenic"
@@ -211,7 +213,9 @@ def _extract_acmg_codes(text: str) -> list[str]:
     return list(dict.fromkeys(c.upper() for c in codes))
 
 
-def _build_consensus(opinions: list[PersonaOpinion], acmg_eval: ACMGEvaluation | None = None) -> str:
+def _build_consensus(
+    opinions: list[PersonaOpinion], acmg_eval: ACMGEvaluation | None = None
+) -> str:
     stances = [o.stance.lower() for o in opinions]
     if all("pathogenic" in s for s in stances):
         return "All personas lean pathogenic."
@@ -226,7 +230,9 @@ def _build_consensus(opinions: list[PersonaOpinion], acmg_eval: ACMGEvaluation |
     return "Mixed opinions — no consensus."
 
 
-def _build_recommendation(consensus: str, variant: Variant, acmg_eval: ACMGEvaluation | None = None) -> str:
+def _build_recommendation(
+    consensus: str, variant: Variant, acmg_eval: ACMGEvaluation | None = None
+) -> str:
     if "pathogenic" in consensus.lower():
         return f"Prioritize {variant.gene} for clinical correlation and segregation testing."
     if "benign" in consensus.lower():

@@ -64,7 +64,7 @@ class ReporterAgent:
                         "role": "user",
                         "content": (
                             "You are an expert bioinformatics reporter. Summarize the run,"
-                                "identify risks,  and recommend next actions in concise markdown. "
+                            "identify risks,  and recommend next actions in concise markdown. "
                             f"Plan: {plan.model_dump(mode='json')}\n"
                             f"Verification: {verification.model_dump(mode='json')}"
                         ),

@@ -26,8 +26,9 @@ class TestCSQParsing:
         # Bug would extract "A" (allele), correct extracts "missense_variant"
         brca1_var = variants[0]
         assert brca1_var.gene == "BRCA1"
-        assert brca1_var.consequence == "missense_variant", \
+        assert brca1_var.consequence == "missense_variant", (
             f"Expected 'missense_variant', got '{brca1_var.consequence}' - CSQ parsing bug!"
+        )
 
     def test_multiallelic_site_first_consequence(self):
         """Multiallelic sites have comma-separated CSQ entries."""
@@ -39,8 +40,9 @@ class TestCSQParsing:
         brca2_var = variants[1]
         assert brca2_var.gene == "BRCA2"
         # Should get the first consequence (for first ALT allele)
-        assert brca2_var.consequence == "missense_variant", \
+        assert brca2_var.consequence == "missense_variant", (
             f"Expected 'missense_variant' for first allele, got '{brca2_var.consequence}'"
+        )
 
 
 class TestVAFCalculation:
@@ -55,8 +57,9 @@ class TestVAFCalculation:
         # AD = 122,123 → VAF = 123 / (122 + 123) = 123/245 ≈ 0.502
         assert brca1_var.vaf is not None
         expected_vaf = 123 / (122 + 123)
-        assert abs(brca1_var.vaf - expected_vaf) < 0.001, \
+        assert abs(brca1_var.vaf - expected_vaf) < 0.001, (
             f"Expected VAF ~{expected_vaf:.3f}, got {brca1_var.vaf}"
+        )
 
     def test_multiallelic_ad_handling(self):
         """Multiallelic sites have >2 AD values; current impl uses AD[1]/sum which is biallelic-only."""
@@ -93,8 +96,9 @@ class TestClinVarClassification:
 
         brca2_var = variants[1]
         assert "Conflicting" in brca2_var.clinvar
-        assert brca2_var.is_pathogenic is False, \
+        assert brca2_var.is_pathogenic is False, (
             "Conflicting interpretations should not be classified as pathogenic"
+        )
 
     def test_vus_classification(self):
         """Uncertain significance should be is_vus=True."""
@@ -153,7 +157,7 @@ class TestParseSample:
         depth, vaf = _parse_sample(values, format_keys)
         assert depth == 245
         assert vaf is not None
-        assert abs(vaf - 123/245) < 0.001
+        assert abs(vaf - 123 / 245) < 0.001
 
     def test_missing_ad_returns_none_vaf(self):
         """Missing AD should return None for VAF."""
