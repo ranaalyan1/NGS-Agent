@@ -31,8 +31,7 @@ from core.models import (
     Verdict,
 )
 from core.report import render_json
-from core.diagnose import diagnose
-from core.parse.nextflow_log import parse_nextflow_log, run_failed, run_succeeded
+from core.diagnose import diagnose, run_finished
 from core.version import RULESET_VERSION, TOOL_VERSION
 
 EXIT_OK = 0
@@ -203,7 +202,7 @@ def _watch_text(path: str) -> tuple[str, int]:
     byte_count = len(encoded)
     raw = gzip.decompress(encoded) if encoded.startswith(b"\x1f\x8b") else encoded
     last_newline = max(raw.rfind(b"\n"), raw.rfind(b"\r"))
-    complete = raw if raw.endswith((b"\n", b"\r")) else raw[:last_newline + 1]
+    complete = raw if raw.endswith((b"\n", b"\r")) else raw[: last_newline + 1]
     return complete.decode("utf-8", errors="replace"), byte_count
 
 
@@ -248,14 +247,17 @@ def watch_nextflow(path: str, interval: float = 15.0, *, sleep=time.sleep) -> in
                 if finding.id not in shown:
                     _live_print(current)
                     shown.add(finding.id)
-            log_facts = parse_nextflow_log(path, text_override=snapshot)
-            if run_succeeded(log_facts) or run_failed(log_facts):
+            if run_finished(path, snapshot):
                 # Canonical final snapshot: same renderer and verdict path as one-shot mode.
                 final = assess_path(path)
                 print(render_terminal(final, answer_verdict(final)))
                 return exit_code(final)
             stamp = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
-            print(f"\rWatching · {seen_bytes} bytes read · last process event: {last_event} · checked {stamp}", end="", flush=True)
+            print(
+                f"\rWatching · {seen_bytes} bytes read · last process event: {last_event} · checked {stamp}",
+                end="",
+                flush=True,
+            )
             sleep(interval)
     except KeyboardInterrupt:
         print()
@@ -266,7 +268,9 @@ def watch_nextflow(path: str, interval: float = 15.0, *, sleep=time.sleep) -> in
                 snapshot = ""
             current = diagnose(path, text_override=snapshot)
         _live_print(current)
-        return EXIT_FAILED if any(f.severity == SEVERITY_FAIL for f in current.findings) else EXIT_OK
+        return (
+            EXIT_FAILED if any(f.severity == SEVERITY_FAIL for f in current.findings) else EXIT_OK
+        )
 
 
 if __name__ == "__main__":  # pragma: no cover

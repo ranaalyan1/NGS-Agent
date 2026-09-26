@@ -16,6 +16,7 @@ from core.answer import answer_verdict
 from core.assess import assess_path
 from core.models import (
     CONFIDENCE_MEDIUM,
+    DECISION_FIX_AND_RERUN,
     DECISION_UNKNOWN,
     KIND_CROMWELL_LOG,
     KIND_NEXTFLOW_LOG,
@@ -94,25 +95,22 @@ def test_gzipped_snakemake_log_is_still_detected(tmp_path):
 # --------------------------------------------------------------------------
 # Assessment: honest, specific, and pointed at the roadmap
 # --------------------------------------------------------------------------
-def test_snakemake_verdict_names_the_runner_and_the_roadmap():
+def test_snakemake_verdict_reports_ranked_signature_with_receipts():
     verdict = assess_path(fx("logs", "snakemake.log"))
     assert verdict.kind == KIND_SNAKEMAKE_LOG
-    assert verdict.decision == DECISION_UNKNOWN
-    assert verdict.findings == []
-    joined = " ".join(verdict.unknown)
-    assert "Snakemake" in joined
-    assert "planned" in joined
-    assert "ROADMAP.md" in joined
+    assert verdict.decision == DECISION_FIX_AND_RERUN
+    assert len(verdict.findings) == 1
+    assert verdict.findings[0].id == "SM-JOB-006"
+    assert verdict.findings[0].has_valid_receipts()
 
 
-def test_cromwell_verdict_names_the_runner_and_the_roadmap():
+def test_cromwell_verdict_reports_signature_with_receipts():
     verdict = assess_path(fx("logs", "cromwell.log"))
     assert verdict.kind == KIND_CROMWELL_LOG
-    assert verdict.decision == DECISION_UNKNOWN
-    assert verdict.findings == []
-    joined = " ".join(verdict.unknown)
-    assert "Cromwell" in joined
-    assert "planned" in joined
+    assert verdict.decision == DECISION_FIX_AND_RERUN
+    assert len(verdict.findings) == 1
+    assert verdict.findings[0].id == "CW-CALL-001"
+    assert verdict.findings[0].has_valid_receipts()
 
 
 def test_wdl_source_verdict_explains_why_code_is_not_judged():
@@ -143,12 +141,12 @@ def test_answer_writer_describes_each_runner():
 # --------------------------------------------------------------------------
 # Doors and folders
 # --------------------------------------------------------------------------
-def test_cli_exits_two_without_guessing(capsys):
-    for name in ("snakemake.log", "cromwell.log"):
+def test_cli_uses_failure_exit_code_for_diagnosed_runners(capsys):
+    for name, rule_id in (("snakemake.log", "SM-JOB-006"), ("cromwell.log", "CW-CALL-001")):
         code = main([str(fx("logs", name))])
         out = capsys.readouterr().out
-        assert code == EXIT_UNKNOWN, name
-        assert "planned" in out.lower()
+        assert code == 1, name
+        assert rule_id in out
     assert main([str(fx("wdl", "example.wdl"))]) == EXIT_UNKNOWN
     capsys.readouterr()
 
@@ -165,8 +163,12 @@ def test_box_names_each_runner():
         assert response.status_code == 200
         payload = response.json()
         assert payload["kind"] == kind
-        assert payload["decision"] == DECISION_UNKNOWN
-        assert payload["findings"] == []
+        if parts[0] == "wdl":
+            assert payload["decision"] == DECISION_UNKNOWN
+            assert payload["findings"] == []
+        else:
+            assert payload["decision"] == DECISION_FIX_AND_RERUN
+            assert len(payload["findings"]) == 1
 
 
 def test_engine_logs_count_as_logs_inside_folders(tmp_path):

@@ -29,8 +29,7 @@ PASS_FRACTION_WARN = 0.80
 
 TRANSITIONS = {"A": "G", "G": "A", "C": "T", "T": "C"}
 TITV_CONTEXT = (
-    "Ti/Tv expectations vary between whole-genome and exome data; "
-    "no assay type is inferred."
+    "Ti/Tv expectations vary between whole-genome and exome data; no assay type is inferred."
 )
 
 
@@ -46,9 +45,7 @@ def _record_values(facts: dict[str, Any]) -> dict[str, Any]:
     missing_lines: list[int] = []
 
     for line_number, fields in records:
-        info = dict(
-            item.split("=", 1) for item in fields[7].split(";") if "=" in item
-        )
+        info = dict(item.split("=", 1) for item in fields[7].split(";") if "=" in item)
         depth = None
         if len(fields) > 9 and "DP" in fields[8].split(":"):
             keys = fields[8].split(":")
@@ -90,11 +87,7 @@ def _record_values(facts: dict[str, Any]) -> dict[str, Any]:
                         heterozygous += 1
 
         reference, alternate = fields[3].upper(), fields[4].upper()
-        if (
-            len(reference) == len(alternate) == 1
-            and reference in "ACGT"
-            and alternate in "ACGT"
-        ):
+        if len(reference) == len(alternate) == 1 and reference in "ACGT" and alternate in "ACGT":
             if TRANSITIONS.get(reference) == alternate:
                 transitions += 1
             else:
@@ -187,10 +180,7 @@ def evaluate_vcf(facts: dict[str, Any]) -> list[Finding]:
             )
 
     genotype_total = values["missing"] + values["called"]
-    if (
-        genotype_total
-        and values["missing"] / genotype_total > MISSING_GT_FRACTION_WARN
-    ):
+    if genotype_total and values["missing"] / genotype_total > MISSING_GT_FRACTION_WARN:
         fraction = values["missing"] / genotype_total
         findings.append(
             _finding(
@@ -207,10 +197,7 @@ def evaluate_vcf(facts: dict[str, Any]) -> list[Finding]:
         )
 
     total_substitutions = values["transitions"] + values["transversions"]
-    if (
-        total_substitutions >= TITV_MIN_SUBSTITUTIONS
-        and values["transversions"] > 0
-    ):
+    if total_substitutions >= TITV_MIN_SUBSTITUTIONS and values["transversions"] > 0:
         titv = values["transitions"] / values["transversions"]
         if titv < TITV_EXTREME_LOW or titv > TITV_EXTREME_HIGH:
             findings.append(
@@ -233,10 +220,7 @@ def evaluate_vcf(facts: dict[str, Any]) -> list[Finding]:
     if (
         called_diploid >= HET_HOM_MIN_SITES
         and homozygous > 0
-        and (
-            heterozygous / homozygous < HET_HOM_LOW
-            or heterozygous / homozygous > HET_HOM_HIGH
-        )
+        and (heterozygous / homozygous < HET_HOM_LOW or heterozygous / homozygous > HET_HOM_HIGH)
     ):
         ratio = heterozygous / homozygous
         findings.append(
@@ -305,15 +289,11 @@ def summarize_vcf(facts: dict[str, Any]) -> dict[str, Any]:
             values["missing"] / genotype_total if genotype_total else None
         ),
         "titv": (
-            values["transitions"] / values["transversions"]
-            if values["transversions"]
-            else None
+            values["transitions"] / values["transversions"] if values["transversions"] else None
         ),
         "titv_transitions": values["transitions"],
         "titv_transversions": values["transversions"],
-        "het_hom_ratio": (
-            values["heterozygous"] / homozygous if homozygous else None
-        ),
+        "het_hom_ratio": (values["heterozygous"] / homozygous if homozygous else None),
         "pass_fraction": values["passed"] / n_sites if n_sites else None,
         "unfiltered_sites": values["unfiltered"],
         "unfiltered_fraction": values["unfiltered"] / n_sites if n_sites else None,
@@ -333,7 +313,9 @@ def unjudged_vcf_metrics(facts: dict[str, Any]) -> list[str]:
         )
     genotype_total = values["called"] + values["missing"]
     if not genotype_total:
-        messages.append("No genotype field was present, so missingness and het/hom balance were not judged.")
+        messages.append(
+            "No genotype field was present, so missingness and het/hom balance were not judged."
+        )
     elif genotype_total < values["n_sites"]:
         messages.append(
             f"Genotypes were absent or unparseable at {values['n_sites'] - genotype_total} sites, so genotype QC is incomplete."
