@@ -67,7 +67,9 @@ def parse_nextflow_log(path: str | Path, text_override: str | None = None) -> Lo
     lines = text.splitlines()
     facts = LogFacts(
         source_path=str(p),
-        source_sha256=sha256_file(p) if text_override is None else hashlib.sha256(text.encode("utf-8")).hexdigest(),
+        source_sha256=sha256_file(p)
+        if text_override is None
+        else hashlib.sha256(text.encode("utf-8")).hexdigest(),
         lines=lines,
     )
     match = VERSION_RE.search(text)

@@ -88,7 +88,8 @@ def load_signatures(directory: str | Path = SIGNATURE_DIR) -> list[Signature]:
     """Read every ``*.yaml`` signature file in the directory."""
     root = Path(directory)
     signatures: list[Signature] = []
-    for path in sorted(root.glob("nf_*.yaml")):
+    pattern = "nf_*.yaml" if root.resolve() == SIGNATURE_DIR.resolve() else "*.yaml"
+    for path in sorted(root.glob(pattern)):
         try:
             data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
         except yaml.YAMLError as exc:
@@ -201,7 +202,15 @@ def best_match(
     return matches[0]
 
 
-def diagnose(path: str | Path, signatures: list[Signature] | None = None, text_override: str | None = None) -> Verdict:
+def run_finished(path: str | Path, text: str) -> bool:
+    """Whether a complete Nextflow snapshot carries an explicit terminal marker."""
+    facts = parse_nextflow_log(path, text_override=text)
+    return run_succeeded(facts) or run_failed(facts)
+
+
+def diagnose(
+    path: str | Path, signatures: list[Signature] | None = None, text_override: str | None = None
+) -> Verdict:
     """A Nextflow log in, a Verdict out."""
     p = Path(path)
     signatures = signatures if signatures is not None else load_signatures()

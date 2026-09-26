@@ -283,9 +283,7 @@ def _receipts(verdict: Verdict) -> AnswerBlock:
             block.lines.append(f"{finding.id}: {receipt.short()}")
     for receipt in verdict.receipts:
         block.lines.append(receipt.short())
-    block.lines.append(
-        f"Tool: ngs-agent {verdict.tool_version}, ruleset {verdict.ruleset_version}"
-    )
+    block.lines.append(f"Tool: ngs-agent {verdict.tool_version}, ruleset {verdict.ruleset_version}")
     return block
 
 

@@ -15,6 +15,7 @@ from pathlib import Path
 
 from .diagnose import diagnose
 from .models import (
+    DECISION_UNKNOWN,
     KIND_CROMWELL_LOG,
     KIND_FASTQC_ZIP,
     KIND_FOLDER,
@@ -256,16 +257,19 @@ def assess_path(path: str | Path) -> Verdict:
 
     if result.kind == KIND_CROMWELL_LOG:
         if any("WDL source" in note for note in result.notes):
-            return unknown_verdict(subject=p.name, kind=KIND_CROMWELL_LOG,
-                reason="This is a WDL workflow definition. WDL static analysis is out of scope; see ROADMAP.md.",
-                details={"sniff": result.to_dict()})
+            return unknown_verdict(
+                subject=p.name,
+                kind=KIND_CROMWELL_LOG,
+                reason="This is a WDL workflow definition. WDL workflow code is not analysed; static analysis is out of scope. See ROADMAP.md.",
+                details={"sniff": result.to_dict()},
+            )
         return diagnose_runner(p, "cromwell")
 
     if result.kind == KIND_VCF:
         try:
             facts = parse_vcf(p)
         except VCFParseError:
-            return unknown_verdict(
+            verdict = unknown_verdict(
                 subject=p.name,
                 kind=KIND_VCF,
                 reason=(
@@ -274,16 +278,18 @@ def assess_path(path: str | Path) -> Verdict:
                 ),
                 details={"sniff": result.to_dict()},
             )
+            verdict.headline = verdict.unknown[0]
+            return verdict
         if facts.get("unsupported"):
             verdict = unknown_verdict(
                 subject=p.name,
                 kind=KIND_VCF,
                 reason=(
-                    f"This VCF is recognised, not judged: {facts['unsupported']}. "
-                    "See ROADMAP.md."
+                    f"This VCF is recognised, not judged: {facts['unsupported']}. See ROADMAP.md."
                 ),
                 details={"sniff": result.to_dict(), "input_sha256": sha256_file(p)},
             )
+            verdict.headline = verdict.unknown[0]
             verdict.details["last_lines"] = facts.get("lines", [])[-20:]
             return verdict
 
@@ -302,8 +308,13 @@ def assess_path(path: str | Path) -> Verdict:
             decision=decision,
             headline=headline,
             findings=findings,
-            receipts=[_input_receipt(p), _tool_receipt("core/rules/vcf_rules.py"), *metric_receipts(facts)],
-            unknown=unjudged + [
+            receipts=[
+                _input_receipt(p),
+                _tool_receipt("core/rules/vcf_rules.py"),
+                *metric_receipts(facts),
+            ],
+            unknown=unjudged
+            + [
                 "QC metrics judge call quality only; they do not assess pathogenicity or variant truth."
             ],
             details={

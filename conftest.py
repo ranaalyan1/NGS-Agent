@@ -42,5 +42,5 @@ def pytest_sessionfinish(session, exitstatus):  # noqa: D103 - pytest hook
     bad = [f for f in FINDINGS_SEEN if not f.has_valid_receipts()]
     print(
         f"\nreceipts audit: {len(FINDINGS_SEEN)} findings created this session, "
-        f"{len(bad)} without a valid receipt"
+        f"{len(bad)} findings without a valid receipt"
     )
