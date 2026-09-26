@@ -151,7 +151,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         description="Drop an NGS file on it and get a plain-language answer with receipts.",
         epilog="exit codes: 0 = pass or warnings, 1 = something failed, 2 = unknown input",
     )
-    parser.add_argument("path", help="a FastQC report, a run folder, or a Nextflow log")
+    parser.add_argument(
+        "path",
+        help="a quality-control report (FastQC or combined summary), a run folder, "
+        "or a pipeline log (Nextflow, Snakemake, Cromwell/WDL)",
+    )
     parser.add_argument(
         "--json", action="store_true", help="print the full verdict as JSON instead of cards"
     )

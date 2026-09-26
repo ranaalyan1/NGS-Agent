@@ -21,10 +21,13 @@ from typing import Any
 
 from .models import (
     DECISION_LABELS,
+    KIND_CROMWELL_LOG,
     KIND_FASTQC_ZIP,
     KIND_FOLDER,
     KIND_LABELS,
+    KIND_MULTIQC,
     KIND_NEXTFLOW_LOG,
+    KIND_SNAKEMAKE_LOG,
     SEVERITY_FAIL,
     SEVERITY_INFO,
     SEVERITY_WARN,
@@ -137,7 +140,28 @@ def _describe_folder(verdict: Verdict) -> str:
 
 
 def _describe_log(verdict: Verdict) -> str:
+    if verdict.kind == KIND_SNAKEMAKE_LOG:
+        return "This is a log file from a Snakemake pipeline run."
+    if verdict.kind == KIND_CROMWELL_LOG:
+        sniff = verdict.details.get("sniff") or {}
+        notes = " ".join(sniff.get("notes", []))
+        if "WDL source" in notes:
+            return "This is a WDL workflow definition file."
+        return "This is a log file from a Cromwell (WDL) pipeline run."
     return "This is a log file from a Nextflow pipeline run."
+
+
+def _describe_multiqc(verdict: Verdict) -> str:
+    n = verdict.details.get("n_samples")
+    if not n:
+        samples = (verdict.details.get("facts") or {}).get("samples") or []
+        n = len(samples)
+    plural = "sample" if n == 1 else "samples"
+    return (
+        f"This is a combined quality-control summary covering {n} {plural}, one row "
+        "per sample. Each sample is judged on its own numbers, and the cohort is "
+        "checked for samples that stand apart from the rest."
+    )
 
 
 def _describe_unknown(verdict: Verdict) -> str:
@@ -162,9 +186,11 @@ def answer_verdict(verdict: Verdict) -> Answer:
 def _what_this_is(verdict: Verdict) -> AnswerBlock:
     if verdict.kind == KIND_FASTQC_ZIP:
         text = _describe_fastqc(verdict)
+    elif verdict.kind == KIND_MULTIQC:
+        text = _describe_multiqc(verdict)
     elif verdict.kind == KIND_FOLDER:
         text = _describe_folder(verdict)
-    elif verdict.kind == KIND_NEXTFLOW_LOG:
+    elif verdict.kind in (KIND_NEXTFLOW_LOG, KIND_SNAKEMAKE_LOG, KIND_CROMWELL_LOG):
         text = _describe_log(verdict)
     else:
         text = _describe_unknown(verdict)

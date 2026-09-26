@@ -35,8 +35,9 @@ Inspect the wheel *before* uploading:
 python -m zipfile -l dist/*.whl | less
 ```
 
-Check that the five YAML signature files are inside `ngs_agent/signatures/`
-(the `watch` command needs them at runtime).
+Check that the ten YAML signature files are inside `core/signatures/`
+(the log diagnoser needs them at runtime) and that `doors/gui/index.html`
+(the Box page) is in the wheel.
 
 ### 3. Dry run on TestPyPI (recommended)
 

@@ -1,0 +1,33 @@
+Snakemake v8.16.0
+Building DAG of jobs...
+Using shell: /bin/bash
+[Wed Sep 24 10:12:01 2026]
+rule align:
+    input: data/sample1_R1.fastq.gz, data/sample1_R2.fastq.gz
+    output: results/sample1.bam
+    jobid: 3
+    reason: Missing output files: results/sample1.bam
+    resources: mem_mb=32000, runtime=120
+
+[Wed Sep 24 10:14:33 2026]
+Finished job 3.
+1 of 4 steps (25%) done
+
+[Wed Sep 24 10:14:34 2026]
+rule count:
+    input: results/sample1.bam
+    output: results/sample1.counts.txt
+    jobid: 5
+
+[Wed Sep 24 10:15:02 2026]
+Error in rule count:
+    jobid: 5
+    input: results/sample1.bam
+    output: results/sample1.counts.txt
+    shell:
+        featureCounts -a /refs/genes.gtf -o results/sample1.counts.txt results/sample1.bam
+        (one of the commands exited with non-zero exit code; note that snakemake uses bash strict mode!)
+
+Exiting because a job execution failed
+Complete log: /home/user/project/.snakemake/log/2026-09-24T101201.123456.snakemake.log
+Shutting down, this might take some time

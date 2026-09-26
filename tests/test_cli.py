@@ -60,7 +60,9 @@ def test_unknown_input_exits_two_and_says_so(capsys):
 def test_vcf_exits_two_without_guessing(capsys):
     code, out = run(capsys, str(fx("vcf", "sample.vcf")))
     assert code == EXIT_UNKNOWN
-    assert "out of scope" in out.lower() or "could not" in out.lower()
+    # Terminal output is word-wrapped, so compare without whitespace.
+    flat = re.sub(r"\s+", " ", out).lower()
+    assert "out of scope" in flat or "could not" in flat
 
 
 def test_vcf_trap_files_exit_two_as_well(capsys):

@@ -1,0 +1,14 @@
+[2026-09-24 10:12:01,234] [info] Cromwell 86 (service::cromwell)
+[2026-09-24 10:12:01,240] [info] Starting Cromwell workflow engine (Horror Show edition)
+[2026-09-24 10:12:02,111] [info] WorkflowManagerActor Workflow 8f3a2b1c submitted to Cromwell
+[2026-09-24 10:12:02,115] [info] WDL workflow rnaseq version 1.0: 3 calls, 0 scatter blocks
+[2026-09-24 10:12:02,120] [info] WorkflowActor-8f3a2b1c: Status change from Submitted to Running, workflowId=8f3a2b1c-4d2e-4f1a-9c3b-7e6a5d4c3b2a
+[2026-09-24 10:12:02,300] [info] Call cache lookup started for call AlignTask.rnaseq
+[2026-09-24 10:12:02,305] [info] call AlignTask: cache miss, executing in docker image quay.io/biocontainers/hisat2:2.2.1
+[2026-09-24 10:47:19,881] [info] call AlignTask: execution failed (exit code 1): hisat2: ERR: missing index files
+[2026-09-24 10:47:19,890] [error] WorkflowActor-8f3a2b1c: Workflow failed: one or more calls failed
+[2026-09-24 10:47:19,891] [info] Workflow complete. Total time: 35m 17s
+Final Outputs:
+{
+  "rnaseq.bam": null
+}

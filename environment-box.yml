@@ -1,0 +1,15 @@
+# Lightweight conda environment for the NGS-Agent interpreter + Box.
+# (The full pipeline tool stack lives in environment.yml; this file is only
+# the drop-a-file-and-get-an-answer product.)
+#
+#   conda env create -f environment-box.yml
+#   conda activate ngs-agent-box
+#   ngs fixtures/fastqc/sample_fastqc.zip
+name: ngs-agent-box
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - pip
+  - pip:
+      - "ngs-agent[box] @ git+https://github.com/ranaalyan1/NGS-Agent.git"

@@ -1,0 +1,5 @@
+Sample	FastQC_percent_duplicates	FastQC_percent_gc	FastQC_avg_sequence_length	FastQC_total_sequences	FastQC_percent_fails
+sample1	8.10	45.20	150	20000000	0.00
+sample2	58.30	44.10	150	18500000	9.10
+sample3	12.40	62.00	150	19200000	0.00
+sample4	9.70	46.30	100	17800000	0.00
