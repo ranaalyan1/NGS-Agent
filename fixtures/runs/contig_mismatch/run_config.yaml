@@ -1,0 +1,5 @@
+genome: GRCh38
+annotation: /refs/GRCh38/gencode.v45.annotation.gtf
+star_index: /refs/GRCh38/star_index_ensembl
+strandedness: reverse
+protocol: paired_end

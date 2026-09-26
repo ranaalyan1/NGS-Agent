@@ -1,4 +1,8 @@
 ```
+# Virtual environments
+.venv/
+venv/
+
 # Dependencies
 __pycache__/
 *.pyc
@@ -41,3 +45,7 @@ dist/
 .DS_Store
 Thumbs.db
 ```
+# Fixtures are tracked test data: the global *.zip / *.log rules above would
+# otherwise drop them, and the tests need them to exist.
+!fixtures/**/*.zip
+!fixtures/**/*.log
