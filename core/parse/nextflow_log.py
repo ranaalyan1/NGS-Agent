@@ -6,6 +6,7 @@ died is the matcher's job (core/diagnose.py).
 
 from __future__ import annotations
 
+import hashlib
 import re
 from pathlib import Path
 
@@ -59,14 +60,14 @@ def split_blocks(lines: list[str]) -> list[list[int]]:
     return blocks
 
 
-def parse_nextflow_log(path: str | Path) -> LogFacts:
-    """Extract the lines, the Nextflow version and the error-bearing blocks."""
+def parse_nextflow_log(path: str | Path, text_override: str | None = None) -> LogFacts:
+    """Extract lines, version and error blocks; optional text supports read-only watch snapshots."""
     p = Path(path)
-    text = read_log_text(p)
+    text = read_log_text(p) if text_override is None else text_override
     lines = text.splitlines()
     facts = LogFacts(
         source_path=str(p),
-        source_sha256=sha256_file(p),
+        source_sha256=sha256_file(p) if text_override is None else hashlib.sha256(text.encode("utf-8")).hexdigest(),
         lines=lines,
     )
     match = VERSION_RE.search(text)

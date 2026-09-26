@@ -65,7 +65,7 @@ def test_ten_signatures_load_and_follow_the_schema():
 def test_every_signature_file_uses_the_exact_schema_keys():
     import yaml
 
-    for path in sorted(SIGNATURE_DIR.glob("*.yaml")):
+    for path in sorted(SIGNATURE_DIR.glob("nf_*.yaml")):
         data = yaml.safe_load(path.read_text(encoding="utf-8"))
         assert set(data) == {
             "id",

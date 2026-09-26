@@ -1,0 +1,10 @@
+{
+  "id": "SM-TARGET-003",
+  "problem": "The requested target is not defined by the workflow.",
+  "meaning": "Snakemake cannot map the target to a rule output.",
+  "action": "Check the target spelling against declared rule outputs.",
+  "evidence": [
+    "Target .* does not exist|No rule to produce"
+  ],
+  "rank": 3
+}

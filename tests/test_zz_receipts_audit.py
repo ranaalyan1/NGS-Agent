@@ -29,6 +29,9 @@ KNOWN_IDS = (
     re.compile(r"^QC-(QUAL|ADAPT|DUP|GC|N|LEN)-\d+$"),
     re.compile(r"^AUD-(STRAND|CONTAM|DUP|TRUNC|BUILD|COUNT|PAIRED|ADAPT|ALIGN)-\d+$"),
     re.compile(r"^NF-[A-Z]+-\d+$"),
+    re.compile(r"^QC-VCF-0[1-5]$"),
+    re.compile(r"^SM-[A-Z]+-\d+$"),
+    re.compile(r"^CW-[A-Z]+-\d+$"),
 )
 
 
@@ -76,6 +79,7 @@ def test_every_finding_created_this_session_carries_a_valid_receipt():
         if not f.has_valid_receipts()
     ]
     assert not offenders, "findings without receipts:\n" + "\n".join(offenders[:20])
+    print(f"{len(offenders)} findings without a valid receipt")
 
 
 def test_every_receipt_has_all_four_fields_and_a_real_timestamp():

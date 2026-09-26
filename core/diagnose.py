@@ -88,7 +88,7 @@ def load_signatures(directory: str | Path = SIGNATURE_DIR) -> list[Signature]:
     """Read every ``*.yaml`` signature file in the directory."""
     root = Path(directory)
     signatures: list[Signature] = []
-    for path in sorted(root.glob("*.yaml")):
+    for path in sorted(root.glob("nf_*.yaml")):
         try:
             data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
         except yaml.YAMLError as exc:
@@ -201,11 +201,11 @@ def best_match(
     return matches[0]
 
 
-def diagnose(path: str | Path, signatures: list[Signature] | None = None) -> Verdict:
+def diagnose(path: str | Path, signatures: list[Signature] | None = None, text_override: str | None = None) -> Verdict:
     """A Nextflow log in, a Verdict out."""
     p = Path(path)
     signatures = signatures if signatures is not None else load_signatures()
-    log = parse_nextflow_log(p)
+    log = parse_nextflow_log(p, text_override=text_override)
     match = best_match(log, signatures)
 
     def now() -> str:
@@ -279,7 +279,7 @@ def diagnose(path: str | Path, signatures: list[Signature] | None = None) -> Ver
     evidence_receipts = [
         Receipt(
             source=f"file:{log.source_sha256[:12]}",
-            version=f"nextflow {log.nextflow_version}" if log.nextflow_version else "nextflow",
+            version=f"sha256:{log.source_sha256}",
             timestamp=now(),
             locator=f"{p.name}:line={line_no}",
             detail=(log.lines[line_no - 1].strip()[:200] if 0 < line_no <= log.n_lines else ""),

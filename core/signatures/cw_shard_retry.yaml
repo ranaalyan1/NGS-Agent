@@ -1,0 +1,10 @@
+{
+  "id": "CW-SHARD-002",
+  "problem": "A Cromwell shard exhausted its retries.",
+  "meaning": "A sharded task continued to fail after the configured retry attempts.",
+  "action": "Inspect the failing shard inputs and backend task log.",
+  "evidence": [
+    "Shard .* failed.*retry|Maximum retries.*shard|Retries exhausted"
+  ],
+  "rank": 3
+}

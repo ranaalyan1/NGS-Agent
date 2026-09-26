@@ -28,6 +28,7 @@ from .models import (
     KIND_MULTIQC,
     KIND_NEXTFLOW_LOG,
     KIND_SNAKEMAKE_LOG,
+    KIND_VCF,
     SEVERITY_FAIL,
     SEVERITY_INFO,
     SEVERITY_WARN,
@@ -216,8 +217,20 @@ def _what_matters(verdict: Verdict) -> AnswerBlock:
     if not findings:
         if verdict.unknown:
             block.lines = list(verdict.unknown)
+            if verdict.details.get("last_lines"):
+                block.details.append("Last lines of the input:")
+                block.details += [f"  {line}" for line in verdict.details["last_lines"]]
         else:
             block.lines = ["Nothing stood out in this file. All checks passed."]
+        if verdict.kind == KIND_VCF:
+            metrics = verdict.details.get("metrics") or {}
+            titv = metrics.get("titv")
+            observed = "not computed" if titv is None else f"{titv:.3g}"
+            context = metrics.get(
+                "titv_context",
+                "Ti/Tv expectations vary between whole-genome and exome data; no assay type is inferred.",
+            )
+            block.lines.append(f"Observed Ti/Tv is {observed}. {context}")
         return block
 
     for finding in findings:
@@ -271,8 +284,7 @@ def _receipts(verdict: Verdict) -> AnswerBlock:
     for receipt in verdict.receipts:
         block.lines.append(receipt.short())
     block.lines.append(
-        f"Tool: ngs-agent {verdict.tool_version}, ruleset {verdict.ruleset_version}, "
-        f"generated {verdict.timestamp}"
+        f"Tool: ngs-agent {verdict.tool_version}, ruleset {verdict.ruleset_version}"
     )
     return block
 

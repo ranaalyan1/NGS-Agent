@@ -30,11 +30,20 @@ from .models import (
 from .parse.fastqc import FastQCParseError, parse_fastqc
 from .parse.folder import folder_digest, parse_folder
 from .parse.multiqc import MultiQCParseError, parse_multiqc
+from .parse.runner_log import diagnose_runner
+from .parse.vcf import VCFParseError, parse_vcf
 from .rules.audit_rules import decide as decide_folder
 from .rules.audit_rules import evaluate as evaluate_folder
 from .rules.multiqc_rules import decide as decide_multiqc
 from .rules.multiqc_rules import evaluate as evaluate_multiqc
 from .rules.qc_rules import decide, evaluate
+from .rules.vcf_rules import (
+    decide_vcf,
+    evaluate_vcf,
+    metric_receipts,
+    summarize_vcf,
+    unjudged_vcf_metrics,
+)
 from .sniff import (
     ACTION_AUDIT_FOLDER,
     ACTION_DIAGNOSE_LOG,
@@ -243,49 +252,67 @@ def assess_path(path: str | Path) -> Verdict:
         return diagnose(p)
 
     if result.kind == KIND_SNAKEMAKE_LOG:
-        return unknown_verdict(
-            subject=p.name,
-            kind=KIND_SNAKEMAKE_LOG,
-            reason=(
-                "This is a Snakemake run log. NGS-Agent diagnoses Nextflow logs "
-                "today; Snakemake diagnosis is planned — see ROADMAP.md for what "
-                "is covered and what comes next."
-            ),
-            details={"sniff": result.to_dict()},
-        )
+        return diagnose_runner(p, "snakemake")
 
     if result.kind == KIND_CROMWELL_LOG:
         if any("WDL source" in note for note in result.notes):
-            reason = (
-                "This is a WDL workflow definition. NGS-Agent interprets run "
-                "outputs (logs, reports, folders), not workflow code, so there is "
-                "nothing here to judge. Cromwell run-log diagnosis is planned — "
-                "see ROADMAP.md."
-            )
-        else:
-            reason = (
-                "This is a Cromwell run log. NGS-Agent diagnoses Nextflow logs "
-                "today; Cromwell/WDL diagnosis is planned — see ROADMAP.md for "
-                "what is covered and what comes next."
-            )
-        return unknown_verdict(
-            subject=p.name,
-            kind=KIND_CROMWELL_LOG,
-            reason=reason,
-            details={"sniff": result.to_dict()},
-        )
+            return unknown_verdict(subject=p.name, kind=KIND_CROMWELL_LOG,
+                reason="This is a WDL workflow definition. WDL static analysis is out of scope; see ROADMAP.md.",
+                details={"sniff": result.to_dict()})
+        return diagnose_runner(p, "cromwell")
 
     if result.kind == KIND_VCF:
-        return unknown_verdict(
+        try:
+            facts = parse_vcf(p)
+        except VCFParseError:
+            return unknown_verdict(
+                subject=p.name,
+                kind=KIND_VCF,
+                reason=(
+                    "This is a recognised VCF, but its records could not be interpreted safely. "
+                    "See ROADMAP.md."
+                ),
+                details={"sniff": result.to_dict()},
+            )
+        if facts.get("unsupported"):
+            verdict = unknown_verdict(
+                subject=p.name,
+                kind=KIND_VCF,
+                reason=(
+                    f"This VCF is recognised, not judged: {facts['unsupported']}. "
+                    "See ROADMAP.md."
+                ),
+                details={"sniff": result.to_dict(), "input_sha256": sha256_file(p)},
+            )
+            verdict.details["last_lines"] = facts.get("lines", [])[-20:]
+            return verdict
+
+        findings = evaluate_vcf(facts)
+        decision, headline = decide_vcf(findings)
+        unjudged = unjudged_vcf_metrics(facts)
+        if not findings and unjudged:
+            decision = DECISION_UNKNOWN
+            headline = (
+                "This VCF is recognised, not judged: evidence is insufficient for one or more "
+                "configured QC metrics. See ROADMAP.md."
+            )
+        return Verdict(
             subject=p.name,
             kind=KIND_VCF,
-            reason=(
-                "This is a VCF variant file. NGS-Agent reads quality-control "
-                "reports, run folders and Nextflow logs; interpreting variants is "
-                "deliberately out of scope for this version. Variant "
-                "interpretation is the next planned input — see ROADMAP.md."
-            ),
-            details={"sniff": result.to_dict()},
+            decision=decision,
+            headline=headline,
+            findings=findings,
+            receipts=[_input_receipt(p), _tool_receipt("core/rules/vcf_rules.py"), *metric_receipts(facts)],
+            unknown=unjudged + [
+                "QC metrics judge call quality only; they do not assess pathogenicity or variant truth."
+            ],
+            details={
+                "input_sha256": facts["source_sha256"],
+                "n_sites": len(facts["records"]),
+                "n_samples": len(facts["samples"]),
+                "qc_scope": "call quality only",
+                "metrics": summarize_vcf(facts),
+            },
         )
 
     return unknown_verdict(

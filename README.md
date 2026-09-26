@@ -1,245 +1,169 @@
+<div align="center">
+
 # NGS-Agent
 
-**Drop an NGS file. Get a true answer in plain language, with receipts.**
+**Quality checks and pipeline-log diagnosis for NGS runs.**
 
-NGS-Agent reads a FastQC report, a combined quality summary, a run folder, or a
-Nextflow log and tells you — in sentences a PI can act on — what is wrong,
-what it means, and the one thing to do next. Every claim it makes is printed
-with the receipt that proves it: which file, which line, which rule, which
-version.
+Reads FastQC and MultiQC reports, run folders, VCFs, and workflow logs. Findings include the rule, evidence location, and file hash.
 
-```bash
-ngs sample_fastqc.zip
-```
+[Quickstart](#60-second-quickstart) · [Supported inputs](#supported-inputs) · [Watch a live run](#watch-a-live-run) · [Receipts](#receipts)
 
-![ngs sample_fastqc.zip — real output](docs/images/quickstart.png)
+</div>
 
----
+![Example NGS-Agent verdict](docs/images/quickstart.png)
 
 ## 60-second quickstart
 
+Python 3.11 or newer:
+
 ```bash
-# 1. Get the code
 git clone https://github.com/ranaalyan1/NGS-Agent.git && cd NGS-Agent
-
-# 2. Install (Python 3.11+)
 python -m venv .venv && .venv/bin/pip install -e ".[dev]"
-
-# 3. Point it at a file
 .venv/bin/python -m doors.cli fixtures/fastqc/sample_fastqc.zip
-
-# 4. Or at a whole run folder — all the steps exited 0, and it is still broken
 .venv/bin/python -m doors.cli fixtures/runs/contig_mismatch
-
-# 5. Or open the Box (drop zone, no instructions needed)
 .venv/bin/python -m uvicorn doors.gui.app:app --host 0.0.0.0 --port 8000
 ```
 
-That is the whole interface. There is no config file, no file-type picker, and
-no menu: the sniffer decides what a file is from its contents.
+Open `http://localhost:8000` for the Box. The CLI identifies inputs by content; it does not need a file-type option or configuration file.
 
-### Other ways to install
-
-The venv recipe above is for development. For daily use, pick one:
+### Install options
 
 ```bash
-# pipx: one isolated install, `ngs` on your PATH
+# Isolated command-line install
 pipx install "ngs-agent[box] @ git+https://github.com/ranaalyan1/NGS-Agent.git"
-ngs fixtures/fastqc/sample_fastqc.zip
+ngs sample_fastqc.zip
 
-# conda: the same product inside a fresh environment
+# Conda
+git clone https://github.com/ranaalyan1/NGS-Agent.git && cd NGS-Agent
 conda env create -f environment-box.yml && conda activate ngs-agent-box
-ngs fixtures/fastqc/sample_fastqc.zip
 
-# Docker: no Python needed on the host; serves the Box on port 8000
+# Docker: Box on port 8000
 docker build -t ngs-agent .
 docker run --rm -p 8000:8000 ngs-agent
-# ...then open http://127.0.0.1:8000 and drop a file on it.
-# Each release also publishes ghcr.io/ranaalyan1/ngs-agent, so you can
-# `docker pull` instead of building.
 ```
 
-### Exit codes
+## Supported inputs
 
-| Code | Meaning |
+| Input | Checks and verdict |
 |---|---|
-| `0` | passed, or warnings only |
-| `1` | at least one failing finding |
-| `2` | the input could not be interpreted |
+| FastQC `.zip` | Six read-quality rules: healthy, trim and proceed, or re-sequence. |
+| MultiQC JSON, table, or HTML | The same six rules per sample, plus cohort checks. |
+| Run folder | Ten cross-file audit rules: healthy, review, or fix and re-run. |
+| Nextflow log | Ten failure signatures; one root cause or an honest unknown. |
+| Snakemake log | Eight ranked failure signatures; root cause or unknown with the log tail. |
+| Cromwell log | Five failure signatures; root cause or unknown with the log tail. WDL source is recognised, not analysed. |
+| VCF or `.vcf.gz` | Five call-quality checks for one sample. No variant interpretation. |
 
----
+### Read-quality rules
 
-## The Box
-
-`POST /analyze` on the GUI is the same pipeline as the CLI. Three states only:
-
-**EMPTY** (drop zone) → **CHECKING** (spinner) → **VERDICT** (answer, *Download
-report*, *Details*).
-
-The downloaded report is a single HTML file with inline CSS: no fonts, no
-scripts, no network calls. Email it to a PI and it renders
-([a real one](docs/sample_report.html)). Next to it, `ngs <path> --json`
-writes the same verdict as JSON, receipts included.
-
----
-
-## What it reads today
-
-| Input | What you get |
+| Rule | Detects |
 |---|---|
-| FastQC report (`.zip`) | Six QC rules (below). Bottom line: **healthy / trim and proceed / re-sequence**. |
-| Combined quality summary (MultiQC data JSON, general-stats table, or report HTML) | The same six QC rules, judged per sample, plus cohort checks for samples that stand apart (length spread, GC outlier). Bottom line: **healthy / trim and proceed / review / re-sequence**. |
-| Run folder | Ten audit rules that compare the files against each other (below). Bottom line: **healthy / review / fix and re-run**. |
-| Nextflow log | Ten failure signatures, ranked, with the line numbers that matched. Bottom line: **the one root cause**, or an honest "unknown" with the last 20 lines attached. |
-| Snakemake or Cromwell/WDL log | Recognised by content. Full diagnosis is planned — see [ROADMAP.md](ROADMAP.md); today you get an honest verdict naming the runner, never a guess. |
+| `QC-QUAL-01` | Base quality below Q20 |
+| `QC-ADAPT-01` | Adapter sequence above 5% |
+| `QC-DUP-01` | Duplication, with RNA-seq versus WGS context |
+| `QC-GC-01` | A narrow GC spike |
+| `QC-N-01` | High fraction of uncalled bases |
+| `QC-LEN-01` | Inconsistent read lengths |
 
-### The QC rules
+### Run-folder audit
 
-| Rule | Catches |
+| Rule | Detects |
 |---|---|
-| `QC-QUAL-01` | Base quality falling below Q20, and where to trim |
-| `QC-ADAPT-01` | Adapter sequence still in the reads (above 5%) |
-| `QC-DUP-01` | Duplication, with the RNA-seq-versus-WGS context that decides whether it matters |
-| `QC-GC-01` | A narrow GC spike: contamination, not a genome |
-| `QC-N-01` | Cycles where the machine could not call a base |
-| `QC-LEN-01` | Reads that are not all the same length |
-
-### The folder audit is the point
-
-These are the failures that do not announce themselves. Every step exits 0,
-every file is present, and the numbers are quietly wrong:
-
-| Rule | Catches |
-|---|---|
-| `AUD-STRAND-01` | Chromosomes named differently in the alignment and the gene list, with an assignment rate under 30% — the silent differential-expression killer |
-| `AUD-STRAND-02` | Strandedness setting contradicted by the counts (including libraries that carry no strand information at all) |
+| `AUD-STRAND-01` | Mismatched chromosome naming with assignment below 30% |
+| `AUD-STRAND-02` | Strandedness setting inconsistent with counts |
 | `AUD-CONTAM-02` | Contamination above 3% |
-| `AUD-DUP-04` | One sample's duplication far above the cohort median |
-| `AUD-TRUNC-01` | An alignment file that was never finished writing |
-| `AUD-BUILD-01` | Two genome builds mixed in one run |
-| `AUD-COUNT-01` | Normalised values (TPM) sitting where raw counts belong |
+| `AUD-DUP-04` | A sample with unusually high duplication versus its cohort |
+| `AUD-TRUNC-01` | An incomplete alignment file |
+| `AUD-BUILD-01` | Mixed genome builds |
+| `AUD-COUNT-01` | Normalised values where raw counts are expected |
 | `AUD-PAIRED-01` | Paired-end libraries counted as single-end |
-| `AUD-ADAPT-03` | Adapter read-through (fragments shorter than the reads) |
+| `AUD-ADAPT-03` | Adapter read-through from short fragments |
 | `AUD-ALIGN-01` | Alignment rate below 75% |
 
-`fixtures/runs/contig_mismatch` is exactly the disaster case: all four steps
-exited 0, and 18% of reads were assigned to genes. NGS-Agent catches it.
+`fixtures/runs/contig_mismatch` reproduces a run where every step exits 0, but only 18% of reads are assigned to genes. The audit catches the chromosome-name mismatch between the alignment and annotation.
 
----
+### VCF call-quality checks
+
+These rules evaluate call quality, not variant truth:
+
+| Rule | Metric |
+|---|---|
+| `QC-VCF-01` | Median depth and fraction of sites below depth 10 |
+| `QC-VCF-02` | Fraction of sites with missing genotypes |
+| `QC-VCF-03` | Ti/Tv balance; only extreme outliers are flagged |
+| `QC-VCF-04` | Het/hom ratio outlier |
+| `QC-VCF-05` | PASS, unfiltered, and other FILTER fractions |
+
+The supported sample limit is **one**. gVCFs, multi-allelic records, and visibly non-minimal indels are recognised but not judged. Whole-genome and exome Ti/Tv expectations differ; the tool does not infer assay type. A healthy QC verdict says nothing about pathogenicity, gene context, or ACMG classification.
+
+## Watch a live run
+
+Poll a growing Nextflow log every 15 seconds. Change the interval with `--interval`. The watcher reads the file without modifying it and holds judgement on an incomplete final line.
+
+```bash
+ngs --watch --interval 15 results/nextflow.log
+```
+
+Complete evidence triggers a `LIVE` verdict and next action. Ctrl+C prints a final snapshot: exit code 0 if no failed finding has appeared, otherwise 1. At normal completion, the final card matches one-shot `ngs results/nextflow.log` output.
+
+## Run it inside your pipeline
+
+`examples/nf-core/NGS_AGENT.nf` defines an optional process. Enable it with `params.ngs_agent`; provide the Nextflow log and MultiQC output paths. It runs the published image with a read-only root filesystem and publishes HTML reports under `results/ngs-agent/`. Findings do not fail the process unless `ngs_agent_fail_on_error` is enabled.
+
+```nextflow
+include { NGS_AGENT } from './examples/nf-core/NGS_AGENT.nf'
+if (params.ngs_agent) { NGS_AGENT(
+  Channel.value(file(params.nextflow_log)),
+  Channel.value(file(params.multiqc_output)), params.ngs_agent_fail_on_error ?: false
+)}
+```
+
+## The Box and reports
+
+Run the web interface with:
+
+```bash
+.venv/bin/python -m uvicorn doors.gui.app:app --host 0.0.0.0 --port 8000
+```
+
+Upload a supported file at `http://localhost:8000`. The Box uses the same assessment code as the CLI and offers a downloadable, self-contained HTML report. Use `ngs <path> --json` for the verdict and receipts as JSON.
 
 ## Receipts
 
-A claim without a receipt is an opinion. Every finding carries at least two:
+Each finding identifies its rule or signature and cites the source file, line, and content hash. For example:
 
-```
-QC-QUAL-01: rule:QC-QUAL-01 @ Per base sequence quality — ruleset 2026-09
+```text
+QC-QUAL-01: rule:QC-QUAL-01 @ Per base sequence quality — ruleset 2026-09.1
 QC-QUAL-01: file:751e79c3d819 @ sample_fastqc/fastqc_data.txt:line=28
             — Per base sequence quality mean = 17.8 at position 40-49 (threshold Q20)
 ```
 
-* `rule:<ID>` — which rule said so, and under which ruleset version.
-* `file:<sha256-12>` — the exact line of the exact file the number came from.
-* `signature:<ID>` — for logs, which failure pattern matched, and where.
+If the input is unsupported or evidence is insufficient, the verdict is **unknown** rather than a guess. VCF metric receipts also appear in the JSON verdict.
 
-Where evidence is missing, the tool says so and the verdict is **unknown**. It
-never fills the gap with a confident guess.
+## Exit codes
 
----
+| Code | Meaning |
+|---:|---|
+| `0` | Pass or warnings only |
+| `1` | At least one failed finding |
+| `2` | Input could not be interpreted |
 
-## Scope: what NGS-Agent is, and is not
+## Scope
 
-NGS-Agent is an **interpreter**, not a runner. It never executes a pipeline,
-never uploads anything, and never calls a language model to decide what to
-tell you — every sentence in v1 comes from a template and a rule.
+NGS-Agent reads results; it does not run or orchestrate pipelines. Core makes no network calls and the tool uploads no files. Verdict text uses fixed templates and measured values.
 
-**v1 does not do:**
-
-* running or orchestrating pipelines (Nextflow, Snakemake, Docker, Slurm);
-* interpreting VCF variant files — you will get an honest "I can't interpret
-  this yet" rather than a guess. Variant interpretation is the next planned
-  input; see [ROADMAP.md](ROADMAP.md);
-* variant prioritisation or ACMG classification;
-* multi-model debate or persona discussion;
-* an MCP server, accounts, authentication, or any cloud upload.
-
-Those are out of scope by design, not by accident. See `NOTES.md` for what was
-deliberately left out of this build, and `ROADMAP.md` for what is covered,
-what comes next, and what stays out.
-
-It also cannot judge what it cannot see: a folder with no counts summary gets no
-assignment-rate verdict, and says so in the output.
-
----
-
-## Roadmap
-
-Covered today: FastQC reports, combined quality summaries, run folders,
-Nextflow logs. Recognised, with full diagnosis planned: Snakemake and
-Cromwell/WDL logs. Next planned input: VCF interpretation (variant QC first).
-
-The full plan — ordering, later items, and what stays out of scope by design —
-lives in [ROADMAP.md](ROADMAP.md).
-
----
-
-## Case study: the run where every step exited 0
-
-An RNA-seq run folder. All four pipeline steps reported success — and 18% of
-reads were assigned to genes, because the alignment and the gene list name
-chromosomes differently (`1` vs `chr1`). Verdict: **fix and re-run**, with the
-fix (re-run quantification with the matching annotation; no re-alignment
-needed) and these receipts:
-
-```
-AUD-STRAND-01: file:8ee3e4f33024 @
-               counts/sample1.featureCounts.txt.summary:line=2
-               — Assigned 1,800,000 of 10,043,000 counted reads = 17.9%
-AUD-STRAND-01: file:8e5658148f4b @
-               star/sample1/Aligned.sortedByCoord.out.bam — 25 @SQ contigs
-AUD-STRAND-01: file:3420f4695f6e @
-               annotation/gencode.v45.annotation.gtf — 25 contigs in column 1
-```
-
-No single file looks wrong on its own — the failure only exists *between*
-files, which is why per-step exit codes miss it. Reproduce it with
-`.venv/bin/python -m doors.cli fixtures/runs/contig_mismatch`; the full
-write-up is [CASE_STUDY.md](CASE_STUDY.md).
-
----
+It does not do VCF pathogenicity, gene-context, or ACMG analysis; WDL source is not statically analysed. Pipeline execution, MCP, accounts, authentication, and cloud uploads are out of scope. Unsupported or unrecognised inputs return an honest unknown. See [ROADMAP.md](ROADMAP.md) for coverage and planned work.
 
 ## Development
 
 ```bash
-.venv/bin/python -m pytest              # the whole suite (~500 tests)
-.venv/bin/python -m pytest tests/test_audit.py -v   # one station
-python scripts/make_fixtures.py         # regenerate fixtures/ (byte-identical)
-python scripts/make_screenshot.py       # regenerate docs/images/quickstart.png
+python -m pytest
+python scripts/make_fixtures.py
+python scripts/make_screenshot.py
 ```
 
-The suite enforces the product's own laws: the Golden Rule (no logic in
-`doors/`), the Law of Receipts (every finding created anywhere in the session is
-audited), and the honest-unknown rule (traps: a VCF renamed `.txt`, a VCF with
-no extension, a gzipped VCF, empty and garbage files).
-
-### Layout
-
-```
-core/          all logic lives here
-  sniff.py       what is this file? (content, never filename)
-  assess.py      one entry point: path -> Verdict
-  parse/         fastqc.py, folder.py, multiqc.py, nextflow_log.py
-  rules/         qc_rules.py, audit_rules.py, multiqc_rules.py
-  signatures/    ten Nextflow failure signatures (YAML)
-  answer.py      Verdict -> plain language (templates only)
-  report.py      Verdict -> standalone HTML + JSON sidecar
-doors/         ways in; no logic
-  cli.py         ngs <path>
-  gui/           FastAPI + one HTML page
-fixtures/      generated test data, including planted failures
-```
-
----
+Tests cover parsing, rules, fixtures, and the receipts audit. Fixtures are generated byte-identically by `scripts/make_fixtures.py`.
 
 ## Licence
 
-Apache-2.0. See [LICENSE](LICENSE).
+Apache-2.0 · [LICENSE](LICENSE)

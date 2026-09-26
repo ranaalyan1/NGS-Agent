@@ -1,0 +1,10 @@
+{
+  "id": "SM-JOB-006",
+  "problem": "A Snakemake job failed with a non-zero exit code.",
+  "meaning": "The command returned a failure status; the log does not identify a more specific cause.",
+  "action": "Inspect the reported rule command and its stderr.",
+  "evidence": [
+    "non-zero exit code.{0,20}[1-9][0-9]*|exit code[:= ]+[1-9][0-9]*"
+  ],
+  "rank": 6
+}

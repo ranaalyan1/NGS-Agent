@@ -1,0 +1,10 @@
+{
+  "id": "CW-CAPTURE-005",
+  "problem": "Cromwell could not capture a task stdout or stderr file.",
+  "meaning": "A task output reference could not be read or persisted.",
+  "action": "Check the task work directory and output file declarations.",
+  "evidence": [
+    "stdout.*(not found|missing|failed)|stderr.*(not found|missing|failed)|Failed to read.*(stdout|stderr)"
+  ],
+  "rank": 4
+}

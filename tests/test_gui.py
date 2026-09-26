@@ -130,7 +130,7 @@ def test_vcf_gives_an_honest_i_cannot_interpret_this(client):
     assert data["decision"] == "UNKNOWN"
     assert data["findings"] == []
     assert data["unknown"]
-    assert "out of scope" in " ".join(data["unknown"]).lower()
+    assert "not judged" in data["headline"].lower()
 
 
 def test_vcf_renamed_to_txt_gives_the_same_honest_answer(client):
@@ -140,10 +140,11 @@ def test_vcf_renamed_to_txt_gives_the_same_honest_answer(client):
     assert data["findings"] == []
 
 
-def test_gzipped_vcf_gives_the_same_honest_answer(client):
+def test_gzipped_vcf_is_judged_for_call_quality(client):
     data = upload(client, fx("vcf", "sample.vcf.gz")).json()
     assert data["kind"] == "vcf"
-    assert data["decision"] == "UNKNOWN"
+    assert data["decision"] == "HEALTHY"
+    assert data["findings"] == []
 
 
 def test_empty_file_gives_an_honest_answer_not_a_crash(client):

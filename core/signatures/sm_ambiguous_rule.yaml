@@ -1,0 +1,10 @@
+{
+  "id": "SM-AMBIG-002",
+  "problem": "More than one Snakemake rule can produce the requested file.",
+  "meaning": "The workflow has competing producers for the same target.",
+  "action": "Add an explicit rule priority or constrain the target pattern.",
+  "evidence": [
+    "AmbiguousRuleException"
+  ],
+  "rank": 2
+}

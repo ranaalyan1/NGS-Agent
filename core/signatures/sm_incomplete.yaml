@@ -1,0 +1,10 @@
+{
+  "id": "SM-INCOMPLETE-007",
+  "problem": "Snakemake removed an output marked incomplete.",
+  "meaning": "A prior or interrupted job left an output file incomplete.",
+  "action": "Rerun the affected rule after confirming its inputs are intact.",
+  "evidence": [
+    "Removing output files of failed job|incomplete files|marked as incomplete"
+  ],
+  "rank": 7
+}

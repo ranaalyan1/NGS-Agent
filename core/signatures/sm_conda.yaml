@@ -1,0 +1,10 @@
+{
+  "id": "SM-CONDA-005",
+  "problem": "The Snakemake conda environment could not be created.",
+  "meaning": "Dependency solving or environment creation failed before the job ran.",
+  "action": "Review the environment specification and package-channel availability.",
+  "evidence": [
+    "Conda.*(solve|environment)|ResolvePackageNotFound|UnsatisfiableError"
+  ],
+  "rank": 5
+}

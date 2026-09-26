@@ -1,0 +1,3 @@
+ N E X T F L O W  ~  version 24.04.2
+WARN: retrying a transient task
+java.lang.OutOfMemoryError: Java heap space

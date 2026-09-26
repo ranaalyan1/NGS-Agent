@@ -1,0 +1,10 @@
+{
+  "id": "CW-BACKEND-003",
+  "problem": "The Cromwell execution backend reported an error.",
+  "meaning": "The backend could not launch or monitor the task successfully.",
+  "action": "Check the backend service status and task submission details.",
+  "evidence": [
+    "Backend.*(error|failed)|Failed to submit.*job|backend.*exception"
+  ],
+  "rank": 1
+}
