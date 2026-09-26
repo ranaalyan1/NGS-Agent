@@ -1,0 +1,17 @@
+# The process was killed by the kernel / cgroup OOM killer (exit 137).
+id: NF-OOM-001
+title: "The job ran out of memory and was killed"
+severity: fatal
+anchors:
+  - "oom-kill event"
+  - "Out of memory"
+  - "error exit status (137)"
+explanation: >-
+  The machine ran out of memory and the operating system killed the job. Exit
+  status 137 means "killed", not "failed": the analysis was not wrong, it was
+  not allowed to finish.
+fix: >-
+  Give the step more memory (for example raise process_high memory in the
+  Nextflow config) or run it on a bigger machine, then resume the pipeline with
+  -resume. Aligners and assemblers are the usual offenders.
+reference: "https://www.nextflow.io/docs/latest/"

@@ -1,0 +1,18 @@
+# Container image could not be pulled (often transient, so: warning).
+id: NF-CONT-004
+title: "A software container could not be downloaded"
+severity: warning
+anchors:
+  - "Cannot pull"
+  - "failed to pull"
+  - "manifest unknown"
+  - "denied: access forbidden"
+  - "docker pull"
+explanation: >-
+  Nextflow could not download the software image for this step. This is usually
+  infrastructure, not biology: an offline registry, a typo in the image name, or
+  an expired login. Nextflow often retries and succeeds.
+fix: >-
+  Check that the container registry is reachable and that the image name and
+  credentials are correct. If the run succeeded anyway, no action is needed.
+reference: "https://www.nextflow.io/docs/latest/"

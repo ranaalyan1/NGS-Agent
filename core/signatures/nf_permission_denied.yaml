@@ -1,0 +1,17 @@
+# Permissions / ownership on a path.
+id: NF-PERM-010
+title: "Permission denied while reading or writing a file"
+severity: fatal
+anchors:
+  - "Permission denied"
+  - "Operation not permitted"
+  - "Access denied"
+  - "EACCES"
+explanation: >-
+  The job was not allowed to read or write a file it needed. Typically the work
+  directory is owned by another user, a mounted volume is read-only, or a file
+  was created by root and is now being read by a normal user.
+fix: >-
+  Fix the ownership or permissions on the path named in the error (or run in a
+  work directory you own), then re-run the step.
+reference: "https://www.nextflow.io/docs/latest/"
