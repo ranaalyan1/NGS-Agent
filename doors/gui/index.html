@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NGS-Agent — drop a file, get an answer</title>
+<style>
+:root{
+  --ink:#12181f; --muted:#5c6b7a; --line:#e3e8ee; --bg:#f6f8fa; --card:#fff;
+  --brand:#1f6f8b; --fail:#c0392b; --warn:#b9770e; --info:#1f6f8b; --pass:#1e7d46;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);
+ font:16px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;}
+.wrap{max-width:860px;margin:0 auto;padding:28px 16px 60px}
+header{display:flex;align-items:baseline;gap:10px;margin-bottom:6px}
+header h1{font-size:20px;margin:0}
+header .tag{color:var(--muted);font-size:14px}
+main{background:var(--card);border:1px solid var(--line);border-radius:12px;
+ padding:22px;box-shadow:0 1px 2px rgba(16,24,40,.04)}
+/* state 1: empty */
+#drop{border:2px dashed #c6d2dd;border-radius:12px;padding:48px 20px;text-align:center;
+ cursor:pointer;transition:border-color .15s,background .15s}
+#drop:hover,#drop.over{border-color:var(--brand);background:#f2f8fb}
+#drop .big{font-size:19px;font-weight:600}
+#drop .small{color:var(--muted);margin-top:6px;font-size:14px}
+#pick{display:none}
+/* state 2: checking */
+#checking{display:none;text-align:center;padding:44px 20px}
+.spinner{width:38px;height:38px;margin:0 auto 14px;border:4px solid #dbe4ec;
+ border-top-color:var(--brand);border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* state 3: verdict */
+#verdict{display:none}
+.badge{display:inline-block;font-size:12px;font-weight:700;letter-spacing:.06em;
+ text-transform:uppercase;padding:4px 10px;border-radius:99px;color:#fff;background:var(--info)}
+.badge.fail{background:var(--fail)} .badge.warn{background:var(--warn)}
+.badge.healthy{background:var(--pass)} .badge.unknown{background:var(--muted)}
+#vtitle{font-size:22px;margin:10px 0 2px}
+#vhead{font-size:17px;margin:0 0 4px}
+#vmeta{color:var(--muted);font-size:13px;margin:0 0 16px}
+h2{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);
+ margin:22px 0 8px;border-bottom:1px solid var(--line);padding-bottom:6px}
+.finding{border:1px solid var(--line);border-left:4px solid var(--info);
+ border-radius:8px;padding:13px 15px;margin-bottom:10px}
+.finding.fail{border-left-color:var(--fail)}
+.finding.warn{border-left-color:var(--warn)}
+.finding h3{font-size:16px;margin:0 0 6px}
+.finding p{margin:4px 0}
+.lbl{font-weight:600;color:var(--muted)}
+ol{padding-left:22px;margin:6px 0}
+ul{padding-left:20px;margin:6px 0}
+.receipt{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+ font-size:12px;color:var(--muted);word-break:break-all;margin:2px 0}
+details{margin-top:10px;padding-top:8px;border-top:1px dashed var(--line)}
+summary{cursor:pointer;color:var(--muted);font-size:14px}
+.buttons{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}
+button{font:inherit;padding:9px 16px;border-radius:8px;border:1px solid var(--brand);
+ background:var(--brand);color:#fff;cursor:pointer}
+button.ghost{background:#fff;color:var(--brand)}
+button:disabled{opacity:.5;cursor:default}
+.note{color:var(--muted);font-size:13px;margin-top:14px}
+table{border-collapse:collapse;width:100%;font-size:13px;margin-top:6px}
+td,th{border-bottom:1px solid var(--line);padding:4px 8px;text-align:left}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>NGS-Agent</h1>
+    <span class="tag">Drop a file. Get a plain-language answer, with receipts.</span>
+  </header>
+
+  <main>
+    <!-- STATE 1: EMPTY -->
+    <div id="drop" role="button" tabindex="0" aria-label="Drop a file here or click to choose one">
+      <div class="big">Drop your file here</div>
+      <div class="small">FastQC reports, run folders, Nextflow logs — or click to choose one.
+        Nothing is uploaded to the internet.</div>
+      <input id="pick" type="file" aria-hidden="true">
+    </div>
+
+    <!-- STATE 2: CHECKING -->
+    <div id="checking" aria-live="polite">
+      <div class="spinner"></div>
+      <div>Reading your file…</div>
+    </div>
+
+    <!-- STATE 3: VERDICT -->
+    <div id="verdict" aria-live="polite">
+      <span id="vbadge" class="badge"></span>
+      <h2 id="vtitle"></h2>
+      <p id="vhead"></p>
+      <p id="vmeta"></p>
+      <div id="vbody"></div>
+      <div class="buttons">
+        <button id="download" type="button">Download report</button>
+        <button id="again" type="button" class="ghost">Check another file</button>
+      </div>
+      <p class="note" id="vfoot"></p>
+    </div>
+  </main>
+
+  <p class="note" id="footnote">
+    Every statement comes with a receipt: where the number came from, which rule
+    judged it, and when. Where evidence is missing, this tool says so instead of
+    guessing.
+  </p>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var drop = document.getElementById("drop");
+  var pick = document.getElementById("pick");
+  var checking = document.getElementById("checking");
+  var verdict = document.getElementById("verdict");
+  var downloadBtn = document.getElementById("download");
+  var againBtn = document.getElementById("again");
+  var currentReport = null;
+
+  function show(state) {
+    drop.style.display = state === "empty" ? "block" : "none";
+    checking.style.display = state === "checking" ? "block" : "none";
+    verdict.style.display = state === "verdict" ? "block" : "none";
+  }
+
+  function el(tag, cls, text) {
+    var node = document.createElement(tag);
+    if (cls) { node.className = cls; }
+    if (text !== undefined && text !== null) { node.textContent = String(text); }
+    return node;
+  }
+
+  function fill(id, text) {
+    document.getElementById(id).textContent = text || "";
+  }
+
+  function badgeClass(data) {
+    var d = (data.decision || "").toUpperCase();
+    if (d === "UNKNOWN") { return "badge unknown"; }
+    if (d === "HEALTHY") { return "badge healthy"; }
+    if (d === "RESEQUENCE") { return "badge fail"; }
+    return "badge warn";
+  }
+
+  function renderFindings(data) {
+    var body = document.getElementById("vbody");
+    body.textContent = "";
+
+    (data.sections || []).forEach(function (section) {
+      var heading = el("h2", null, section.heading);
+      body.appendChild(heading);
+
+      if (section.heading === "What matters" && (data.findings || []).length) {
+        data.findings.forEach(function (finding) {
+          var card = el("div", "finding " + (finding.severity || "info"));
+          card.appendChild(el("h3", null, finding.title));
+          var what = el("p");
+          what.appendChild(el("span", "lbl", "What it is. "));
+          what.appendChild(document.createTextNode(finding.what));
+          card.appendChild(what);
+          var meaning = el("p");
+          meaning.appendChild(el("span", "lbl", "What it means. "));
+          meaning.appendChild(document.createTextNode(finding.meaning));
+          card.appendChild(meaning);
+          var action = el("p");
+          action.appendChild(el("span", "lbl", "Do this. "));
+          action.appendChild(document.createTextNode(finding.action));
+          card.appendChild(action);
+
+          var more = el("details");
+          more.appendChild(el("summary", null, "Receipts and technical details"));
+          (finding.receipts || []).forEach(function (receipt) {
+            more.appendChild(el("p", "receipt",
+              receipt.source + " @ " + receipt.locator +
+              (receipt.detail ? " — " + receipt.detail : "")));
+          });
+          var keys = Object.keys(finding.details || {});
+          if (keys.length) {
+            var table = el("table");
+            keys.forEach(function (key) {
+              var row = el("tr");
+              row.appendChild(el("th", null, key));
+              row.appendChild(el("td", null, finding.details[key]));
+              table.appendChild(row);
+            });
+            more.appendChild(table);
+          }
+          card.appendChild(more);
+          body.appendChild(card);
+        });
+        return;
+      }
+
+      var list = document.createElement(section.heading === "What to do" ? "ol" : "ul");
+      list.className = section.heading === "Receipts" ? "plain" : "";
+      (section.lines || []).forEach(function (line) {
+        list.appendChild(el("li", section.heading === "Receipts" ? "receipt" : null, line));
+      });
+      body.appendChild(list);
+    });
+  }
+
+  function render(data) {
+    currentReport = data.report_html || null;
+    fill("vtitle", data.subject);
+    fill("vhead", data.headline);
+    document.getElementById("vbadge").className = badgeClass(data);
+    document.getElementById("vbadge").textContent = data.decision_label || data.decision;
+    fill("vmeta", (data.kind_label || "") +
+      (data.timestamp ? " · checked " + data.timestamp : "") +
+      (data.input_sha256 ? " · SHA-256 " + data.input_sha256.slice(0, 16) + "…" : ""));
+    renderFindings(data);
+    downloadBtn.disabled = !currentReport;
+    fill("vfoot", "ngs-agent " + data.tool_version + " · ruleset " + data.ruleset_version);
+    show("verdict");
+  }
+
+  function send(file) {
+    if (!file) { return; }
+    show("checking");
+    var form = new FormData();
+    form.append("file", file, file.name);
+    fetch("/analyze", { method: "POST", body: form })
+      .then(function (response) {
+        if (!response.ok) { throw new Error("server said " + response.status); }
+        return response.json();
+      })
+      .then(render)
+      .catch(function (error) {
+        show("empty");
+        window.alert("That file could not be checked: " + error.message);
+      });
+  }
+
+  function onDrop(event) {
+    event.preventDefault();
+    drop.classList.remove("over");
+    var files = event.dataTransfer && event.dataTransfer.files;
+    if (files && files.length) { send(files[0]); }
+  }
+
+  drop.addEventListener("click", function () { pick.click(); });
+  drop.addEventListener("keydown", function (event) {
+    if (event.key === "Enter" || event.key === " ") { event.preventDefault(); pick.click(); }
+  });
+  drop.addEventListener("dragover", function (event) {
+    event.preventDefault();
+    drop.classList.add("over");
+  });
+  drop.addEventListener("dragleave", function () { drop.classList.remove("over"); });
+  drop.addEventListener("drop", onDrop);
+  pick.addEventListener("change", function () {
+    if (pick.files && pick.files.length) { send(pick.files[0]); }
+  });
+
+  downloadBtn.addEventListener("click", function () {
+    if (!currentReport) { return; }
+    var blob = new Blob([currentReport], { type: "text/html" });
+    var url = URL.createObjectURL(blob);
+    var link = document.createElement("a");
+    link.href = url;
+    link.download = "ngs-agent-report.html";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  });
+
+  againBtn.addEventListener("click", function () {
+    pick.value = "";
+    currentReport = null;
+    show("empty");
+  });
+
+  show("empty");
+})();
+</script>
+</body>
+</html>
