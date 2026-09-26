@@ -1,0 +1,10 @@
+{
+  "id": "SM-INPUT-001",
+  "problem": "Snakemake cannot find a required input file.",
+  "meaning": "A declared input path is absent or unavailable to the job.",
+  "action": "Check the input path and sample-sheet entries, then rerun.",
+  "evidence": [
+    "MissingInputException"
+  ],
+  "rank": 1
+}

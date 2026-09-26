@@ -58,17 +58,26 @@ def test_unknown_input_exits_two_and_says_so(capsys):
 
 
 def test_vcf_exits_two_without_guessing(capsys):
-    code, out = run(capsys, str(fx("vcf", "sample.vcf")))
+    code, out = run(capsys, str(fx("misc", "plain.txt")))
     assert code == EXIT_UNKNOWN
-    # Terminal output is word-wrapped, so compare without whitespace.
     flat = re.sub(r"\s+", " ", out).lower()
-    assert "out of scope" in flat or "could not" in flat
+    assert "could not recognise" in flat or "no evidence" in flat
 
 
-def test_vcf_trap_files_exit_two_as_well(capsys):
-    for name in ("mystery.txt", "vcf_no_extension", "sample.vcf.gz"):
+def test_valid_vcf_is_judged_for_call_quality_only(capsys):
+    code, out = run(capsys, str(fx("vcf", "clean.vcf")))
+    assert code == EXIT_OK
+    assert "QC healthy" in out
+    assert "pathogenicity" in out.lower() or "variant truth" in out.lower()
+
+
+def test_vcf_non_vcf_traps_and_gzip_are_honest(capsys):
+    for name in ("mystery.txt", "vcf_no_extension"):
         code, _ = run(capsys, str(fx("vcf", name)))
         assert code == EXIT_UNKNOWN, name
+    code, out = run(capsys, str(fx("vcf", "sample.vcf.gz")))
+    assert code == EXIT_OK
+    assert "QC healthy" in out
 
 
 def test_missing_path_exits_two_without_a_traceback(capsys):

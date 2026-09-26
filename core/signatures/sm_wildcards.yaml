@@ -1,0 +1,10 @@
+{
+  "id": "SM-WILDCARD-004",
+  "problem": "Snakemake could not resolve a wildcard consistently.",
+  "meaning": "A rule pattern or constraint cannot derive the required wildcard value.",
+  "action": "Review the output pattern and wildcard constraints.",
+  "evidence": [
+    "WildcardError|Wildcards.*cannot be determined|wildcard.*conflict"
+  ],
+  "rank": 4
+}

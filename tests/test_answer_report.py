@@ -84,7 +84,7 @@ def test_unknown_verdict_is_honest_and_still_structured():
 def test_vcf_verdict_says_out_of_scope_plainly():
     answer = answer_verdict(assess_path(fx("vcf", "sample.vcf")))
     text = answer.to_text().lower()
-    assert "out of scope" in text or "could not" in text
+    assert "roadmap.md" in text or "not judged" in text
     assert "receipts" in text
 
 

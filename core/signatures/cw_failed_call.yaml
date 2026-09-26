@@ -1,0 +1,10 @@
+{
+  "id": "CW-CALL-001",
+  "problem": "A Cromwell call failed.",
+  "meaning": "The workflow call reported failure; this log excerpt does not establish a biological cause.",
+  "action": "Inspect the failed call task log and its stderr.",
+  "evidence": [
+    "Call .*failed|Job .* failed"
+  ],
+  "rank": 5
+}

@@ -193,12 +193,14 @@ def make_fastqc_zip(
     path.parent.mkdir(parents=True, exist_ok=True)
     folder = f"{sample}_fastqc"
     with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as zf:
-        zf.writestr(f"{folder}/fastqc_data.txt", "".join(data))
-        zf.writestr(f"{folder}/summary.txt", summary)
-        zf.writestr(
-            f"{folder}/fastqc_report.html",
-            f"<html><body><h1>FastQC report for {sample}</h1></body></html>",
-        )
+        for name, content in (
+            (f"{folder}/fastqc_data.txt", "".join(data)),
+            (f"{folder}/summary.txt", summary),
+            (f"{folder}/fastqc_report.html", f"<html><body><h1>FastQC report for {sample}</h1></body></html>"),
+        ):
+            info = zipfile.ZipInfo(name, date_time=(2020, 1, 1, 0, 0, 0))
+            info.compress_type = zipfile.ZIP_DEFLATED
+            zf.writestr(info, content)
     return path
 
 
@@ -229,6 +231,29 @@ chr2\t48327\t.\tG\tA\t221.9\tPASS\tDP=61;AF=1.0\tGT:DP\t1/1:61
 """
 
 
+def _vcf_records(depths, genotypes=None, filters=None):
+    genotypes = genotypes or ["0/1"] * len(depths)
+    filters = filters or ["PASS"] * len(depths)
+    header = VCF_BODY.split("#CHROM",1)[0] + "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tsample1\n"
+    rows=[]
+    bases=[("A","G"),("C","T"),("A","C"),("G","T")]
+    for i,depth in enumerate(depths):
+        ref,alt=bases[i%len(bases)]
+        rows.append(f"chr1\t{1000+i}\t.\t{ref}\t{alt}\t60\t{filters[i]}\tDP={depth}\tGT:DP\t{genotypes[i]}:{depth}\n")
+    return header+"".join(rows)
+
+
+def make_station10_vcfs():
+    root=FIX/"vcf"
+    _write(root/"clean.vcf", _vcf_records([30]*12,["0/1"]*6+["1/1"]*6))
+    _write(root/"low_depth.vcf", _vcf_records([2,4,5,6,8,3,4,7,8,6]))
+    gts=["./.","./.","./.","0/1","0/1","0/1","0/1","0/1","0/1","0/1"]
+    _write(root/"high_missingness.vcf", _vcf_records([30]*10,gts))
+    _write(root/"gvcf.vcf", "##fileformat=VCFv4.2\n#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tsample1\nchr1\t1\t.\tA\t<NON_REF>\t.\t.\tEND=100\tGT\t0/0\n")
+    _write(root/"unnormalised.vcf", "##fileformat=VCFv4.2\n#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tsample1\nchr1\t1\t.\tAT\tATT\t50\tPASS\tDP=30\tGT:DP\t0/1:30\n")
+    _write(root/"multi_sample.vcf", VCF_BODY.replace("sample1\n", "sample1\tsample2\n"))
+
+
 def make_minimal_bam(contigs: list[str], eof: bool = True, truncated: bool = False) -> bytes:
     """A tiny but structurally valid BAM: magic, header text, ref list."""
     text = "@HD\tVN:1.6\tSO:coordinate\n"
@@ -243,7 +268,7 @@ def make_minimal_bam(contigs: list[str], eof: bool = True, truncated: bool = Fal
     for i, c in enumerate(contigs):
         name = c.encode() + b"\x00"
         body += struct.pack("<i", len(name)) + name + struct.pack("<i", 248956422 - i)
-    raw = gzip.compress(body)
+    raw = gzip.compress(body, mtime=0)
     if truncated:
         return raw[: max(16, len(raw) // 3)]
     if eof:
@@ -560,7 +585,7 @@ Error in rule count:
     output: results/sample1.counts.txt
     shell:
         featureCounts -a /refs/genes.gtf -o results/sample1.counts.txt results/sample1.bam
-        (one of the commands exited with non-zero exit code; note that snakemake uses bash strict mode!)
+        (one of the commands exited with non-zero exit code 7; note that snakemake uses bash strict mode!)
 
 Exiting because a job execution failed
 Complete log: /home/user/project/.snakemake/log/2026-09-24T101201.123456.snakemake.log
@@ -1052,12 +1077,12 @@ def main() -> None:
         statuses={"Per sequence GC content": "fail"},
     )
 
+    make_station10_vcfs()
     _write(FIX / "vcf" / "sample.vcf", VCF_BODY)
     _write(FIX / "vcf" / "mystery.txt", VCF_BODY)  # TRAP: VCF named .txt
     _write(FIX / "vcf" / "vcf_no_extension", VCF_BODY)  # TRAP: no extension
     (FIX / "vcf").mkdir(parents=True, exist_ok=True)
-    with gzip.open(FIX / "vcf" / "sample.vcf.gz", "wb") as fh:  # TRAP: gzipped VCF
-        fh.write(VCF_BODY.encode())
+    (FIX / "vcf" / "sample.vcf.gz").write_bytes(gzip.compress((FIX / "vcf" / "clean.vcf").read_bytes(), mtime=0))  # gzipped VCF
 
     (FIX / "bam").mkdir(parents=True, exist_ok=True)
     (FIX / "bam" / "truncated.bam").write_bytes(
@@ -1071,6 +1096,18 @@ def main() -> None:
     _write(FIX / "logs" / "nextflow_nomatch.log", make_nomatch_log())
     _write(FIX / "logs" / "snakemake.log", make_snakemake_log())
     _write(FIX / "logs" / "cromwell.log", make_cromwell_log())
+    growing=FIX/"logs"/"growing"
+    _write(growing/"nextflow.early", _nextflow_banner()+"WARN: retrying a transient task\nWARN: waiting for a scheduled executor\n")
+    _write(growing/"nextflow.part1", _nextflow_banner()+"WARN: retrying a transient task\njava.lang.OutOfMemoryError: Java heap space\n")
+    _write(growing/"nextflow.part2", _nextflow_banner()+"WARN: retrying a transient task\njava.lang.OutOfMemoryError: Java heap space\nExecution cancelled\n")
+    _write(growing/"clean.part", make_nextflow_ok_log())
+    _write(growing/"truncated.part", _nextflow_banner()+"Command error:\njava.lang.OutOfMemoryError: Java heap")
+    sm=FIX/"logs"/"snakemake"
+    sm_cases={"missing_input":"MissingInputException: missing reads.fastq.gz\n", "ambiguous_rule":"AmbiguousRuleException: target output matches rules a and b\n", "unknown_target":"No rule to produce target.xyz\n", "wildcards":"WildcardError: Wildcards in input files cannot be determined\n", "conda":"ResolvePackageNotFound: missing package\n", "job_failed":"Error in rule align:\n(one of the commands exited with non-zero exit code 7)\n", "incomplete":"Removing output files of failed job: marked as incomplete\n", "cycle":"CyclicGraphException: cycle in the graph\n", "no_match":"Snakemake started workflow successfully\nBuilding DAG of jobs...\n"}
+    for name,content in sm_cases.items(): _write(sm/(name+".log"),content)
+    cw=FIX/"logs"/"cromwell"
+    cw_cases={"failed_call":"Call AlignTask failed\n", "shard_retry":"Shard 2 failed after retries exhausted\n", "backend":"Backend error: failed to submit job\n", "localization":"Failed to localize input file\n", "capture":"Failed to read task stdout file\n", "no_match":"Cromwell workflow is running\n"}
+    for name,content in cw_cases.items(): _write(cw/(name+".log"),content)
     _write(FIX / "wdl" / "example.wdl", make_wdl_source())
 
     _write(FIX / "multiqc" / "multiqc_general_stats.txt", make_multiqc_general_stats())

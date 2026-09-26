@@ -26,7 +26,7 @@ Error in rule count:
     output: results/sample1.counts.txt
     shell:
         featureCounts -a /refs/genes.gtf -o results/sample1.counts.txt results/sample1.bam
-        (one of the commands exited with non-zero exit code; note that snakemake uses bash strict mode!)
+        (one of the commands exited with non-zero exit code 7; note that snakemake uses bash strict mode!)
 
 Exiting because a job execution failed
 Complete log: /home/user/project/.snakemake/log/2026-09-24T101201.123456.snakemake.log

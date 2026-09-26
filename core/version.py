@@ -9,4 +9,4 @@ TOOL_VERSION = "1.0.0"
 #: Version of the rule set (QC rules, audit rules, log signatures).
 #: Bump this whenever a rule's thresholds or wording change, because it is
 #: printed on every report and stored on every receipt.
-RULESET_VERSION = "2026-09"
+RULESET_VERSION = "2026-09.1"

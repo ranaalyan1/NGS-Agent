@@ -1,0 +1,10 @@
+{
+  "id": "CW-LOCALIZE-004",
+  "problem": "Cromwell could not localize an input.",
+  "meaning": "An input could not be staged into the task execution environment.",
+  "action": "Verify the input path and localization configuration.",
+  "evidence": [
+    "localiz(e|ation).*failed|Failed to localize|Unable to localize"
+  ],
+  "rank": 2
+}

@@ -63,19 +63,23 @@ def test_messy_fastqc_verdict_is_resequence():
     assert verdict.decision == DECISION_RESEQUENCE
 
 
-def test_vcf_is_declared_out_of_scope_not_guessed_at():
+def test_insufficient_vcf_evidence_is_recognised_but_not_judged():
     verdict = assess_path(fx("vcf", "sample.vcf"))
     assert verdict.kind == KIND_VCF
     assert verdict.decision == DECISION_UNKNOWN
     assert verdict.findings == []
-    assert any("out of scope" in reason for reason in verdict.unknown)
+    assert "ROADMAP.md" in verdict.headline
+    assert "not judged" in verdict.headline.lower()
 
 
-def test_vcf_trap_files_are_also_declared_out_of_scope():
-    for name in ("mystery.txt", "vcf_no_extension", "sample.vcf.gz"):
+def test_vcf_trap_files_stay_unknown_and_gzip_is_supported():
+    for name in ("mystery.txt", "vcf_no_extension"):
         verdict = assess_path(fx("vcf", name))
         assert verdict.decision == DECISION_UNKNOWN, name
         assert verdict.findings == []
+    gzipped = assess_path(fx("vcf", "sample.vcf.gz"))
+    assert gzipped.decision == DECISION_HEALTHY
+    assert gzipped.findings == []
 
 
 def test_unknown_file_gives_an_honest_unknown_verdict():

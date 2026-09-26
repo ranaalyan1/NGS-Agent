@@ -65,8 +65,11 @@ ACTION_AUDIT_FOLDER = "audit_folder"
 ACTION_DIAGNOSE_LOG = "diagnose_log"
 ACTION_UNSUPPORTED_VCF = "unsupported:vcf"
 ACTION_UNSUPPORTED_BAM_ALONE = "unsupported:bam_alone"
-ACTION_UNSUPPORTED_SNAKEMAKE = "unsupported:snakemake_log"
-ACTION_UNSUPPORTED_CROMWELL = "unsupported:cromwell_log"
+ACTION_DIAGNOSE_SNAKEMAKE = "diagnose:snakemake_log"
+ACTION_DIAGNOSE_CROMWELL = "diagnose:cromwell_log"
+# Compatibility aliases; recognised runner logs now route to full diagnosis.
+ACTION_UNSUPPORTED_SNAKEMAKE = ACTION_DIAGNOSE_SNAKEMAKE
+ACTION_UNSUPPORTED_CROMWELL = ACTION_DIAGNOSE_CROMWELL
 ACTION_UNKNOWN = "unknown"
 
 # --- Nextflow fingerprints -------------------------------------------------
@@ -192,6 +195,18 @@ SNAKEMAKE_MARKERS = (
 
 def _looks_like_snakemake(text: str) -> bool:
     lowered = text.lower()
+    direct_markers = (
+        "MissingInputException",
+        "AmbiguousRuleException",
+        "WildcardError",
+        "CyclicGraphException",
+        "ResolvePackageNotFound",
+        "Error in rule",
+        "No rule to produce",
+        "Removing output files of failed job",
+    )
+    if any(marker.lower() in lowered for marker in direct_markers):
+        return True
     hits = sum(1 for marker in SNAKEMAKE_MARKERS if marker.lower() in lowered)
     if "snakemake" in lowered and hits >= 1:
         return True
@@ -216,6 +231,13 @@ WDL_WORKFLOW_RE = re.compile(r"\bworkflow\s+\w*\s*\{")
 
 def _looks_like_cromwell_log(text: str) -> bool:
     lowered = text.lower()
+    direct_error = re.search(
+        r"(?im)(?:^call .*failed|^shard .*failed.*retr|backend.*error|"
+        r"failed to localize|unable to localize|failed to read.*(?:stdout|stderr))",
+        text,
+    )
+    if direct_error:
+        return True
     if "cromwell" in lowered and any(
         word in lowered for word in ("workflow", "wdl", "call ", "actor", "final outputs")
     ):
@@ -338,7 +360,7 @@ def sniff(path: str | Path) -> SniffResult:
             notes=notes + ["Nextflow fingerprints found in text."],
         )
 
-    # 6. Snakemake log — recognised; full diagnosis is planned (see ROADMAP.md).
+    # 6. Snakemake log — recognised and routed to ranked signature diagnosis.
     if _looks_like_snakemake(content):
         return SniffResult(
             kind=KIND_SNAKEMAKE_LOG,
@@ -348,7 +370,7 @@ def sniff(path: str | Path) -> SniffResult:
             notes=notes + ["Snakemake fingerprints found in text."],
         )
 
-    # 7. Cromwell log or WDL source — recognised; diagnosis is planned.
+    # 7. Cromwell log is diagnosed; WDL source remains recognised-only.
     if _looks_like_cromwell_log(content):
         return SniffResult(
             kind=KIND_CROMWELL_LOG,

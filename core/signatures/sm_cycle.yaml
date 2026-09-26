@@ -1,0 +1,10 @@
+{
+  "id": "SM-CYCLE-008",
+  "problem": "The requested Snakemake jobs contain a dependency cycle.",
+  "meaning": "The rule dependency graph cannot be ordered because of a cycle.",
+  "action": "Review rule input and output dependencies to break the cycle.",
+  "evidence": [
+    "CyclicGraphException|cycle in the graph|Circular dependency"
+  ],
+  "rank": 8
+}
