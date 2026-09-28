@@ -42,7 +42,10 @@ QC_GC = "QC-GC-01"
 QC_N = "QC-N-01"
 QC_LEN = "QC-LEN-01"
 
-# Thresholds live here, in one place, so they can be argued about in review.
+# DEFAULT thresholds (not expert-approved): these values encode opinions pending
+# biologist sign-off. Labs should tune them for each assay type. Keep defaults
+# consolidated here; do not mistake them for universal biological cut-offs.
+# Duplication: 20/50/70%; read quality: Q20/Q25; adapters: 5/10%; Ns: 5/20%.
 Q_DROP_FAIL = 20.0  # mean base quality below this is bad sequence
 Q_DROP_WARN = 25.0  # below this, trimming is advisable
 ADAPTER_WARN = 5.0  # % of reads with adapter at any cycle

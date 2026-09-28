@@ -49,7 +49,10 @@ AUD_PAIRED = "AUD-PAIRED-01"
 AUD_ADAPT = "AUD-ADAPT-03"
 AUD_ALIGN = "AUD-ALIGN-01"
 
-# Thresholds, all in one place so they can be reviewed together.
+# DEFAULT thresholds (not expert-approved): these values encode opinions pending
+# biologist sign-off. Labs should tune them for each assay type. Keep defaults
+# consolidated here; do not mistake them for universal biological cut-offs.
+# Assignment: 30%; freemix: 3/5%; alignment: 75/50%; duplication defaults below.
 ASSIGNMENT_FAIL = 0.30  # below this, reads are not landing on genes
 FREEMIX_WARN = 0.03  # 3% contamination
 FREEMIX_FAIL = 0.05
