@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "ngs-agent"
-version = "1.0.0"
+version = "1.1.0"
 description = "Quality checks and pipeline-log diagnosis for NGS runs, with rule-based findings and evidence receipts"
 readme = "README.md"
 requires-python = ">=3.11"
