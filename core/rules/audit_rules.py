@@ -10,6 +10,14 @@ Every finding carries the rule receipt plus the file:line receipts of the
 numbers it used.
 """
 
+# THRESHOLDS IN THIS MODULE ARE DEFAULTS — pending expert sign-off.
+# The consolidated cut-offs (duplication 20/50/70%, freemix 3/5%,
+# alignment 75/50%, assignment 30%, plus each module's own numbers below)
+# encode opinions, not biological laws. Labs should tune them per assay
+# type before treating any verdict as house policy. Do not change a number
+# without a biologist's sign-off; labeling and rationale live in
+# README.md > "Thresholds".
+
 from __future__ import annotations
 
 from collections.abc import Callable

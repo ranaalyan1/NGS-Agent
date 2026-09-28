@@ -6,7 +6,7 @@
 
 Reads FastQC and MultiQC reports, run folders, VCFs, and workflow logs. Findings include the rule, evidence location, and file hash.
 
-[Quickstart](#60-second-quickstart) · [Supported inputs](#supported-inputs) · [Watch a live run](#watch-a-live-run) · [Receipts](#receipts)
+[Quickstart](#60-second-quickstart) · [Supported inputs](#supported-inputs) · [Thresholds](#thresholds) · [Watch a live run](#watch-a-live-run) · [Receipts](#receipts)
 
 </div>
 
@@ -95,6 +95,10 @@ These rules evaluate call quality, not variant truth:
 | `QC-VCF-05` | PASS, unfiltered, and other FILTER fractions |
 
 The supported sample limit is **one**. gVCFs, multi-allelic records, and visibly non-minimal indels are recognised but not judged. Whole-genome and exome Ti/Tv expectations differ; the tool does not infer assay type. A healthy QC verdict says nothing about pathogenicity, gene context, or ACMG classification.
+
+## Thresholds
+
+The cut-offs the rules judge against are **defaults**, consolidated at the top of `core/rules/qc_rules.py` and `core/rules/audit_rules.py` so they can be argued about in one place: duplication 20/50/70%, freemix 3/5%, alignment 75/50%, assignment 30%. They encode opinions pending expert sign-off. Labs should tune them per assay type — RNA-seq, WGS, and exome runs do not share the same expectations — before treating a verdict as house policy.
 
 ## Watch a live run
 
