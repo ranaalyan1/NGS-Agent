@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "ngs-agent"
-version = "1.0.0"
+version = "1.1.0"
 description = "Drop an NGS file, get a plain-language answer with receipts: FastQC/MultiQC quality control, run-folder audit, pipeline-log diagnosis"
 readme = "README.md"
 requires-python = ">=3.11"
