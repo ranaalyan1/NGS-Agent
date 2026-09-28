@@ -18,6 +18,7 @@ dist/
 *.egg-info/
 *.whl
 *.tar.gz
+*.zip
 
 # Environment files
 .env
@@ -32,10 +33,11 @@ dist/
 # Editors and operating-system files
 .vscode/
 .idea/
+*.swo
 .DS_Store
 Thumbs.db
 
-# Generated test output
-fixtures/
+# Fixtures are tracked test data: the global *.zip / *.log rules above would
+# otherwise hide newly generated ones, and the tests need them to exist.
 !fixtures/**/*.zip
 !fixtures/**/*.log

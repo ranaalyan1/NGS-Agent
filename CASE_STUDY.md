@@ -39,8 +39,9 @@ AUD-STRAND-01: rule:AUD-STRAND-01 @ bam contigs vs annotation contigs,
 AUD-STRAND-01: file:8ee3e4f33024 @
                counts/sample1.featureCounts.txt.summary:line=2
                — Assigned 1,800,000 of 10,043,000 counted reads = 17.9%
-AUD-STRAND-01: file:8e5658148f4b @
-               star/sample1/Aligned.sortedByCoord.out.bam — 25 @SQ contigs
+AUD-STRAND-01: file:1537c883b687 @
+               star/sample1/Aligned.sortedByCoord.out.bam — 25 @SQ contigs,
+               eof_ok=True
 AUD-STRAND-01: file:3420f4695f6e @
                annotation/gencode.v45.annotation.gtf — 25 contigs in column 1
 ```

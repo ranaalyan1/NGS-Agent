@@ -50,9 +50,12 @@ docker run --rm -p 8000:8000 ngs-agent
 | MultiQC JSON, table, or HTML | The same six rules per sample, plus cohort checks. |
 | Run folder | Ten cross-file audit rules: healthy, review, or fix and re-run. |
 | Nextflow log | Ten failure signatures; one root cause or an honest unknown. |
+| Nextflow log still being written | Read-only `--watch` polling; live snapshots and a normal final verdict. |
 | Snakemake log | Eight ranked failure signatures; root cause or unknown with the log tail. |
-| Cromwell log | Five failure signatures; root cause or unknown with the log tail. WDL source is recognised, not analysed. |
+| Cromwell log | Five failure signatures; root cause or unknown with the log tail. |
+| WDL source | Recognised; static analysis is out of scope. |
 | VCF or `.vcf.gz` | Five call-quality checks for one sample. No variant interpretation. |
+| Unsupported or insufficient evidence | Honest unknown; the tool does not guess. |
 
 ### Read-quality rules
 
@@ -154,9 +157,9 @@ If the input is unsupported or evidence is insufficient, the verdict is **unknow
 
 ## Scope
 
-NGS-Agent reads results; it does not run or orchestrate pipelines. Core makes no network calls and the tool uploads no files. Verdict text uses fixed templates and measured values.
+NGS-Agent reads results; it does not execute or orchestrate pipelines. Core makes no network calls, the product has no LLM, and the tool uploads no files. Verdict text uses fixed templates and measured values.
 
-It does not do VCF pathogenicity, gene-context, or ACMG analysis; WDL source is not statically analysed. Pipeline execution, MCP, accounts, authentication, and cloud uploads are out of scope. Unsupported or unrecognised inputs return an honest unknown. See [ROADMAP.md](ROADMAP.md) for coverage and planned work.
+It does not do VCF pathogenicity, gene-context, or ACMG analysis; WDL source is not statically analysed. Pipeline execution, MCP, accounts, authentication, and cloud uploads are permanently out of scope. Unsupported or unrecognised inputs return an honest unknown. See [ROADMAP.md](ROADMAP.md) for coverage and planned work.
 
 ## Development
 
