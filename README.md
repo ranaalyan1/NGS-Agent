@@ -108,13 +108,13 @@ Complete evidence triggers a `LIVE` verdict and next action. Ctrl+C prints a fin
 
 ## Run it inside your pipeline
 
-`examples/nf-core/NGS_AGENT.nf` defines an optional process. Enable it with `params.ngs_agent`; provide the Nextflow log and MultiQC output paths. It runs the published image with a read-only root filesystem and publishes HTML reports under `results/ngs-agent/`. Findings do not fail the process unless `ngs_agent_fail_on_error` is enabled.
+`examples/nf-core/NGS_AGENT.nf` defines an optional process. Enable it with `params.advisory_qc`; provide the Nextflow log and MultiQC output paths. It runs the published image with a read-only root filesystem and publishes HTML reports under `results/ngs-agent/`. Findings do not fail the process unless `advisory_qc_fail_on_error` is enabled.
 
 ```nextflow
 include { NGS_AGENT } from './examples/nf-core/NGS_AGENT.nf'
-if (params.ngs_agent) { NGS_AGENT(
+if (params.advisory_qc) { NGS_AGENT(
   Channel.value(file(params.nextflow_log)),
-  Channel.value(file(params.multiqc_output)), params.ngs_agent_fail_on_error ?: false
+  Channel.value(file(params.multiqc_output)), params.advisory_qc_fail_on_error ?: false
 )}
 ```
 

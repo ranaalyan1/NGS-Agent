@@ -449,7 +449,7 @@ def rule_sample_gc_spike(sample: MultiQCSample, facts: MultiQCFacts) -> Finding 
 # --------------------------------------------------------------------------
 def rule_length_consistency(facts: MultiQCFacts) -> Finding | None:
     with_lengths = [s for s in facts.samples if s.read_length is not None]
-    lengths = {s.read_length for s in with_lengths}
+    lengths = {s.read_length for s in with_lengths if s.read_length is not None}
     if len(lengths) < 2:
         return None
     lo = min(lengths)
@@ -493,10 +493,14 @@ def rule_gc_cohort_outlier(facts: MultiQCFacts) -> Finding | None:
     with_gc = [s for s in facts.samples if s.gc_percent is not None]
     if len(with_gc) < 2:
         return None
-    ordered = sorted(s.gc_percent for s in with_gc)
+    ordered = sorted(s.gc_percent for s in with_gc if s.gc_percent is not None)
     mid = len(ordered) // 2
     median = ordered[mid] if len(ordered) % 2 else (ordered[mid - 1] + ordered[mid]) / 2
-    outliers = [s for s in with_gc if abs(s.gc_percent - median) > GC_COHORT_OUTLIER_GAP]
+    outliers = [
+        s
+        for s in with_gc
+        if s.gc_percent is not None and abs(s.gc_percent - median) > GC_COHORT_OUTLIER_GAP
+    ]
     if not outliers:
         return None
     names = sorted(s.name for s in outliers)
@@ -560,8 +564,8 @@ def evaluate(facts: MultiQCFacts) -> list[Finding]:
             if finding is not None:
                 findings.append(finding)
     if len(facts.samples) >= 2:
-        for rule in COHORT_RULES:
-            finding = rule(facts)
+        for cohort_rule in COHORT_RULES:
+            finding = cohort_rule(facts)
             if finding is not None:
                 findings.append(finding)
     return findings

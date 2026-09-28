@@ -1,45 +1,32 @@
-.PHONY: help wizard install test test-unit test-integration test-all lint format typecheck build ci
+.PHONY: help install test lint format typecheck build ci
 
 help:
 	@echo "Targets:"
-	@echo "  install          Create the pinned conda environment (mamba env create -f environment.yml)"
-	@echo "  test             Run the full test suite (unit + integration, integration self-skips without docker)"
-	@echo "  test-unit        Run only unit tests (excludes integration)"
-	@echo "  test-integration Run only integration tests (requires docker; the swarm functional test also needs RUN_NGS_FUNCTIONAL=1)"
-	@echo "  lint             Ruff lint + format check"
+	@echo "  install          Editable install with dev extras (pip install -e '.[dev]')"
+	@echo "  test             Run the full test suite"
+	@echo "  lint             Ruff lint + format check on the product and tests"
 	@echo "  format           Auto-format with ruff"
-	@echo "  typecheck        Run mypy on the ngs_agent package"
-	@echo "  ci               Everything CI runs: lint, test-unit, test-integration"
-
-wizard:
-	python cli.py wizard
+	@echo "  typecheck        Run mypy on the core and doors packages"
+	@echo "  ci               Everything CI runs: lint, typecheck, test"
 
 install:
-	mamba env create -f environment.yml
+	python -m pip install -e ".[dev]"
 
-# Full suite by default: integration tests skip themselves when docker or the
-# required env vars are unavailable, so `make test` is safe everywhere.
 test:
 	pytest
 
-test-unit:
-	pytest -m "not integration"
-
-test-integration:
-	pytest -m "integration"
-
 lint:
-	ruff check ngs_agent tests
-	ruff format --check ngs_agent tests
+	ruff check core doors tests scripts conftest.py
+	ruff format --check core doors tests scripts conftest.py
 
 format:
-	ruff format ngs_agent tests
-	ruff check --fix ngs_agent tests
+	ruff format core doors tests scripts conftest.py
+	ruff check --fix core doors tests scripts conftest.py
 
 typecheck:
-	mypy ngs_agent
+	mypy core doors
 
 build:
 	python -m build
 
-ci: lint test-unit test-integration
+ci: lint typecheck test

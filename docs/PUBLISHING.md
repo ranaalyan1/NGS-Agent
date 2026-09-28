@@ -1,12 +1,12 @@
 # Publishing `ngs-agent` to PyPI
 
-The project name in `pyproject.toml` is `ngs-agent`, so once it is published anyone
-can install with `pip install ngs-agent` (or `pip install NGS-Agent` — pip
-normalises case/dashes automatically).
+The project name in `pyproject.toml` is `ngs-agent`; anyone can install with
+`pip install ngs-agent` (or `pip install NGS-Agent` — pip normalises
+case/dashes automatically).
 
-**Why this matters:** `pip install ngs-agent` currently fails everywhere because
-the package has never been uploaded. PyPI names are first-come-first-served, so
-publish the name soon before someone else takes it.
+The v1 line has no LLM and no network calls at runtime: the wheel ships the
+`core/` interpreter, the `doors/` CLI and Box, the YAML log signatures, and
+the Box page.
 
 ---
 
@@ -23,10 +23,10 @@ publish the name soon before someone else takes it.
 ### 2. Build the distributions locally
 
 ```bash
-cd /home/user/NGS-Agent
+cd NGS-Agent
 python -m venv .venv-publish && . .venv-publish/bin/activate
 python -m pip install --upgrade pip build twine
-python -m build          # creates dist/ngs_agent-0.2.0-py3-none-any.whl + .tar.gz
+python -m build          # creates dist/*.whl + .tar.gz
 ```
 
 Inspect the wheel *before* uploading:
@@ -35,7 +35,7 @@ Inspect the wheel *before* uploading:
 python -m zipfile -l dist/*.whl | less
 ```
 
-Check that the ten YAML signature files are inside `core/signatures/`
+Check that the YAML signature files are inside `core/signatures/`
 (the log diagnoser needs them at runtime) and that `doors/gui/index.html`
 (the Box page) is in the wheel.
 
@@ -53,8 +53,8 @@ Then verify in a **clean** environment (not your dev env):
 ```bash
 python -m venv /tmp/verify && . /tmp/verify/bin/activate
 pip install --index-url https://test.pypi.org/simple/ ngs-agent
-ngsagent --version
-ngsagent watch --help
+ngs --version
+ngs --json path/to/sample_fastqc.zip
 ```
 
 > TestPyPI needs its own token, and by default it will not have uploaded your
@@ -71,8 +71,9 @@ twine upload dist/*
 
 ```bash
 python -m venv /tmp/verify && . /tmp/verify/bin/activate
-pip install ngs-agent
-ngsagent watch demo_data/sample.log   # (once demo data is bundled — see notes)
+pip install "ngs-agent[box]"
+ngs --version
+ngs fixtures/fastqc/sample_fastqc.zip
 ```
 
 ---
@@ -82,37 +83,10 @@ ngsagent watch demo_data/sample.log   # (once demo data is bundled — see notes
 Trusted Publishing means PyPI gives GitHub permission to upload on your behalf —
 **no password or token is stored in GitHub**.
 
-1. Add the release workflow (already provided at
-   `.github/workflows/publish.yml`):
-
-   ```yaml
-   # .github/workflows/publish.yml
-   name: Publish to PyPI
-
-   on:
-     push:
-       tags: ["v*"]
-     workflow_dispatch: {}
-
-   permissions:
-     id-token: write   # required for Trusted Publishing
-     contents: read
-
-   jobs:
-     publish:
-       runs-on: ubuntu-latest
-       steps:
-         - uses: actions/checkout@v4
-         - uses: actions/setup-python@v5
-           with:
-             python-version: "3.12"
-         - name: Install build tooling
-           run: python -m pip install --upgrade build
-         - name: Build distributions
-           run: python -m build
-         - name: Publish to PyPI
-           uses: pypa/gh-action-pypi-publish@release/v1
-   ```
+1. The release workflow lives at `publish.yml` under `.github/`: it builds
+   with `python -m build` and uploads with
+   `pypa/gh-action-pypi-publish@release/v1` when a `v*` tag is pushed
+   (or when dispatched manually).
 
 2. Connect GitHub to PyPI (one-time, ~1 minute):
    - Go to <https://pypi.org/manage/account/publishing/>
@@ -127,40 +101,29 @@ Trusted Publishing means PyPI gives GitHub permission to upload on your behalf �
 3. Publish by tagging a release:
 
    ```bash
-   git tag v0.2.0
-   git push origin v0.2.0
+   git tag v1.1.0
+   git push origin v1.1.0
    ```
 
    The workflow builds `dist/` and uploads it automatically. GitHub shows the
    run under **Actions → Publish to PyPI**.
 
-> Repeat for every version: bump `version` in `pyproject.toml`, commit,
-> `git tag vX.Y.Z`, push. (Consider switching the tag/version to be created by
-> `release-please` later if you want fully automatic releases.)
-
----
-
-## Things to fix before/at first publish (they affect users)
-
-These are repository issues, not PyPI issues — they only become visible *after*
-the package is up, so fix them in the same round as the publish:
-
-| Issue | Effect on users | Fix |
-|---|---|---|
-| `demo_data/` is not in the wheel | README's `ngsagent watch demo_data/sample.log` fails for everyone | Bundle demos inside the package (e.g. `ngs_agent/demo_data/`) and add `ngsagent demo` to print/copy them |
-| `requires-python = ">=3.11"` | Blocks PCs with Python 3.8–3.10 (old Ubuntu, many HPC nodes) | Drop to `>=3.9` or `>=3.10` once code is verified on those versions |
-| No `ngs_agent/__main__.py` | `python -m ngs_agent` doesn't work (useful on Windows when Scripts isn't on PATH) | Add a two-line `__main__.py` |
-| Generic `ngs` console script | Can collide with other packages' `ngs` binary and silently break | Ship only `ngsagent` (+ `ngs-agent` alias if you like) |
-| Version hardcoded in `ngs_agent/cli.py` | `--version` drifts from the released version | Single-source from `importlib.metadata` |
-| Duplicate `src/ngs_agent` package | Risk of accidentally shipping the v2 engine under the same import name | Add a CI test asserting the wheel contains only the intended package |
+> Repeat for every version: bump `version` in `pyproject.toml` (and
+> `core/version.py`), commit, `git tag vX.Y.Z`, push. (Consider switching the
+> tag/version to be created by `release-please` later if you want fully
+> automatic releases.)
 
 ---
 
 ## Release checklist
 
-1. All tests green: `python -m pytest -m "not integration"`
-2. `python -m build` succeeds and wheel contains `ngs_agent/signatures/*.yaml`
-3. Clean-venv install + smoke test (`ngsagent --version`, `watch`, `analyze`)
-4. Bump version, commit, tag `vX.Y.Z`, push tag
-5. Confirm the Actions run published successfully
-6. `pip install ngs-agent` from a clean venv works
+1. All tests green: `python -m pytest` (the receipts audit must print
+   `0 findings without a valid receipt`)
+2. Lint/typecheck green: `ruff check core doors tests scripts conftest.py`,
+   `mypy core doors`
+3. `python -m build` succeeds and the wheel contains `core/signatures/*.yaml`
+   and `doors/gui/index.html`
+4. Clean-venv install + smoke test (`ngs --version`, `ngs <fixture> --json`)
+5. Bump version, commit, tag `vX.Y.Z`, push tag
+6. Confirm the Actions run published successfully
+7. `pip install ngs-agent` from a clean venv works

@@ -18,7 +18,6 @@ WORKDIR /app
 COPY pyproject.toml README.md LICENSE ./
 COPY core/ core/
 COPY doors/ doors/
-COPY ngs_agent/ ngs_agent/
 
 RUN pip install --no-cache-dir ".[box]" \
     && python -c "import core.assess, doors.cli, doors.gui.app; print('ngs-agent OK')"

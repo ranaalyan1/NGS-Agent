@@ -466,9 +466,11 @@ def _extract_freemix(text_file: _TextFile, metrics: _Metrics) -> None:
     for i, line in enumerate(text_file.lines, start=1):
         match = re.search(r"FREEMIX[^0-9+-]*([0-9]*\.?[0-9]+(?:[eE][-+]?\d+)?)", line)
         if match:
-            value = _num(match.group(1))
-            if value is not None:
-                metrics.set("freemix", value, [_receipt(text_file, i, line.strip(), "VerifyBamID")])
+            parsed = _num(match.group(1))
+            if parsed is not None:
+                metrics.set(
+                    "freemix", parsed, [_receipt(text_file, i, line.strip(), "VerifyBamID")]
+                )
                 return
 
 

@@ -12,7 +12,7 @@ license = { text = "Apache-2.0" }
 authors = [
   { name = "Muhammad Alyan Ashraf", email = "ranaaliyan887@gmail.com" }
 ]
-keywords = ["ngs", "vcf", "bioinformatics", "cli", "wet-lab", "rna-seq", "wgs", "variant", "agentic"]
+keywords = ["ngs", "vcf", "bioinformatics", "cli", "wet-lab", "rna-seq", "wgs", "variant", "fastqc"]
 classifiers = [
   "Development Status :: 4 - Beta",
   "Intended Audience :: Science/Research",
@@ -26,15 +26,7 @@ classifiers = [
 ]
 
 dependencies = [
-  "click>=8.1.7",
-  "rich>=13.9.4",
   "PyYAML>=6.0.2",
-  "typing-extensions>=4.12.2",
-  "httpx>=0.28.1",
-  # Agentic execution core (planner/executor/backends/tools).
-  "pydantic>=2.10.6",
-  "typer>=0.12.5",
-  "platformdirs>=4.2.0",
 ]
 
 [project.optional-dependencies]
@@ -43,28 +35,6 @@ box = [
   "fastapi>=0.115.0",
   "uvicorn>=0.30.0",
   "python-multipart>=0.0.9",
-]
-llm = [
-  "anthropic>=0.49.0",
-  "openai>=1.0.0",
-  "httpx>=0.28.1",
-]
-
-tui = [
-  "pyfiglet>=1.0",
-  "prompt_toolkit>=3.0",
-]
-
-swarm = [
-  "temporalio>=1.8.0",
-  "boto3>=1.37.0",
-  "redis>=5.0.0",
-  "python-dotenv>=1.0.1",
-  "pydantic>=2.10.6",
-  "pydantic-settings>=2.7.1",
-  "structlog>=24.4.0",
-  "orjson>=3.10.15",
-  "tenacity>=9.0.0",
 ]
 
 dev = [
@@ -75,19 +45,10 @@ dev = [
   "types-PyYAML>=6.0",
   # The GUI tests import fastapi's TestClient, so `.[dev]` pulls the box too.
   "ngs-agent[box]",
-  # The integration test imports boto3 during collection, even when the
-  # functional test is skipped. Keep the documented `.[dev]` test command
-  # self-contained; swarm users still get the same dependency from [swarm].
-  "boto3>=1.37.0",
 ]
 
 [tool.mypy]
 python_version = "3.11"
-
-[[tool.mypy.overrides]]
-# Optional [llm] extra: absent in type-check/CI environments.
-module = "anthropic"
-ignore_missing_imports = true
 
 [project.urls]
 Homepage = "https://github.com/ranaalyan1/NGS-Agent"
@@ -97,35 +58,23 @@ Repository = "https://github.com/ranaalyan1/NGS-Agent"
 [project.scripts]
 # The v1 product: one command shape, `ngs <path>`.
 ngs = "doors.cli:main"
-# Legacy (pre-rebuild) entry points, kept for existing installs.
-ngsagent = "ngs_agent.cli:main"
-# Agentic (v2) CLI: NL planning + backend-aware pipeline execution.
-ngs-agent = "ngs_agent.cli.app:main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["ngs_agent", "core", "doors"]
-# Demo files power `ngsagent demo` from an installed wheel. Listed
-# explicitly because default exclude patterns drop *.log files.
+packages = ["core", "doors"]
+# Non-Python files the v1 product needs at runtime.
 artifacts = [
-  "ngs_agent/demo_data/sample.vcf",
-  "ngs_agent/demo_data/sample.log",
-  # Non-Python files the v1 product needs at runtime.
   "core/signatures/*.yaml",
   "doors/gui/index.html",
 ]
 
 [tool.hatch.build.targets.sdist]
 include = [
-  "ngs_agent/",
   "core/",
   "doors/",
   "fixtures/",
-  "demo_data/",
-  "agents/",
-  "workflows/",
-  "shared/",
-  "tools/",
+  "examples/",
   "README.md",
+  "CHANGELOG.md",
   "LICENSE",
   "pyproject.toml",
 ]
@@ -136,49 +85,18 @@ target-version = "py311"
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "UP", "B", "BLE"]
-# The planner must survive a malformed samplesheet discovered mid-planning,
-# so it uses a broad except that logs and continues.
 ignore = ["BLE001", "UP042"]
 
 [tool.ruff.lint.per-file-ignores]
-# Legacy (pre-agentic) modules are kept behaviour-identical; only safe
-# auto-fixes were applied to them, so remaining style findings are waived.
-"ngs_agent/__init__.py" = ["E501", "W293", "B007", "F841", "F401", "UP036", "UP028"]
-"ngs_agent/acmg.py" = ["E501"]
-"ngs_agent/analyzer.py" = ["E501"]
-"ngs_agent/cli/__init__.py" = ["E501", "F401"]
-"ngs_agent/config/__init__.py" = ["E501", "B007"]
-"ngs_agent/debate.py" = ["E501", "B007"]
-"ngs_agent/doctor.py" = ["E501", "F841", "UP036"]
-"ngs_agent/nibi.py" = ["E501", "F841"]
-"ngs_agent/qc.py" = ["E501"]
-"ngs_agent/reports.py" = ["E501"]
-"ngs_agent/tui.py" = ["E501", "B007", "F841"]
-"ngs_agent/watcher.py" = ["E501", "UP028", "UP036"]
-"ngs_agent/backends/*" = ["E501"]
-"tests/test_analyzer.py" = ["E501", "F841"]
-"tests/test_debate.py" = ["W293", "W291"]
-"tests/test_pipeline.py" = ["E501"]
-"tests/test_reports.py" = ["E501"]
 # Generated fixture content: long lines are the log/table text being planted.
 "scripts/make_fixtures.py" = ["E501", "B905"]
 "scripts/make_screenshot.py" = ["E501"]
 # FastAPI's `File(...)` as a default argument is the documented idiom.
 "doors/gui/app.py" = ["B008"]
-# Swarm agent containers: safe auto-fixes applied; deeper refactors deferred.
-# UP017 stays off: the containers run Python 3.10 (ubuntu:22.04) and
-# datetime.UTC is 3.11+; the timezone.utc spelling must be kept.
-"agents/*" = ["E501", "W293", "W291", "UP006", "F841", "B008", "UP035", "UP017"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
-# Integration tests are NOT excluded from normal runs: they self-skip when
-# docker or the required env vars (RUN_NGS_FUNCTIONAL, TEST_FASTQ_R1, ...)
-# are unavailable, so `pytest` always exercises everything possible.
-markers = [
-    "integration: marks tests as integration (deselect with '-m \"not integration\"')"
-]
 filterwarnings = [
     "ignore::DeprecationWarning",
 ]

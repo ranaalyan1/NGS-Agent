@@ -42,7 +42,7 @@ NGS-Agent is an **interpreter**, not a runner. These will not be built here:
 
 * running or orchestrating pipelines (Nextflow, Snakemake, Docker, Slurm);
 * variant prioritisation or ACMG classification;
-* multi-model debate or persona discussion;
+* multi-model LLM discussion or persona-based verdicts;
 * an MCP server, accounts, authentication, or any cloud upload.
 
 The reasoning is architectural: the tool never executes anything, never sends

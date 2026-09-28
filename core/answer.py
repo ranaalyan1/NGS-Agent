@@ -228,7 +228,10 @@ def _what_matters(verdict: Verdict) -> AnswerBlock:
             observed = "not computed" if titv is None else f"{titv:.3g}"
             context = metrics.get(
                 "titv_context",
-                "Ti/Tv expectations vary between whole-genome and exome data; no assay type is inferred.",
+                (
+                    "Ti/Tv expectations vary between whole-genome and exome data; "
+                    "no assay type is inferred."
+                ),
             )
             block.lines.append(f"Observed Ti/Tv is {observed}. {context}")
         return block

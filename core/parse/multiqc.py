@@ -366,8 +366,8 @@ def _coerce_series(value: Any) -> list[tuple[Any, Any]]:
             if isinstance(y, dict):
                 # One line per adapter: the worst adapter at each position.
                 leaves = [_num(leaf) for leaf in y.values()]
-                leaves = [leaf for leaf in leaves if leaf is not None]
-                y = max(leaves) if leaves else None
+                present = [leaf for leaf in leaves if leaf is not None]
+                y = max(present) if present else None
             number = _num(y)
             if number is not None:
                 pairs.append((x, number))
