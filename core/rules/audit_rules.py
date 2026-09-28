@@ -10,6 +10,14 @@ Every finding carries the rule receipt plus the file:line receipts of the
 numbers it used.
 """
 
+# THRESHOLDS IN THIS MODULE ARE DEFAULTS — pending expert sign-off.
+# The consolidated cut-offs (duplication 20/50/70%, freemix 3/5%,
+# alignment 75/50%, assignment 30%, plus each module's own numbers below)
+# encode opinions, not biological laws. Labs should tune them per assay
+# type before treating any verdict as house policy. Do not change a number
+# without a biologist's sign-off; labeling and rationale live in
+# README.md > "Thresholds".
+
 from __future__ import annotations
 
 from collections.abc import Callable
@@ -41,7 +49,10 @@ AUD_PAIRED = "AUD-PAIRED-01"
 AUD_ADAPT = "AUD-ADAPT-03"
 AUD_ALIGN = "AUD-ALIGN-01"
 
-# Thresholds, all in one place so they can be reviewed together.
+# DEFAULT thresholds (not expert-approved): these values encode opinions pending
+# biologist sign-off. Labs should tune them for each assay type. Keep defaults
+# consolidated here; do not mistake them for universal biological cut-offs.
+# Assignment: 30%; freemix: 3/5%; alignment: 75/50%; duplication defaults below.
 ASSIGNMENT_FAIL = 0.30  # below this, reads are not landing on genes
 FREEMIX_WARN = 0.03  # 3% contamination
 FREEMIX_FAIL = 0.05

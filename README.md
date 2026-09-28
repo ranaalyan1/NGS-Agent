@@ -6,7 +6,7 @@
 
 Reads FastQC and MultiQC reports, run folders, VCFs, and workflow logs. Findings include the rule, evidence location, and file hash.
 
-[Quickstart](#60-second-quickstart) · [Supported inputs](#supported-inputs) · [Watch a live run](#watch-a-live-run) · [Receipts](#receipts)
+[Quickstart](#60-second-quickstart) · [Supported inputs](#supported-inputs) · [Thresholds](#thresholds) · [Watch a live run](#watch-a-live-run) · [Receipts](#receipts)
 
 </div>
 
@@ -50,9 +50,12 @@ docker run --rm -p 8000:8000 ngs-agent
 | MultiQC JSON, table, or HTML | The same six rules per sample, plus cohort checks. |
 | Run folder | Ten cross-file audit rules: healthy, review, or fix and re-run. |
 | Nextflow log | Ten failure signatures; one root cause or an honest unknown. |
+| Nextflow log still being written | Read-only `--watch` polling; live snapshots and a normal final verdict. |
 | Snakemake log | Eight ranked failure signatures; root cause or unknown with the log tail. |
-| Cromwell log | Five failure signatures; root cause or unknown with the log tail. WDL source is recognised, not analysed. |
+| Cromwell log | Five failure signatures; root cause or unknown with the log tail. |
+| WDL source | Recognised; static analysis is out of scope. |
 | VCF or `.vcf.gz` | Five call-quality checks for one sample. No variant interpretation. |
+| Unsupported or insufficient evidence | Honest unknown; the tool does not guess. |
 
 ### Read-quality rules
 
@@ -96,6 +99,10 @@ These rules evaluate call quality, not variant truth:
 
 The supported sample limit is **one**. gVCFs, multi-allelic records, and visibly non-minimal indels are recognised but not judged. Whole-genome and exome Ti/Tv expectations differ; the tool does not infer assay type. A healthy QC verdict says nothing about pathogenicity, gene context, or ACMG classification.
 
+## Thresholds
+
+The cut-offs the rules judge against are **defaults**, consolidated at the top of `core/rules/qc_rules.py` and `core/rules/audit_rules.py` so they can be argued about in one place: duplication 20/50/70%, freemix 3/5%, alignment 75/50%, assignment 30%. They encode opinions pending expert sign-off. Labs should tune them per assay type — RNA-seq, WGS, and exome runs do not share the same expectations — before treating a verdict as house policy.
+
 ## Watch a live run
 
 Poll a growing Nextflow log every 15 seconds. Change the interval with `--interval`. The watcher reads the file without modifying it and holds judgement on an incomplete final line.
@@ -108,13 +115,13 @@ Complete evidence triggers a `LIVE` verdict and next action. Ctrl+C prints a fin
 
 ## Run it inside your pipeline
 
-`examples/nf-core/NGS_AGENT.nf` defines an optional process. Enable it with `params.ngs_agent`; provide the Nextflow log and MultiQC output paths. It runs the published image with a read-only root filesystem and publishes HTML reports under `results/ngs-agent/`. Findings do not fail the process unless `ngs_agent_fail_on_error` is enabled.
+`examples/nf-core/NGS_AGENT.nf` defines an optional process. Enable it with `params.advisory_qc`; provide the Nextflow log and MultiQC output paths. It runs the published image with a read-only root filesystem and publishes HTML reports under `results/ngs-agent/`. Findings do not fail the process unless `advisory_qc_fail_on_error` is enabled.
 
 ```nextflow
 include { NGS_AGENT } from './examples/nf-core/NGS_AGENT.nf'
-if (params.ngs_agent) { NGS_AGENT(
+if (params.advisory_qc) { NGS_AGENT(
   Channel.value(file(params.nextflow_log)),
-  Channel.value(file(params.multiqc_output)), params.ngs_agent_fail_on_error ?: false
+  Channel.value(file(params.multiqc_output)), params.advisory_qc_fail_on_error ?: false
 )}
 ```
 
@@ -150,9 +157,9 @@ If the input is unsupported or evidence is insufficient, the verdict is **unknow
 
 ## Scope
 
-NGS-Agent reads results; it does not run or orchestrate pipelines. Core makes no network calls and the tool uploads no files. Verdict text uses fixed templates and measured values.
+NGS-Agent reads results; it does not execute or orchestrate pipelines. Core makes no network calls, the product has no LLM, and the tool uploads no files. Verdict text uses fixed templates and measured values.
 
-It does not do VCF pathogenicity, gene-context, or ACMG analysis; WDL source is not statically analysed. Pipeline execution, MCP, accounts, authentication, and cloud uploads are out of scope. Unsupported or unrecognised inputs return an honest unknown. See [ROADMAP.md](ROADMAP.md) for coverage and planned work.
+It does not do VCF pathogenicity, gene-context, or ACMG analysis; WDL source is not statically analysed. Pipeline execution, MCP, accounts, authentication, and cloud uploads are permanently out of scope. Unsupported or unrecognised inputs return an honest unknown. See [ROADMAP.md](ROADMAP.md) for coverage and planned work.
 
 ## Development
 

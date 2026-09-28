@@ -14,15 +14,16 @@ from __future__ import annotations
 
 import argparse
 import gzip
-import time
-from datetime import UTC, datetime
 import json
 import os
 import sys
+import time
 from collections.abc import Sequence
+from datetime import UTC, datetime
 
 from core.answer import Answer, answer_verdict
 from core.assess import assess_path
+from core.diagnose import diagnose, run_finished
 from core.models import (
     DECISION_LABELS,
     DECISION_UNKNOWN,
@@ -31,7 +32,6 @@ from core.models import (
     Verdict,
 )
 from core.report import render_json
-from core.diagnose import diagnose, run_finished
 from core.version import RULESET_VERSION, TOOL_VERSION
 
 EXIT_OK = 0
@@ -254,7 +254,8 @@ def watch_nextflow(path: str, interval: float = 15.0, *, sleep=time.sleep) -> in
                 return exit_code(final)
             stamp = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
             print(
-                f"\rWatching · {seen_bytes} bytes read · last process event: {last_event} · checked {stamp}",
+                f"\rWatching · {seen_bytes} bytes read · last process event: "
+                f"{last_event} · checked {stamp}",
                 end="",
                 flush=True,
             )

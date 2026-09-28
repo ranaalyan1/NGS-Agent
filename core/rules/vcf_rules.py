@@ -169,13 +169,16 @@ def evaluate_vcf(facts: dict[str, Any]) -> list[Finding]:
                 _finding(
                     "QC-VCF-01",
                     "Low or uneven call depth",
-                    f"Median depth is {median_depth:g}; {len(low_depths)} of {n_sites} sites ({low_fraction:.1%}) are below {DEPTH_LOW}.",
-                    "Call confidence may be reduced at these sites; depth alone does not determine variant truth.",
+                    f"Median depth is {median_depth:g}; {len(low_depths)} of {n_sites} sites "
+                    f"({low_fraction:.1%}) are below {DEPTH_LOW}.",
+                    "Call confidence may be reduced at these sites; "
+                    "depth alone does not determine variant truth.",
                     "Review the caller's depth settings and the affected sites.",
                     facts,
                     cited_lines,
                     f"median={median_depth:g}; below_fraction={low_fraction:.4f}",
-                    f"median >= {DEPTH_LOW}; fraction below {DEPTH_LOW} < {DEPTH_LOW_FRACTION_WARN}",
+                    f"median >= {DEPTH_LOW}; fraction below {DEPTH_LOW} "
+                    f"< {DEPTH_LOW_FRACTION_WARN}",
                 )
             )
 
@@ -187,7 +190,8 @@ def evaluate_vcf(facts: dict[str, Any]) -> list[Finding]:
                 "QC-VCF-02",
                 "High genotype missingness",
                 f"{values['missing']} of {genotype_total} genotypes ({fraction:.1%}) are missing.",
-                "Missing calls reduce the amount of genotype data available for downstream analysis.",
+                "Missing calls reduce the amount of genotype data "
+                "available for downstream analysis.",
                 "Review sample call rate and caller filters.",
                 facts,
                 values["missing_lines"],
@@ -204,12 +208,14 @@ def evaluate_vcf(facts: dict[str, Any]) -> list[Finding]:
                 _finding(
                     "QC-VCF-03",
                     "Extreme transition/transversion balance",
-                    f"Observed Ti/Tv is {titv:.3g} across {total_substitutions} single-base substitutions.",
+                    f"Observed Ti/Tv is {titv:.3g} across {total_substitutions} "
+                    f"single-base substitutions.",
                     f"{TITV_CONTEXT} Only extreme outliers are flagged.",
                     "Check the call set and assay context before downstream use.",
                     facts,
                     [line for line, _ in records],
-                    f"Ti/Tv={titv:.4g}; transitions={values['transitions']}; transversions={values['transversions']}",
+                    f"Ti/Tv={titv:.4g}; transitions={values['transitions']}; "
+                    f"transversions={values['transversions']}",
                     f"{TITV_EXTREME_LOW} <= Ti/Tv <= {TITV_EXTREME_HIGH}",
                 )
             )
@@ -227,7 +233,8 @@ def evaluate_vcf(facts: dict[str, Any]) -> list[Finding]:
             _finding(
                 "QC-VCF-04",
                 "Heterozygous/homozygous ratio outlier",
-                f"The het/hom ratio is {ratio:.3g} across {called_diploid} called diploid genotypes.",
+                f"The het/hom ratio is {ratio:.3g} across {called_diploid} "
+                f"called diploid genotypes.",
                 "This is a call-set QC outlier only; it does not establish biological cause.",
                 "Review sample identity, ploidy assumptions, and caller settings.",
                 facts,
@@ -250,11 +257,14 @@ def evaluate_vcf(facts: dict[str, Any]) -> list[Finding]:
                     f"{values['unfiltered']} ({unfiltered_fraction:.1%}) are unfiltered/untagged; "
                     f"{nonpass_filtered} have other FILTER labels."
                 ),
-                "Filter labels describe caller filtering; unfiltered or non-PASS records need explicit review.",
+                "Filter labels describe caller filtering; "
+                "unfiltered or non-PASS records need explicit review.",
                 "Review FILTER definitions and retain the caller's documented filtering policy.",
                 facts,
                 [line for line, _ in records],
-                f"PASS_fraction={passed_fraction:.4f}; unfiltered_fraction={unfiltered_fraction:.4f}; nonpass_filtered={nonpass_filtered}",
+                f"PASS_fraction={passed_fraction:.4f}; "
+                f"unfiltered_fraction={unfiltered_fraction:.4f}; "
+                f"nonpass_filtered={nonpass_filtered}",
                 f"PASS fraction >= {PASS_FRACTION_WARN}; no unfiltered sites",
             )
         )
@@ -269,7 +279,8 @@ def decide_vcf(findings: list[Finding]) -> tuple[str, str]:
         )
     return (
         DECISION_HEALTHY,
-        "VCF QC healthy: no configured call-quality outliers were detected; this says nothing about pathogenicity or variant truth.",
+        "VCF QC healthy: no configured call-quality outliers were detected; "
+        "this says nothing about pathogenicity or variant truth.",
     )
 
 
@@ -309,7 +320,9 @@ def unjudged_vcf_metrics(facts: dict[str, Any]) -> list[str]:
         messages.append("No usable depth field was present, so depth distribution was not judged.")
     elif len(values["depths"]) < values["n_sites"]:
         messages.append(
-            f"Depth was absent or unparseable at {values['n_sites'] - len(values['depths'])} sites, so the depth profile is incomplete."
+            f"Depth was absent or unparseable at "
+            f"{values['n_sites'] - len(values['depths'])} sites, "
+            f"so the depth profile is incomplete."
         )
     genotype_total = values["called"] + values["missing"]
     if not genotype_total:
@@ -318,19 +331,23 @@ def unjudged_vcf_metrics(facts: dict[str, Any]) -> list[str]:
         )
     elif genotype_total < values["n_sites"]:
         messages.append(
-            f"Genotypes were absent or unparseable at {values['n_sites'] - genotype_total} sites, so genotype QC is incomplete."
+            f"Genotypes were absent or unparseable at "
+            f"{values['n_sites'] - genotype_total} sites, "
+            f"so genotype QC is incomplete."
         )
     elif values["heterozygous"] + values["homozygous"] < HET_HOM_MIN_SITES:
         n = values["heterozygous"] + values["homozygous"]
         messages.append(
-            f"Only {n} called diploid genotypes were present; the het/hom ratio needs at least {HET_HOM_MIN_SITES}."
+            f"Only {n} called diploid genotypes were present; "
+            f"the het/hom ratio needs at least {HET_HOM_MIN_SITES}."
         )
     elif not values["homozygous"]:
         messages.append("No homozygous calls were present, so the het/hom ratio is undefined.")
     substitutions = values["transitions"] + values["transversions"]
     if substitutions < TITV_MIN_SUBSTITUTIONS:
         messages.append(
-            f"Only {substitutions} informative single-base substitutions were present; Ti/Tv needs at least {TITV_MIN_SUBSTITUTIONS}."
+            f"Only {substitutions} informative single-base substitutions were present; "
+            f"Ti/Tv needs at least {TITV_MIN_SUBSTITUTIONS}."
         )
     elif not values["transversions"]:
         messages.append("No transversions were observed, so Ti/Tv could not be computed.")

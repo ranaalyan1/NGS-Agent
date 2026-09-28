@@ -1,4 +1,4 @@
-// Optional nf-core integration: set params.ngs_agent=true and provide both files.
+// Optional nf-core integration: set params.advisory_qc=true and provide both files.
 // NGS-Agent only reads staged inputs; Docker's root filesystem is read-only.
 process NGS_AGENT {
     tag 'advisory-qc'
@@ -38,4 +38,4 @@ PY
 }
 
 // Include/invoke only when enabled; this process is never part of the default run.
-// NGS_AGENT(Channel.value(file(params.nextflow_log)), Channel.value(file(params.multiqc_output)), params.ngs_agent_fail_on_error ?: false)
+// NGS_AGENT(Channel.value(file(params.nextflow_log)), Channel.value(file(params.multiqc_output)), params.advisory_qc_fail_on_error ?: false)
