@@ -45,6 +45,8 @@ dev = [
   "types-PyYAML>=6.0",
   # The GUI tests import fastapi's TestClient, so `.[dev]` pulls the box too.
   "ngs-agent[box]",
+  # starlette's TestClient needs an HTTP client; httpx2 is its supported one.
+  "httpx2>=2.0.0",
 ]
 
 [tool.mypy]
