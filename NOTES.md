@@ -3,6 +3,43 @@
 What was built, what was deliberately not built, and what needs a human's
 decision. Written for the next person to pick this up.
 
+## 2026-09-28 — BUGS_FOUND.md triaged and removed
+
+The 2026-09-10 bug-hunt report was worked item by item and is now deleted.
+Resolutions:
+
+* **A1–A14 (container pipeline and its submission CLI)** — every item lived
+  in code this repository no longer carries: the legacy package tree, the
+  container agents, the orchestration layer, the submission CLI, and the
+  worker were deleted in the legacy-tree removal. The v1 product never
+  executes pipelines, so none of these can reproduce. Gone with the code.
+* **B1, B3, B4, B7 (multi-persona LLM analysis, config, doctor, report
+  nits)** — same verdict: the legacy pip CLI package is deleted; v1 has no
+  language model, no config file, and no doctor command.
+* **B2 (duplicate ACMG criteria)** — the legacy ACMG module is deleted; a
+  repo-wide scan finds zero ACMG code, and variant classification is
+  permanently out of scope (ROADMAP.md).
+* **B5 (single signature file accepted by a directory-only loader)** — the
+  legacy flag is gone; the v1 CLI exposes no signature-path option, so the
+  silent no-op cannot be reached. The core loader takes a directory and
+  raises `SignatureError` on malformed files.
+* **B6 (wheel omitted bundled demo files)** — the demo files are deleted;
+  the wheel ships `core/` (including the YAML signatures) and `doors/`
+  (including the Box page); contents verified at release time.
+* **C1 (CI lint red)** — real, and fixed: Ruff findings in the v1 tree were
+  paid with wrap-only edits (no text changes), mypy now passes on
+  `core doors`, and the Test/Pylint workflows were retargeted at the v1
+  packages.
+* **C2 (NameError in an orphaned `src/` tree)** — stale: no `src/` tree
+  exists in this repository (verified 2026-09-28).
+* **C3 (unused read-length hint)** — the computing agent was deleted with
+  the legacy tree.
+* **C4 (dependency drift)** — fixed: `requirements.txt` is gone and
+  `pyproject.toml` is the single source of truth; the CLI guide installs
+  with `pip install -e ".[dev]"`.
+
+No item survives in the shipped product, so no follow-up issues were opened.
+
 ## 2026-09-26 — launch-gap round (five review items; before Stations 9–13)
 
 1. **VCF roadmap stated publicly** (`ROADMAP.md`, linked from the README scope
