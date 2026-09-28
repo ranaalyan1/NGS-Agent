@@ -1,11 +1,7 @@
-"""Make the repository root importable in every test run, and watch receipts.
+"""Make the repository root importable and audit receipts across the suite.
 
-The new product lives in top-level packages (``core``, ``doors``) while the
-legacy tests import ``ngs_agent``; both need the repo root on sys.path.
-
-The session fixture here also records every ``Finding`` the suite creates, so
-``tests/test_receipts_audit.py`` can check the Law of Receipts against findings
-produced anywhere, not just the ones a single test happened to build.
+The session fixture records every ``Finding`` created, so the Law of Receipts
+is checked across findings produced by all tests, not just one test module.
 """
 
 import sys

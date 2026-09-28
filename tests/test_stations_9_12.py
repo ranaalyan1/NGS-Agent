@@ -132,6 +132,7 @@ def test_cromwell_signature_fixtures_and_unknown():
 def test_watcher_detects_midrun_oom_but_holds_partial_line(capsys):
     def interrupt(_):
         raise KeyboardInterrupt
+
     code = watch_nextflow(str(FIX / "logs" / "growing" / "nextflow.early"), 0.01, sleep=interrupt)
     out = capsys.readouterr().out
     assert code == EXIT_OK and "NF-JAVA-006" not in out

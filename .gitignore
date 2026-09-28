@@ -1,15 +1,13 @@
-```
 # Virtual environments
 .venv/
 venv/
 
-# Dependencies
+# Python and test caches
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
+*.py[cod]
 .pytest_cache/
 .mypy_cache/
+.ruff_cache/
 .coverage
 coverage/
 htmlcov/
@@ -20,7 +18,6 @@ dist/
 *.egg-info/
 *.whl
 *.tar.gz
-*.zip
 
 # Environment files
 .env
@@ -29,23 +26,16 @@ dist/
 
 # Logs and temporary files
 *.log
-# These small logs are part of the documented demo commands.
-!demo_data/sample.log
-!ngs_agent/demo_data/sample.log
 *.tmp
 *.swp
 
-# Editors and IDEs
+# Editors and operating-system files
 .vscode/
 .idea/
-*.swp
-*.swo
-
-# OS generated files
 .DS_Store
 Thumbs.db
-```
-# Fixtures are tracked test data: the global *.zip / *.log rules above would
-# otherwise drop them, and the tests need them to exist.
+
+# Generated test output
+fixtures/
 !fixtures/**/*.zip
 !fixtures/**/*.log

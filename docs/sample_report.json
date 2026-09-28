@@ -1,7 +1,7 @@
 {
   "schema": "ngs-agent/verdict/1",
-  "tool_version": "1.0.0",
-  "ruleset_version": "2026-09",
+  "tool_version": "1.1.0",
+  "ruleset_version": "2026-09.1",
   "answer": {
     "What this is": [
       "This is a folder of results from one sequencing run. NGS-Agent checks the files inside it against each other.",
@@ -18,11 +18,11 @@
     "Receipts": [
       "AUD-STRAND-01: rule:AUD-STRAND-01 @ bam contigs vs annotation contigs, assignment rate \u2014 AUD-STRAND-01 evaluated against bam contigs vs annotation contigs, assignment rate",
       "AUD-STRAND-01: file:8ee3e4f33024 @ counts/sample1.featureCounts.txt.summary:line=2 \u2014 Assigned 1,800,000 of 10,043,000 counted reads = 17.9%",
-      "AUD-STRAND-01: file:8e5658148f4b @ star/sample1/Aligned.sortedByCoord.out.bam \u2014 25 @SQ contigs, eof_ok=True",
+      "AUD-STRAND-01: file:1537c883b687 @ star/sample1/Aligned.sortedByCoord.out.bam \u2014 25 @SQ contigs, eof_ok=True",
       "AUD-STRAND-01: file:3420f4695f6e @ annotation/gencode.v45.annotation.gtf \u2014 25 contigs in column 1",
       "dir:contig_mismatch @ fixtures/runs/contig_mismatch \u2014 Run folder; individual files carry their own hashes",
-      "tool:ngs-agent @ core/assess.py:assess_folder \u2014 ruleset 2026-09",
-      "Tool: ngs-agent 1.0.0, ruleset 2026-09, generated 2026-09-26T10:31:40Z"
+      "tool:ngs-agent @ core/assess.py:assess_folder \u2014 ruleset 2026-09.1",
+      "Tool: ngs-agent 1.1.0, ruleset 2026-09.1"
     ]
   },
   "verdict": {
@@ -44,8 +44,8 @@
         "receipts": [
           {
             "source": "rule:AUD-STRAND-01",
-            "version": "2026-09",
-            "timestamp": "2026-09-26T10:31:40Z",
+            "version": "2026-09.1",
+            "timestamp": "2026-09-28T07:33:50Z",
             "locator": "bam contigs vs annotation contigs, assignment rate",
             "detail": "AUD-STRAND-01 evaluated against bam contigs vs annotation contigs, assignment rate",
             "snippet": ""
@@ -53,15 +53,15 @@
           {
             "source": "file:8ee3e4f33024",
             "version": "featureCounts summary",
-            "timestamp": "2026-09-26T10:31:40Z",
+            "timestamp": "2026-09-28T07:33:50Z",
             "locator": "counts/sample1.featureCounts.txt.summary:line=2",
             "detail": "Assigned 1,800,000 of 10,043,000 counted reads = 17.9%",
             "snippet": ""
           },
           {
-            "source": "file:8e5658148f4b",
+            "source": "file:1537c883b687",
             "version": "BAM header",
-            "timestamp": "2026-09-26T10:31:40Z",
+            "timestamp": "2026-09-28T07:33:50Z",
             "locator": "star/sample1/Aligned.sortedByCoord.out.bam",
             "detail": "25 @SQ contigs, eof_ok=True",
             "snippet": ""
@@ -69,7 +69,7 @@
           {
             "source": "file:3420f4695f6e",
             "version": "annotation",
-            "timestamp": "2026-09-26T10:31:40Z",
+            "timestamp": "2026-09-28T07:33:50Z",
             "locator": "annotation/gencode.v45.annotation.gtf",
             "detail": "25 contigs in column 1",
             "snippet": ""
@@ -88,18 +88,18 @@
     "receipts": [
       {
         "source": "dir:contig_mismatch",
-        "version": "listed by ngs-agent 1.0.0",
-        "timestamp": "2026-09-26T10:31:40Z",
+        "version": "listed by ngs-agent 1.1.0",
+        "timestamp": "2026-09-28T07:33:50Z",
         "locator": "fixtures/runs/contig_mismatch",
         "detail": "Run folder; individual files carry their own hashes",
         "snippet": ""
       },
       {
         "source": "tool:ngs-agent",
-        "version": "1.0.0",
-        "timestamp": "2026-09-26T10:31:40Z",
+        "version": "1.1.0",
+        "timestamp": "2026-09-28T07:33:50Z",
         "locator": "core/assess.py:assess_folder",
-        "detail": "ruleset 2026-09",
+        "detail": "ruleset 2026-09.1",
         "snippet": ""
       }
     ],
@@ -483,7 +483,7 @@
             {
               "source": "file:3420f4695f6e",
               "version": "filename",
-              "timestamp": "2026-09-26T10:31:40Z",
+              "timestamp": "2026-09-28T07:33:50Z",
               "locator": "annotation/gencode.v45.annotation.gtf",
               "detail": "genome build GRCh38",
               "snippet": ""
@@ -491,7 +491,7 @@
             {
               "source": "file:aa555f17d653",
               "version": "config",
-              "timestamp": "2026-09-26T10:31:40Z",
+              "timestamp": "2026-09-28T07:33:50Z",
               "locator": "run_config.yaml:line=1",
               "detail": "genome build GRCh38",
               "snippet": ""
@@ -499,7 +499,7 @@
             {
               "source": "file:aa555f17d653",
               "version": "config",
-              "timestamp": "2026-09-26T10:31:40Z",
+              "timestamp": "2026-09-28T07:33:50Z",
               "locator": "run_config.yaml:line=2",
               "detail": "genome build GRCh38",
               "snippet": ""
@@ -507,7 +507,7 @@
             {
               "source": "file:aa555f17d653",
               "version": "config",
-              "timestamp": "2026-09-26T10:31:40Z",
+              "timestamp": "2026-09-28T07:33:50Z",
               "locator": "run_config.yaml:line=2",
               "detail": "genome build GRCh38",
               "snippet": ""
@@ -515,7 +515,7 @@
             {
               "source": "file:aa555f17d653",
               "version": "config",
-              "timestamp": "2026-09-26T10:31:40Z",
+              "timestamp": "2026-09-28T07:33:50Z",
               "locator": "run_config.yaml:line=3",
               "detail": "genome build GRCh38",
               "snippet": ""
@@ -525,7 +525,7 @@
             {
               "source": "file:3420f4695f6e",
               "version": "annotation",
-              "timestamp": "2026-09-26T10:31:40Z",
+              "timestamp": "2026-09-28T07:33:50Z",
               "locator": "annotation/gencode.v45.annotation.gtf",
               "detail": "25 contigs in column 1",
               "snippet": ""
@@ -535,7 +535,7 @@
             {
               "source": "file:8c0271788ba1",
               "version": "counts table",
-              "timestamp": "2026-09-26T10:31:40Z",
+              "timestamp": "2026-09-28T07:33:50Z",
               "locator": "counts/sample1.featureCounts.txt",
               "detail": "50 rows, max 25500.0, decimals=False -> counts",
               "snippet": ""
@@ -545,7 +545,7 @@
             {
               "source": "file:8ee3e4f33024",
               "version": "featureCounts summary",
-              "timestamp": "2026-09-26T10:31:40Z",
+              "timestamp": "2026-09-28T07:33:50Z",
               "locator": "counts/sample1.featureCounts.txt.summary:line=2",
               "detail": "Assigned 1,800,000 of 10,043,000 counted reads = 17.9%",
               "snippet": ""
@@ -555,7 +555,7 @@
             {
               "source": "file:8ee3e4f33024",
               "version": "featureCounts summary",
-              "timestamp": "2026-09-26T10:31:40Z",
+              "timestamp": "2026-09-28T07:33:50Z",
               "locator": "counts/sample1.featureCounts.txt.summary:line=10",
               "detail": "Number of pairs\t10000000",
               "snippet": ""
@@ -563,9 +563,9 @@
           ],
           "adapter_curve": [
             {
-              "source": "file:1a1e0cba6fa8",
+              "source": "file:3a3c98dc7b2c",
               "version": "FastQC",
-              "timestamp": "2026-09-26T10:31:40Z",
+              "timestamp": "2026-09-28T07:33:50Z",
               "locator": "fastqc/sample1_fastqc.zip",
               "detail": "FastQC adapter content peaks at 0.2%",
               "snippet": ""
@@ -577,7 +577,7 @@
             {
               "source": "file:ddf0ff5a2bd3",
               "version": "execution trace",
-              "timestamp": "2026-09-26T10:31:40Z",
+              "timestamp": "2026-09-28T07:33:50Z",
               "locator": "pipeline_info/execution_trace_2026-06-02.txt:line=2",
               "detail": "1\tabc0001\t1\tNFCORE_RNASEQ:RNASEQ:FASTQC_FASTQ:FASTQC\tCOMPLETED\t0\t12.3s\t99.1%\t1.2%\t1.1 GB\t2.4 GB",
               "snippet": ""
@@ -585,7 +585,7 @@
             {
               "source": "file:ddf0ff5a2bd3",
               "version": "execution trace",
-              "timestamp": "2026-09-26T10:31:40Z",
+              "timestamp": "2026-09-28T07:33:50Z",
               "locator": "pipeline_info/execution_trace_2026-06-02.txt:line=3",
               "detail": "2\tabc0002\t2\tNFCORE_RNASEQ:RNASEQ:TRIM_CUTADAPT:CUTADAPT\tCOMPLETED\t0\t12.3s\t99.1%\t1.2%\t1.1 GB\t2.4 GB",
               "snippet": ""
@@ -593,7 +593,7 @@
             {
               "source": "file:ddf0ff5a2bd3",
               "version": "execution trace",
-              "timestamp": "2026-09-26T10:31:40Z",
+              "timestamp": "2026-09-28T07:33:50Z",
               "locator": "pipeline_info/execution_trace_2026-06-02.txt:line=4",
               "detail": "3\tabc0003\t3\tNFCORE_RNASEQ:RNASEQ:ALIGN_STAR:STAR_ALIGN\tCOMPLETED\t0\t12.3s\t99.1%\t1.2%\t1.1 GB\t2.4 GB",
               "snippet": ""
@@ -601,7 +601,7 @@
             {
               "source": "file:ddf0ff5a2bd3",
               "version": "execution trace",
-              "timestamp": "2026-09-26T10:31:40Z",
+              "timestamp": "2026-09-28T07:33:50Z",
               "locator": "pipeline_info/execution_trace_2026-06-02.txt:line=5",
               "detail": "4\tabc0004\t4\tNFCORE_RNASEQ:RNASEQ:QUANTIFY_FEATURECOUNTS:FEATURECOUNTS\tCOMPLETED\t0\t12.3s\t99.1%\t1.2%\t1.1 GB\t2.4 GB",
               "snippet": ""
@@ -611,7 +611,7 @@
             {
               "source": "file:0915c2ff4435",
               "version": "Picard MarkDuplicates",
-              "timestamp": "2026-09-26T10:31:40Z",
+              "timestamp": "2026-09-28T07:33:50Z",
               "locator": "qc/sample1.MarkDuplicates.metrics.txt:line=5",
               "detail": "sample1: PERCENT_DUPLICATION 0.0910",
               "snippet": ""
@@ -619,7 +619,7 @@
             {
               "source": "file:74d659aa7dd4",
               "version": "Picard MarkDuplicates",
-              "timestamp": "2026-09-26T10:31:40Z",
+              "timestamp": "2026-09-28T07:33:50Z",
               "locator": "qc/sample2.MarkDuplicates.metrics.txt:line=5",
               "detail": "sample2: PERCENT_DUPLICATION 0.0880",
               "snippet": ""
@@ -627,7 +627,7 @@
             {
               "source": "file:71a7359a833c",
               "version": "Picard MarkDuplicates",
-              "timestamp": "2026-09-26T10:31:40Z",
+              "timestamp": "2026-09-28T07:33:50Z",
               "locator": "qc/sample3.MarkDuplicates.metrics.txt:line=5",
               "detail": "sample3: PERCENT_DUPLICATION 0.1020",
               "snippet": ""
@@ -637,7 +637,7 @@
             {
               "source": "file:6b4fcb5b2d0a",
               "version": "VerifyBamID",
-              "timestamp": "2026-09-26T10:31:40Z",
+              "timestamp": "2026-09-28T07:33:50Z",
               "locator": "qc/sample1.verify_bam.selfSM:line=2",
               "detail": "FREEMIX 0.0032",
               "snippet": ""
@@ -647,7 +647,7 @@
             {
               "source": "file:aa555f17d653",
               "version": "config/samplesheet",
-              "timestamp": "2026-09-26T10:31:40Z",
+              "timestamp": "2026-09-28T07:33:50Z",
               "locator": "run_config.yaml:line=4",
               "detail": "strandedness: reverse",
               "snippet": ""
@@ -657,7 +657,7 @@
             {
               "source": "file:aa555f17d653",
               "version": "config/samplesheet",
-              "timestamp": "2026-09-26T10:31:40Z",
+              "timestamp": "2026-09-28T07:33:50Z",
               "locator": "run_config.yaml:line=5",
               "detail": "protocol: paired_end",
               "snippet": ""
@@ -665,9 +665,9 @@
           ],
           "bam_contigs": [
             {
-              "source": "file:8e5658148f4b",
+              "source": "file:1537c883b687",
               "version": "BAM header",
-              "timestamp": "2026-09-26T10:31:40Z",
+              "timestamp": "2026-09-28T07:33:50Z",
               "locator": "star/sample1/Aligned.sortedByCoord.out.bam",
               "detail": "25 @SQ contigs, eof_ok=True",
               "snippet": ""
@@ -677,7 +677,7 @@
             {
               "source": "file:34e1aa5c1fdc",
               "version": "STAR Log.final.out",
-              "timestamp": "2026-09-26T10:31:40Z",
+              "timestamp": "2026-09-28T07:33:50Z",
               "locator": "star/sample1/Log.final.out:line=6",
               "detail": "Uniquely mapped reads % |       88.40%",
               "snippet": ""
@@ -687,7 +687,7 @@
             {
               "source": "file:4259083b92fe",
               "version": "STAR ReadsPerGene",
-              "timestamp": "2026-09-26T10:31:40Z",
+              "timestamp": "2026-09-28T07:33:50Z",
               "locator": "star/sample1/ReadsPerGene.out.tab:line=1",
               "detail": "ReadsPerGene totals across 12 genes: unstranded 85,249,995, forward 1,924,995, reverse 83,325,000",
               "snippet": ""
@@ -697,7 +697,7 @@
             {
               "source": "file:1004f80c48ee",
               "version": "trimming report",
-              "timestamp": "2026-09-26T10:31:40Z",
+              "timestamp": "2026-09-28T07:33:50Z",
               "locator": "trim/sample1.cutadapt.log",
               "detail": "trimming report present",
               "snippet": ""
@@ -705,13 +705,13 @@
           ]
         }
       },
-      "input_sha256": "64e56759822a1c542267aecd3bae33079b1f9511e0b4c1762e6c2cb60ebd7c9a",
+      "input_sha256": "f1d1c0a2f21c8e84cc96995466669cc0d22d96d37abdfffeba048b391af8b50f",
       "n_files": 17,
       "n_bams": 1,
       "n_logs": 1
     },
-    "tool_version": "1.0.0",
-    "ruleset_version": "2026-09",
-    "timestamp": "2026-09-26T10:31:40Z"
+    "tool_version": "1.1.0",
+    "ruleset_version": "2026-09.1",
+    "timestamp": "2026-09-28T07:33:50Z"
   }
 }

@@ -4,9 +4,9 @@
 
 **Quality checks and pipeline-log diagnosis for NGS runs.**
 
-Reads FastQC and MultiQC reports, run folders, VCFs, and workflow logs. Findings include the rule, evidence location, and file hash.
+Read FastQC and MultiQC reports, run folders, VCFs, and workflow logs. Every finding includes its rule, evidence location, and file hash.
 
-[Quickstart](#60-second-quickstart) · [Supported inputs](#supported-inputs) · [Watch a live run](#watch-a-live-run) · [Receipts](#receipts)
+[Quickstart](#60-second-quickstart) · [Supported inputs](#supported-inputs) · [Thresholds](#thresholds) · [Receipts](#receipts)
 
 </div>
 
@@ -24,12 +24,12 @@ python -m venv .venv && .venv/bin/pip install -e ".[dev]"
 .venv/bin/python -m uvicorn doors.gui.app:app --host 0.0.0.0 --port 8000
 ```
 
-Open `http://localhost:8000` for the Box. The CLI identifies inputs by content; it does not need a file-type option or configuration file.
+Open `http://localhost:8000` for the Box. The CLI identifies inputs by content; no file-type option or configuration file is needed.
 
 ### Install options
 
 ```bash
-# Isolated command-line install
+# Isolated command-line install from the public repository
 pipx install "ngs-agent[box] @ git+https://github.com/ranaalyan1/NGS-Agent.git"
 ngs sample_fastqc.zip
 
@@ -37,7 +37,7 @@ ngs sample_fastqc.zip
 git clone https://github.com/ranaalyan1/NGS-Agent.git && cd NGS-Agent
 conda env create -f environment-box.yml && conda activate ngs-agent-box
 
-# Docker: Box on port 8000
+# Docker: serve the Box on port 8000
 docker build -t ngs-agent .
 docker run --rm -p 8000:8000 ngs-agent
 ```
@@ -49,10 +49,13 @@ docker run --rm -p 8000:8000 ngs-agent
 | FastQC `.zip` | Six read-quality rules: healthy, trim and proceed, or re-sequence. |
 | MultiQC JSON, table, or HTML | The same six rules per sample, plus cohort checks. |
 | Run folder | Ten cross-file audit rules: healthy, review, or fix and re-run. |
-| Nextflow log | Ten failure signatures; one root cause or an honest unknown. |
-| Snakemake log | Eight ranked failure signatures; root cause or unknown with the log tail. |
-| Cromwell log | Five failure signatures; root cause or unknown with the log tail. WDL source is recognised, not analysed. |
+| Nextflow log | Ten failure signatures; one root cause or an honest `UNKNOWN`. |
+| Nextflow log still being written | Read-only `--watch` polling; live snapshots and normal final verdict. |
+| Snakemake log | Eight ranked failure signatures; root cause or `UNKNOWN` with the log tail. |
+| Cromwell run log | Five failure signatures; root cause or `UNKNOWN` with the log tail. |
 | VCF or `.vcf.gz` | Five call-quality checks for one sample. No variant interpretation. |
+| WDL source | Recognised; static analysis is out of scope. |
+| Unsupported or insufficient evidence | `UNKNOWN`; the tool does not guess. |
 
 ### Read-quality rules
 
@@ -94,7 +97,11 @@ These rules evaluate call quality, not variant truth:
 | `QC-VCF-04` | Het/hom ratio outlier |
 | `QC-VCF-05` | PASS, unfiltered, and other FILTER fractions |
 
-The supported sample limit is **one**. gVCFs, multi-allelic records, and visibly non-minimal indels are recognised but not judged. Whole-genome and exome Ti/Tv expectations differ; the tool does not infer assay type. A healthy QC verdict says nothing about pathogenicity, gene context, or ACMG classification.
+The supported sample limit is **one**. gVCFs, multi-sample VCFs, multiallelic records, and visibly non-minimal indels are recognised but not judged. Whole-genome and exome Ti/Tv expectations differ; the tool does not infer assay type. A healthy QC verdict says nothing about pathogenicity, gene context, or ACMG classification.
+
+## Thresholds
+
+Thresholds are **defaults**, consolidated at the top of `core/rules/qc_rules.py` and `core/rules/audit_rules.py`: duplication 20/50/70%, freemix 3/5%, alignment 75/50%, and assignment 30%. These defaults encode opinions pending expert sign-off; they are not universal biological cut-offs. Labs should tune thresholds for each assay type. The values and rule semantics are unchanged in this release.
 
 ## Watch a live run
 
@@ -104,19 +111,7 @@ Poll a growing Nextflow log every 15 seconds. Change the interval with `--interv
 ngs --watch --interval 15 results/nextflow.log
 ```
 
-Complete evidence triggers a `LIVE` verdict and next action. Ctrl+C prints a final snapshot: exit code 0 if no failed finding has appeared, otherwise 1. At normal completion, the final card matches one-shot `ngs results/nextflow.log` output.
-
-## Run it inside your pipeline
-
-`examples/nf-core/NGS_AGENT.nf` defines an optional process. Enable it with `params.ngs_agent`; provide the Nextflow log and MultiQC output paths. It runs the published image with a read-only root filesystem and publishes HTML reports under `results/ngs-agent/`. Findings do not fail the process unless `ngs_agent_fail_on_error` is enabled.
-
-```nextflow
-include { NGS_AGENT } from './examples/nf-core/NGS_AGENT.nf'
-if (params.ngs_agent) { NGS_AGENT(
-  Channel.value(file(params.nextflow_log)),
-  Channel.value(file(params.multiqc_output)), params.ngs_agent_fail_on_error ?: false
-)}
-```
+Complete evidence triggers a `LIVE` verdict. Ctrl+C prints a final snapshot. At normal completion, the final card matches one-shot `ngs results/nextflow.log` output.
 
 ## The Box and reports
 
@@ -138,7 +133,7 @@ QC-QUAL-01: file:751e79c3d819 @ sample_fastqc/fastqc_data.txt:line=28
             — Per base sequence quality mean = 17.8 at position 40-49 (threshold Q20)
 ```
 
-If the input is unsupported or evidence is insufficient, the verdict is **unknown** rather than a guess. VCF metric receipts also appear in the JSON verdict.
+`UNKNOWN` is a valid verdict when the input is unsupported or evidence is insufficient. VCF metric receipts also appear in the JSON verdict.
 
 ## Exit codes
 
@@ -150,9 +145,9 @@ If the input is unsupported or evidence is insufficient, the verdict is **unknow
 
 ## Scope
 
-NGS-Agent reads results; it does not run or orchestrate pipelines. Core makes no network calls and the tool uploads no files. Verdict text uses fixed templates and measured values.
+NGS-Agent interprets existing results; it does not execute or orchestrate pipelines. Core makes no network calls, the product has no LLM, and uploaded files are not sent anywhere. Verdicts use fixed templates and measured values.
 
-It does not do VCF pathogenicity, gene-context, or ACMG analysis; WDL source is not statically analysed. Pipeline execution, MCP, accounts, authentication, and cloud uploads are out of scope. Unsupported or unrecognised inputs return an honest unknown. See [ROADMAP.md](ROADMAP.md) for coverage and planned work.
+VCF call-quality QC is supported. Variant interpretation—including pathogenicity, gene context, and ACMG classification—is permanently out of scope. MCP, accounts, authentication, and cloud uploads are also out of scope. Unsupported or unrecognised inputs return `UNKNOWN`, never a guess. See [ROADMAP.md](ROADMAP.md) for coverage and scope.
 
 ## Development
 

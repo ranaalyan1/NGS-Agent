@@ -1,275 +1,73 @@
-# NGS‑Agent CLI – User Guide
+# NGS-Agent CLI user guide
 
-> **Goal:** Make the NGS‑Agent command‑line interface as easy and frictionless as possible for bench‑researchers, post‑docs, core‑facility staff, and developers. This guide walks through installation, the new *quick* command, and the existing commands, with many examples so you can start analyzing data in minutes.
+The CLI accepts one input path, identifies its format by content, and prints a plain-language verdict with evidence receipts. It does not execute a sequencing workflow or infer unsupported results. `UNKNOWN` is a valid outcome.
 
----
+## Install
 
-## Table of Contents
-
-1. [Quick Install](#quick-install)
-2. [New `quick` Command – One‑Line RNA‑Seq](#new-quick-command---one-line-rna-seq)
-3. [Existing Commands (Brief Overview)](#existing-commands-brief-overview)
-4. [Full `submit` Command – When You Need More Control](#full-submit-command---when-you-need-more-control)
-5. [Batch Operations (`submit‑batch` + `wizard`)](#batch-operations-submit-batch--wizard)
-6. [Configuration & Environment](#configuration--environment)
-7. [Troubleshooting & FAQ](#troubleshooting--faq)
-8. [Changelog (what changed for simplicity)](#changelog-what-changed-for-simplicity)
-
----
-
-## 1. Quick Install
-
-The CLI is a regular Python script that requires a few packages. The easiest way is to install the project's requirements once:
+Python 3.11 or newer:
 
 ```bash
-# From the repository root
+pipx install "ngs-agent[box] @ git+https://github.com/ranaalyan1/NGS-Agent.git"
+```
+
+For a source checkout and development install:
+
+```bash
+git clone https://github.com/ranaalyan1/NGS-Agent.git
 cd NGS-Agent
-pip install --break-system-packages -r requirements.txt
+python -m venv .venv
+.venv/bin/pip install -e ".[dev]"
 ```
 
-> **What’s inside `requirements.txt`?**  
-> `click`, `temporalio`, `boto3`, `python-dotenv`, and a few other bio‑informatics utils. If you already have a Python environment with these packages, you can skip the install step.
+Both installs provide the same `ngs` command. The `box` extra includes the web interface dependencies. The source checkout also supports running the CLI as `python -m doors.cli`.
 
-### Verify the installation
+## Basic use
 
 ```bash
-python cli.py --help
+ngs sample_fastqc.zip
+ngs results/run_folder
+ngs results/nextflow.log
+ngs sample.vcf
 ```
 
-You should see a list of commands similar to:
-
-```
-Commands:
-  quick         Quick submit a single pipeline run with minimal flags.
-  status        Get status of a run.
-  submit        Submit a single pipeline run.
-  submit-batch  Submit a batch pipeline run using a CSV sample sheet.
-  wizard        Interactive setup wizard for batch analysis.
-```
-
----
-
-## 2. `quick` Command – One‑Line RNA‑Seq
-
-### Purpose
-
-Submit a **single‑sample RNA‑Seq** run with minimal typing. You provide the
-data + reference; the command fills in the rest:
-
-| Parameter | Default |
-|-----------|---------|
-| Experiment type | `RNA‑Seq` |
-| Organism | `human` |
-| Paired‑end | `False` (single‑end) |
-| GTF | optional — omit for **align‑only** (counting/DE truly skipped) |
-
-> Single‑sample runs stop at counting by design: DESeq2 needs ≥2 samples
-> across ≥2 conditions, so use `submit‑batch` for differential expression.
-
-### Syntax
+Machine-readable JSON, including findings and receipts:
 
 ```bash
-python cli.py quick --fastq <FASTQ> --ref-genome <INDEX_OR_FASTA> [--gtf <GENES.GTF>] [--organism <SPECIES>]
+ngs --json sample_fastqc.zip
 ```
 
-| Flag | Description | Required? |
-|------|-------------|-----------|
-| `--fastq` | Path to a **single‑end** FASTQ file | **Yes** |
-| `--ref-genome` | HISAT2 index basename (with `.ht2` siblings) or reference FASTA | **Yes** |
-| `--gtf` | Annotation GTF for counting (omit = align‑only run) | No |
-| `--organism` | `human`, `mouse`, `rat`, `zebrafish`, `yeast`, `other`, `mixed`. Default: `human` | No |
+The input can be a FastQC archive, MultiQC report, run folder, supported workflow log, or a supported single-sample VCF. See the [README supported-input table](README.md#supported-inputs) and [ROADMAP](ROADMAP.md) for exact limits.
 
-### Examples
+## Watch a growing Nextflow log
 
 ```bash
-# Full single-sample run with counting
-python cli.py quick --fastq data.fastq --ref-genome data/ref/grch38_idx --gtf data/ref/genes.gtf
-
-# Align-only (no GTF available) — fast QC + alignment + report
-python cli.py quick --fastq data.fastq --ref-genome data/ref/grch38_idx
-
-# Mouse data
-python cli.py quick --fastq data.fastq --ref-genome data/ref/mm10_idx --gtf data/ref/mm10.gtf --organism mouse
+ngs --watch --interval 15 results/nextflow.log
 ```
 
-### What happens under the hood
+The watcher reads without modifying the log and waits for complete evidence before judging an incomplete final line. Ctrl+C displays a final snapshot.
 
-1. **Validate** the FASTQ, the reference (file or index basename with `.ht2`/`.bwt` siblings), and the GTF if given.
-2. **Connect** to the Temporal server (`TEMPORAL_HOST`, default `localhost:7233`).
-3. **Start** the `NGSPipelineWorkflow` with a generated `run‑id`.
-4. **Print** a monitoring URL, e.g.:
+## Verdicts and exit codes
 
-```
-Quick run submitted: quick-3f9a2c1d
-Monitor at http://localhost:8080/namespaces/default/workflows/ngs-quick-3f9a2c1d
-```
+A verdict can be healthy, require review or action, or be `UNKNOWN` when evidence is insufficient or the input is outside supported scope. The CLI does not guess.
 
-> **Note:** The Temporal server must be reachable. If it isn't, you'll get a
-> clear error telling you to run `docker compose up -d` or set `TEMPORAL_HOST`.
+| Exit code | Meaning |
+|---:|---|
+| `0` | Pass or warnings only |
+| `1` | At least one failed finding |
+| `2` | Input could not be interpreted |
 
-### When to use `quick` vs. `submit`
+Every finding includes its rule or signature identifier and source receipts. File receipts identify the evidence file, line or location, and content hash; rule receipts identify the rule and ruleset version.
 
-| Situation | Recommendation |
-|-----------|----------------|
-| You just want a **quick smoke test** of a new FASTQ file. | `quick` – one flag only. |
-| You need **DNA‑Seq (WGS/WES)**, **paired‑end**, **GTF‑based counting**, or **custom references**. | Use `submit` (see below). |
-| You are running a **batch of many samples**. | Use `submit‑batch` or the `wizard`. |
+## Scope
 
----
+The product is a no-LLM results interpreter. Core has no network calls and the tool does not upload files or run pipelines. VCF support is call-quality QC only; pathogenicity, gene context, and ACMG interpretation are permanently out of scope. Thresholds are defaults and labs should tune them by assay type; see the [README Thresholds section](README.md#thresholds).
 
-## 3. Existing Commands (Brief Overview)
+## Box
 
-| Command | When to use | Minimal flags |
-|---------|-------------|---------------|
-| `status RUN_ID` | Check status / retrieve result of a previously submitted run. | `RUN_ID` (argument) |
-| `submit` | Full‑featured single‑sample submission. | `--fastq` / `--fastq-r1` / `--fastq-r2`, `--organism`, `--ref-genome`, `[--reference-fasta]`, `[--gtf]`, `[--panel-bed]`, `[--known-sites]`, `[--paired/--single]` |
-| `submit-batch` | Submit many samples at once via a CSV sheet. | `--sample-sheet`, `--organism`, `--ref-genome`, `[--reference-fasta]`, `[--gtf]`, `[--paired/--single]` |
-| `wizard` | Interactive prompt that creates an `.env` and a sample‑sheet for you. | None (prompts you step‑by‑step) |
-
-All of these commands share the same underlying Temporal workflow, so the monitoring URL pattern is consistent: `http://localhost:8080/namespaces/default/workflows/ngs-<run‑id>`.
-
----
-
-## 4. Full `submit` Command – When You Need More Control
-
-The `submit` command is for advanced use‑cases. Its help (run `python cli.py submit --help`) lists every option, but a minimal example is:
+Install the `box` extra, then start the web interface from a source checkout:
 
 ```bash
-python cli.py submit \
-    --fastq data.fastq \
-    --organism human \
-    --ref-genome data/ref/grch38_idx \
-    --gtf data/ref/genes.gtf \
-    --experiment RNA-Seq
+.venv/bin/python -m uvicorn doors.gui.app:app --host 0.0.0.0 --port 8000
 ```
 
-- **`--experiment`** chooses `RNA‑Seq`, `WGS`, or `WES`.
-- **`--organism`** accepts `human`, `mouse`, `rat`, `zebrafish`, `yeast`, `other`, `mixed`.
-- **`--ref-genome`** accepts a HISAT2 index basename (validated via `.ht2` siblings) or a reference FASTA path.
-- **`--gtf`** is optional for RNA‑Seq: omit it for an align‑only run (counting/DE skipped, no crash).
-- **`--panel‑bed`**, **`--known‑sites`** are optional; validated only when supplied.
-
-Use `submit` when you need **full control** (e.g., DNA‑Seq with BQSR, custom GTF‑based gene counting, or multi‑panel experiments).
-
----
-
-## 5. Batch Operations (`submit‑batch` + `wizard`)
-
-### `submit‑batch`
-
-Run a batch analysis from a CSV sample sheet:
-
-```bash
-python cli.py submit-batch \
-    --sample-sheet samples.csv \
-    --organism human \
-    --ref-genome data/ref/grch38_idx \
-    --gtf data/ref/genes.gtf \
-    --paired
-```
-
-The CSV must have columns: `sample_id`, `condition`, `replicate_group`, `species`, `fastq` (or `fastq_path`), `fastq_r1`, `fastq_r2`. The `wizard` command can generate this file for you. For differential expression, include ≥2 samples across ≥2 conditions (with replicates ideally).
-
-### `wizard`
-
-Start an interactive setup:
-
-```bash
-python cli.py wizard
-```
-
-You’ll be prompted for:
-
-1. Analysis type (`RNA‑Seq`, `WGS`, `WES`)
-2. Paired‑end? (yes/no)
-3. Default organism (`human`, `mouse`, `mixed`)
-4. Number of samples to configure
-5. Per‑sample details (ID, condition, replicate, species, FASTQ paths)
-6. Reference genome index basename and GTF path (blank GTF = align‑only)
-
-At the end, the wizard writes:
-
-- **`.env`** file with key‑value pairs (experiment, organism, paired‑end, reference genome, GTF)
-- **`sample_sheet.csv`** ready for `submit‑batch`
-
-Then it prints the exact `cli.py submit-batch` command you should run.
-
----
-
-## 6. Configuration & Environment
-
-| Variable | Default | Where it’s used |
-|----------|---------|-----------------|
-| `TEMPORAL_HOST` | `localhost:7233` | All CLI commands that connect to Temporal |
-| `.env` file | (created by `wizard`) | Loaded by `load_dotenv()` at script start |
-
-You can override `TEMPORAL_HOST` environment‑wide, e.g.:
-
-```bash
-export TEMPORAL_HOST="my-temporal-instance.example.com:7233"
-python cli.py quick --fastq data.fastq
-```
-
-If you frequently use a remote Temporal service, add the export to your shell profile (`~/.bashrc`, `~/.zshrc`) or create a persistent `.env` file in the project root.
-
----
-
-## 7. Troubleshooting & FAQ
-
-| Symptom | Likely cause | Fix |
-|---------|--------------|-----|
-| `Error: Cannot reach Temporal at ...` | Temporal server not running or `TEMPORAL_HOST` wrong. | Run `docker compose up -d`, or set `TEMPORAL_HOST` to the correct host:port. All commands (`submit`, `status`, `quick`) honor it. |
-| `--fastq does not exist or is not a file: ...` | FASTQ file path typo or missing file. | Verify the path, create the file, or use an absolute path. |
-| `--ref-genome 'hg38' is not a file and no index files ...` | Bare preset name instead of a real path. | Pass the index basename (e.g. `data/ref/grch38_idx` with `.ht2` siblings) or a FASTA path. |
-| `Unrecognized argument: --organism` | Typo or unsupported species. | Use one of: `human`, `mouse`, `rat`, `zebrafish`, `yeast`, `other`, `mixed`. |
-| `ModuleNotFoundError: No module named 'click'` | Packages not installed. | Run `pip install --break-system-packages -r requirements.txt`. |
-| Want to run **paired‑end** with `quick`? | `quick` is single‑end only. | Use `submit` with `--fastq-r1` / `--fastq-r2` and `--paired`. |
-| `DE skipped: need ≥2 quantified samples ...` | Single‑sample or single‑condition run. | Expected: submit a batch with ≥2 conditions for DE. |
-
-### Getting help for any command
-
-```bash
-python cli.py <command> --help
-```
-
-Example:
-
-```bash
-python cli.py quick --help
-python cli.py submit --help
-```
-
----
-
-## 8. Changelog – What Changed for Simplicity
-
-| Change | Reason |
-|--------|--------|
-| **`quick` requires a real `--ref-genome`** (file or index basename) | The old `hg38`/`mm10` preset strings were never mounted and crashed alignment. Validation now catches this before submit. |
-| **Align‑only mode is real** (omit `--gtf` in `quick`/`submit`/`submit-batch`) | Counting/DE are skipped by the workflow instead of crashing in the count agent. |
-| **Made `--gtf` optional in `submit`** | Researchers who don’t need counting can skip the GTF file entirely. |
-| **Simplified help text** | All option descriptions now explicitly mark which are required vs. optional. |
-| **`wizard` uses valid organisms** (`human`/`mouse`/`mixed`) and prints a valid next command | The old `hg38`/`mm10` values were rejected by `submit-batch`. |
-| **`wizard` now writes `.env` + sample‑sheet automatically** | One‑step generation of the configuration needed for batch runs. |
-| **All commands honor `TEMPORAL_HOST`** (including `status`) with actionable errors | No more raw tracebacks on connection failure. |
-| **Batch CSV accepts `fastq` or `fastq_path`** | Single‑end batch rows no longer fall into mock mode. |
-
----
-
-## 🎯 Quick Start Summary (one‑liner)
-
-```bash
-# 1️⃣ Install (once)
-cd NGS-Agent && pip install --break-system-packages -r requirements.txt
-
-# 2️⃣ Make sure you have a Temporal server reachable at localhost:7233
-#    (or set TEMPORAL_HOST env var)
-
-# 3️⃣ Submit a quick RNA‑Seq run
-python cli.py quick --fastq /path/to/your_data.fastq --ref-genome /path/to/grch38_idx --gtf /path/to/genes.gtf
-
-# 4️⃣ Monitor the run
-#    → Open the URL printed, e.g. http://localhost:8080/namespaces/default/workflows/ngs-quick-...
-```
-
-That’s it! You now have a frictionless pathway from FASTQ file to pipeline monitoring in a single command. Happy sequencing!
+Open `http://localhost:8000`, drop in a supported file, and download the self-contained report. The Box and CLI use the same assessment path.

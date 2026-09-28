@@ -122,9 +122,10 @@ def test_readme_has_an_honest_scope_section():
     text = read(README).lower()
     assert "## scope" in text
     scope = text.split("## scope")[1]
-    for refused in ("vcf", "pipeline", "mcp", "account", "cloud"):
+    for refused in ("vcf", "pipeline", "mcp", "account", "cloud", "llm"):
         assert refused in scope, f"scope section does not mention {refused}"
-    assert "does not do" in scope or "not do" in scope
+    assert "does not execute" in scope
+    assert "permanently out of scope" in scope
 
 
 def test_readme_mentions_the_versions_the_tool_reports():

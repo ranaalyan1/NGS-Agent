@@ -14,15 +14,16 @@ from __future__ import annotations
 
 import argparse
 import gzip
-import time
-from datetime import UTC, datetime
 import json
 import os
 import sys
+import time
 from collections.abc import Sequence
+from datetime import UTC, datetime
 
 from core.answer import Answer, answer_verdict
 from core.assess import assess_path
+from core.diagnose import diagnose, run_finished
 from core.models import (
     DECISION_LABELS,
     DECISION_UNKNOWN,
@@ -31,7 +32,6 @@ from core.models import (
     Verdict,
 )
 from core.report import render_json
-from core.diagnose import diagnose, run_finished
 from core.version import RULESET_VERSION, TOOL_VERSION
 
 EXIT_OK = 0
